@@ -295,7 +295,63 @@ body{
   background:var(--ink2);
   padding:.85rem 1.1rem .75rem;
   border-bottom:1.5px solid var(--gold);
+  position:relative;
 }
+.card-actions{
+  position:absolute;top:.65rem;right:.7rem;
+  display:flex;gap:.28rem;opacity:0;
+  transition:opacity .18s;
+}
+.card:hover .card-actions,.card:focus-within .card-actions{opacity:1}
+.card-act-btn{
+  background:rgba(184,134,11,.13);
+  border:1px solid rgba(184,134,11,.3);
+  border-radius:6px;
+  color:var(--gold2);
+  font-size:.72rem;padding:.22rem .42rem;
+  cursor:pointer;line-height:1;
+  -webkit-tap-highlight-color:transparent;
+  transition:background .15s,border-color .15s;
+}
+.card-act-btn:hover{background:var(--gold);color:#fff;border-color:var(--gold)}
+.card-act-btn.del:hover{background:#c0392b;border-color:#c0392b;color:#fff}
+/* Confirm overlay */
+.confirm-bg{
+  position:fixed;inset:0;z-index:300;
+  background:rgba(20,18,12,.55);
+  backdrop-filter:blur(3px);
+  display:flex;align-items:center;justify-content:center;
+  padding:1.5rem;opacity:0;pointer-events:none;
+  transition:opacity .2s;
+}
+.confirm-bg.open{opacity:1;pointer-events:all}
+.confirm-box{
+  background:var(--card-bg);
+  border:1px solid var(--gold-rim);
+  border-radius:14px;padding:1.6rem 1.4rem;
+  max-width:300px;width:100%;text-align:center;
+  box-shadow:0 20px 60px rgba(20,18,12,.22);
+}
+.confirm-box h4{
+  font-family:var(--font-serif);font-size:1.2rem;font-weight:400;
+  color:var(--ink);margin-bottom:.5rem;
+}
+.confirm-box p{
+  font-family:var(--font-sans);font-size:.72rem;
+  letter-spacing:.04em;color:var(--smoke);margin-bottom:1.2rem;
+}
+.confirm-btns{display:flex;gap:.6rem;justify-content:center}
+.confirm-btns button{
+  padding:.55rem 1.2rem;border-radius:8px;cursor:pointer;
+  font-family:var(--font-sans);font-size:.72rem;letter-spacing:.06em;
+  border:1px solid var(--ctrl-border);
+  -webkit-tap-highlight-color:transparent;
+  transition:all .15s;
+}
+#confirm-ok{background:#c0392b;border-color:#c0392b;color:#fff}
+#confirm-ok:hover{background:#a93226}
+#confirm-cancel{background:transparent;color:var(--ink)}
+#confirm-cancel:hover{border-color:var(--gold)}
 .card-num{
   font-family:var(--font-sans);
   font-size:.5rem;letter-spacing:.28em;text-transform:uppercase;
@@ -862,6 +918,74 @@ function loadSharedRecipes() {
     });
 }
 
+/* ── Delete ── */
+function deleteRecipe(rec) {
+  fetch(SB_URL + '/rest/v1/ricette?id=eq.' + rec._id, {
+    method: 'DELETE',
+    headers: sbHeaders()
+  })
+  .then(function(r){
+    if (r.ok || r.status === 204) {
+      CU = CU.filter(function(x){ return x._id !== rec._id; });
+      buildCats(); render();
+    } else { return r.text().then(function(t){ throw new Error(t); }); }
+  })
+  .catch(function(e){
+    console.error('Delete error:', e);
+    alert('Errore eliminazione. Controlla connessione.');
+  });
+}
+
+/* ── Update ── */
+function updateRecipe(rec, newData) {
+  newData._c = true; newData._id = rec._id;
+  fetch(SB_URL + '/rest/v1/ricette?id=eq.' + rec._id, {
+    method: 'PATCH',
+    headers: Object.assign({}, sbHeaders(), {'Prefer':'return=representation'}),
+    body: JSON.stringify({ data: newData })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(rows){
+    if (Array.isArray(rows) && rows[0]) {
+      var idx = CU.findIndex(function(x){ return x._id === rec._id; });
+      if (idx !== -1) CU[idx] = newData;
+      buildCats(); render();
+    } else { throw new Error(JSON.stringify(rows)); }
+  })
+  .catch(function(e){
+    console.error('Update error:', e);
+    alert('Errore aggiornamento. Controlla connessione.');
+  });
+}
+
+/* ── Edit modal ── */
+var _editTarget = null;
+function openEditModal(rec) {
+  _editTarget = rec;
+  resetModal();
+  // Pre-fill
+  var mn = document.getElementById('mn'); if(mn) mn.value = rec.n;
+  var mc = document.getElementById('mc'); if(mc) mc.value = rec.c;
+  var msec = document.getElementById('msec'); if(msec && rec.s) msec.value = rec.s;
+  // Pre-fill ingredients
+  var il = document.getElementById('ilist'); if(il) il.innerHTML='';
+  (rec.i||[]).forEach(function(ing){ addIng(ing[0], ing[1]!==null?ing[1]:'', ing[2]); });
+  // Change modal title and button
+  var mh = document.querySelector('.modal h3'); if(mh) mh.textContent = 'Modifica Ricetta';
+  var bs = document.getElementById('bsave'); if(bs) bs.textContent = 'Aggiorna';
+  document.getElementById('mbg').classList.add('open');
+}
+
+/* ── Confirm delete ── */
+var _deleteTarget = null;
+function openConfirm(rec) {
+  _deleteTarget = rec;
+  var cn = document.getElementById('confirm-name');
+  if(cn) cn.textContent = 'Eliminare «' + rec.n + '»?';
+  document.getElementById('confirmbg').classList.add('open');
+}
+function closeConfirm(){ document.getElementById('confirmbg').classList.remove('open'); _deleteTarget=null; }
+
 function saveRecipe(rec) {
   rec._c = true;
   fetch(SB_URL + '/rest/v1/ricette', {
@@ -941,6 +1065,16 @@ function buildCard(r, idx) {
     var sb = el('span','section-badge');
     sb.textContent = SECTIONS[r.s].icon + ' ' + SECTIONS[r.s].label;
     nm.appendChild(sb);
+  }
+  // Action buttons (only for shared/custom recipes with _id)
+  if (r._c && r._id) {
+    var acts = el('div','card-actions');
+    var ebtn = el('button','card-act-btn edit'); ebtn.type='button'; ebtn.textContent='✏️'; ebtn.title='Modifica';
+    ebtn.addEventListener('click', function(e){ e.stopPropagation(); openEditModal(r); });
+    var dbtn = el('button','card-act-btn del'); dbtn.type='button'; dbtn.textContent='🗑️'; dbtn.title='Elimina';
+    dbtn.addEventListener('click', function(e){ e.stopPropagation(); openConfirm(r); });
+    acts.appendChild(ebtn); acts.appendChild(dbtn);
+    hd.appendChild(acts);
   }
   hd.appendChild(num); hd.appendChild(nm); card.appendChild(hd);
 
@@ -1038,7 +1172,12 @@ function resetModal(){
   var msec=document.getElementById('msec');if(msec&&curSec!=='tutti')msec.value=curSec;
 }
 function openModal(){resetModal();document.getElementById('mbg').classList.add('open');}
-function closeModal(){document.getElementById('mbg').classList.remove('open');}
+function closeModal(){
+  document.getElementById('mbg').classList.remove('open');
+  _editTarget=null;
+  var mh=document.querySelector('.modal h3');if(mh)mh.textContent='Nuova Ricetta';
+  var bs=document.getElementById('bsave');if(bs)bs.textContent='Salva ricetta';
+}
 
 /* ─── Init ─── */
 function init() {
@@ -1099,8 +1238,24 @@ function init() {
       if(iN) ings.push([iN,iQ,iU]);
     });
     if(!ings.length){alert('Aggiungi almeno un ingrediente');return;}
-    saveRecipe({n:name,c:catV,s:secV,i:ings});
+    var newRec={n:name,c:catV,s:secV,i:ings};
+    if(_editTarget){ updateRecipe(_editTarget, newRec); _editTarget=null; }
+    else { saveRecipe(newRec); }
+    // Reset modal title/button
+    var mh=document.querySelector('.modal h3');if(mh)mh.textContent='Nuova Ricetta';
+    var bs=document.getElementById('bsave');if(bs)bs.textContent='Salva ricetta';
     closeModal();
+  });
+  // Confirm delete buttons
+  var cok=document.getElementById('confirm-ok');
+  if(cok) cok.addEventListener('click',function(){
+    if(_deleteTarget){ deleteRecipe(_deleteTarget); }
+    closeConfirm();
+  });
+  var ccanc=document.getElementById('confirm-cancel');
+  if(ccanc) ccanc.addEventListener('click', closeConfirm);
+  document.getElementById('confirmbg').addEventListener('click',function(e){
+    if(e.target===this) closeConfirm();
   });
 
   loadSharedRecipes();
@@ -1114,5 +1269,15 @@ window.addEventListener('load',iosBoot);
 if(document.readyState==='interactive'||document.readyState==='complete') iosBoot();
 setTimeout(iosBoot,0);setTimeout(iosBoot,200);setTimeout(iosBoot,800);
 </script>
+<div class="confirm-bg" id="confirmbg">
+  <div class="confirm-box">
+    <h4>Elimina ricetta</h4>
+    <p id="confirm-name">Sei sicuro di voler eliminare questa ricetta?</p>
+    <div class="confirm-btns">
+      <button id="confirm-cancel" type="button">Annulla</button>
+      <button id="confirm-ok" type="button">Elimina</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
