@@ -336,6 +336,11 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 .move-save{background:linear-gradient(135deg,var(--gold2),var(--gold3));border-color:transparent;color:#fff;font-style:italic}
 .move-cancel{background:transparent;color:var(--ink)}
 
+.db-status{width:8px;height:8px;border-radius:50%;background:#888;display:inline-block;flex-shrink:0;transition:background .3s;cursor:help}
+.db-status.ok{background:#4CAF50}
+.db-status.err{background:#f44336}
+.db-status.loading{background:#FFA726;animation:pulse .8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 @media(max-width:560px){
   .land-top{padding:1.5rem 1.1rem .95rem}.land-logo{width:68px;height:68px}
   .panel{min-height:min(16vh,95px)}.panel-body{padding:1.1rem .95rem}.panel-title{font-size:1.22rem}
@@ -436,7 +441,10 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="12" height="12"><polyline points="10,3 4,8 10,13"/></svg>Sezioni
       </button>
       <div class="hd-title"><h1 class="fd" id="hdTitle">Colazioni</h1><p class="fsc" id="hdSub">Impasti &middot; Creme &middot; Lievitati</p></div>
-      <div class="hd-right"><button class="ico-btn fs" id="admBtn">&#128274;</button></div>
+      <div class="hd-right">
+      <span class="db-status" id="dbStatus" title="Stato database">&#9679;</span>
+      <button class="ico-btn fs" id="admBtn">&#128274;</button>
+    </div>
     </div>
   </header>
   <div class="ctrl-shell">
@@ -488,9 +496,25 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
   <p class="fsc">PIN admin (vale anche come password d'accesso)<br><small style="opacity:.6;font-size:.58rem">default: MDL2025</small></p>
   <div class="adm-pin-row"><input type="password" id="admPin" placeholder="PIN" maxlength="12"><button type="button" id="admOk">&#8594;</button></div>
   <p class="adm-err fsc" id="admErr"></p><button class="adm-cancel fs" id="admCancel" type="button">Annulla</button>
-  <div class="adm-sep"><p class="fsc">Cambia password accesso app</p>
+  <div class="adm-sep">
+    <p class="fsc">Cambia password accesso app</p>
     <div class="adm-pwd-row"><input type="password" id="newPwd" placeholder="Nuova password" maxlength="32"><button type="button" id="savePwdBtn">OK</button></div>
     <p class="adm-msg fsc" id="admMsg"></p>
+  </div>
+  <div class="adm-sep">
+    <p class="fsc">&#10024; Chiave Gemini AI (gratuita)</p>
+    <p style="font-size:.54rem;color:var(--smoke2);margin-bottom:.4rem">Ottieni su <strong>ai.google.dev</strong> &rarr; Get API Key &rarr; gratuito</p>
+    <div class="adm-pwd-row">
+      <input type="password" id="admGeminiKey" placeholder="AIza&#8230;" maxlength="60">
+      <button type="button" id="saveGeminiBtn">OK</button>
+    </div>
+    <p class="adm-msg fsc" id="admGeminiMsg"></p>
+  </div>
+  <div class="adm-sep">
+    <p class="fsc">&#128197; Database Supabase</p>
+    <p id="admDbInfo" style="font-size:.58rem;color:var(--smoke2);margin-bottom:.5rem;line-height:1.5">Verifica connessione al database condiviso</p>
+    <button type="button" id="testDbBtn" style="width:100%;background:var(--ctrl);border:1px solid var(--cb);border-radius:6px;padding:.42rem;font-size:.72rem;color:var(--ink);cursor:pointer">Testa connessione</button>
+    <p class="adm-msg fsc" id="admDbMsg"></p>
   </div>
 </div></div>
 <div class="ai-bg" id="aiBg"><div class="ai-modal">
@@ -766,16 +790,52 @@ function submitPwd(){
 }
 
 function sbH(){return{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};}
+function setDbStatus(s){var el=qs('dbStatus');if(!el)return;el.className='db-status '+s;}
 function loadRecipes(){
+  setDbStatus('loading');
   fetch(SB_URL+'/rest/v1/ricette?select=id,data&order=id.asc',{headers:sbH()})
-    .then(function(r){return r.json();})
+    .then(function(r){
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return r.json();
+    })
     .then(function(rows){
+      setDbStatus('ok');
       CU=Array.isArray(rows)?rows.map(function(row){var r=row.data;r._c=true;r._id=row.id;return r;}):[];
       renderCats();renderGrid();
+      var info=qs('admDbInfo');if(info)info.textContent='Connesso - '+CU.length+' ricette nel DB condiviso';
     })
-    .catch(function(){
-      try{CU=JSON.parse(localStorage.getItem('rc')||'[]');}catch(e){CU=[];}
+    .catch(function(e){
+      setDbStatus('err');
+      try{CU=JSON.parse(localStorage.getItem('rc')||'[]');}catch(e2){CU=[];}
       CU.forEach(function(r){r._c=true;});renderCats();renderGrid();
+      var info=qs('admDbInfo');if(info)info.textContent='Errore: '+e.message+'. Dati in locale.';
+    });
+}
+function testDb(){
+  var btn=qs('testDbBtn');var msg=qs('admDbMsg');
+  if(btn)btn.textContent='Testing...';if(msg)msg.textContent='';
+  setDbStatus('loading');
+  fetch(SB_URL+'/rest/v1/ricette?select=id&limit=1',{headers:sbH()})
+    .then(function(r){
+      if(!r.ok)return r.text().then(function(t){throw new Error('HTTP '+r.status+': '+t);});
+      return r.json();
+    })
+    .then(function(rows){
+      setDbStatus('ok');
+      if(msg)msg.textContent='Connessione OK - Database raggiungibile';
+      if(btn)btn.textContent='Testa connessione';
+      loadRecipes();
+    })
+    .catch(function(e){
+      setDbStatus('err');
+      var errMsg=e.message||String(e);
+      if(msg)msg.style.color='#f44336';
+      if(msg)msg.textContent='Errore: '+errMsg;
+      if(btn)btn.textContent='Testa connessione';
+      // Check if it's a table-not-found error
+      if(errMsg.indexOf('42P01')!==-1||errMsg.indexOf('relation')!==-1){
+        if(msg)msg.textContent='La tabella "ricette" non esiste su Supabase. Vai su SQL Editor ed esegui la query di setup.';
+      }
     });
 }
 function saveRec(rec){
@@ -1108,6 +1168,20 @@ function boot(){
     };reader.readAsDataURL(file);
   });
   loadRecipes();
+  // Gemini key in admin
+  var gk2;try{gk2=localStorage.getItem('gemini_key');}catch(e){}
+  var admGk=qs('admGeminiKey');if(admGk&&gk2)admGk.value=gk2;
+  var saveGeminiBtn=qs('saveGeminiBtn');
+  if(saveGeminiBtn)saveGeminiBtn.addEventListener('click',function(){
+    var k=(qs('admGeminiKey').value||'').trim();
+    if(!k||k.length<10){qs('admGeminiMsg').textContent='Chiave non valida';return;}
+    try{localStorage.setItem('gemini_key',k);}catch(e){}
+    var ki=qs('aiKey');if(ki)ki.value=k;
+    qs('admGeminiMsg').textContent='Chiave salvata!';qs('admGeminiMsg').style.color='var(--gold2)';
+    setTimeout(function(){qs('admGeminiMsg').textContent='';},2500);
+  });
+  var testDbBtn=qs('testDbBtn');
+  if(testDbBtn)testDbBtn.addEventListener('click',testDb);
 }
 </script>
 </body>
