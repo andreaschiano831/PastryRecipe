@@ -1098,14 +1098,12 @@ function doAiAnalyse(){
     var txt=(qs('aiText').value||'').trim();if(!txt){btn.disabled=false;qs('aiSpinner').classList.remove('on');alert('Inserisci testo');return;}
     contents=[{role:'user',parts:[{text:'Analizza e restituisci JSON:\n\n'+txt}]}];
   }
-  // Inject system instruction into the first user message (v1 API compatible)
-  if(contents.length>0&&contents[0].parts){
-    var firstPart=contents[0].parts[0];
-    if(firstPart.text){firstPart.text=sys+'\n\n'+firstPart.text;}
-    else{contents[0].parts.unshift({text:sys});}
-  }
-  var url='https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key='+key;
-  fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:contents})})
+  var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key;
+  var body={
+    contents:contents,
+    systemInstruction:{parts:[{text:sys}]}
+  };
+  fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){return r.json();})
     .then(function(data){
       if(data.error)throw new Error(data.error.message||'Gemini error');
@@ -1113,9 +1111,8 @@ function doAiAnalyse(){
       if(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts)
         text=data.candidates[0].content.parts[0].text||'';
       text=text.replace(/```json/g,'').replace(/```/g,'').trim();
-      // Extract JSON from response
-      var match=text.match(/\{[\s\S]*\}/);
-      if(match)text=match[0];
+      var m=text.match(/\{[\s\S]*\}/);
+      if(m)text=m[0];
       populateAiPreview(JSON.parse(text));
     })
     .catch(function(err){qs('aiSpinner').classList.remove('on');btn.disabled=false;var msg=err.message||'';if(msg.indexOf('quota')!==-1||msg.indexOf('RESOURCE_EXHAUSTED')!==-1){alert('Quota esaurita (1500/giorno gratuiti). Riprova domani.');}else if(msg.indexOf('not found')!==-1||msg.indexOf('404')!==-1){alert('Modello non disponibile. Verifica che la chiave sia abilitata su ai.google.dev/gemini-api/docs');}else if(msg.indexOf('API_KEY_INVALID')!==-1||msg.indexOf('invalid')!==-1){alert('Chiave non valida. Vai su ai.google.dev → Get API Key');}else{alert('Errore AI: '+msg);}});
