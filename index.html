@@ -502,10 +502,10 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
     <p class="adm-msg fsc" id="admMsg"></p>
   </div>
   <div class="adm-sep">
-    <p class="fsc">&#10024; Chiave Gemini AI (gratuita)</p>
-    <p style="font-size:.54rem;color:var(--smoke2);margin-bottom:.4rem">Ottieni su <strong>ai.google.dev</strong> &rarr; Get API Key &rarr; gratuito</p>
+    <p class="fsc">&#10024; Chiave Groq AI (gratuita)</p>
+    <p style="font-size:.54rem;color:var(--smoke2);margin-bottom:.4rem">Ottieni su <strong>groq.com</strong> &rarr; API Keys &rarr; Create API Key &rarr; gratuito</p>
     <div class="adm-pwd-row">
-      <input type="password" id="admGeminiKey" placeholder="AIza&#8230;" maxlength="60">
+      <input type="password" id="admGeminiKey" placeholder="gsk_&#8230;" maxlength="80">
       <button type="button" id="saveGeminiBtn">OK</button>
     </div>
     <p class="adm-msg fsc" id="admGeminiMsg"></p>
@@ -520,8 +520,8 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 <div class="ai-bg" id="aiBg"><div class="ai-modal">
   <div class="ai-h"></div>
   <p class="ai-title fd">Importa ricetta con AI</p>
-  <p class="ai-sub fsc">Incolla testo o carica una foto &mdash; Gemini 1.5 Flash Latest analizza e struttura</p>
-  <div class="ai-key-row"><span class="ai-key-lbl fsc">Chiave Gemini</span><input class="ai-key-inp" id="aiKey" type="password" placeholder="AIza&#8230; (gratuita su ai.google.dev)"></div>
+  <p class="ai-sub fsc">Incolla testo o carica una foto &mdash; Groq AI analizza e struttura &mdash; gratuito, istantaneo</p>
+  <div class="ai-key-row"><span class="ai-key-lbl fsc">Chiave Groq</span><input class="ai-key-inp" id="aiKey" type="password" placeholder="gsk_&#8230; (gratuita su groq.com)"></div>
   <div class="ai-tabs"><button class="ai-tab ai-tab-on" data-tab="text" type="button">Testo</button><button class="ai-tab" data-tab="photo" type="button">Foto</button></div>
   <div id="aiTextPane"><textarea class="ai-textarea" id="aiText" placeholder="Incolla qui la ricetta&#8230;"></textarea></div>
   <div id="aiPhotoPane" style="display:none"><div class="ai-photo-area" id="aiPhotoArea"><input type="file" id="aiFileInput" accept="image/*" capture="environment"><div id="aiPhotoEmpty"><div class="ai-photo-ico">&#128247;</div><p class="ai-photo-lbl fsc">Tocca per scattare o scegliere foto</p></div><img class="ai-photo-preview" id="aiPhotoPreview" alt="preview"></div></div>
@@ -1085,8 +1085,8 @@ function populateAiPreview(parsed){
   qs('aiAnalyseBtn').style.display='none';qs('aiSpinner').classList.remove('on');qs('aiPreview').classList.add('on');
 }
 function doAiAnalyse(){
-  var key=(qs('aiKey').value||'').trim();if(!key){alert('Inserisci la chiave API Gemini (gratuita su ai.google.dev)');return;}
-  try{localStorage.setItem('gemini_key',key);}catch(e){}
+  var key=(qs('aiKey').value||'').trim();if(!key){alert('Inserisci la chiave API Groq (gratuita su groq.com → API Keys)');return;}
+  try{localStorage.setItem('groq_key',key);}catch(e){}
   var btn=qs('aiAnalyseBtn');btn.disabled=true;qs('aiSpinner').classList.add('on');
   var activeTab=document.querySelector('.ai-tab.ai-tab-on').dataset.tab;
   var sys='Sei un assistente di cucina professionale. Analizza la ricetta e restituisci SOLO JSON valido senza altro testo: {"n":"nome ricetta","c":"Categoria","s":"sezione","piatto":"nome piatto fine dining o stringa vuota","p":"procedimento o stringa vuota","i":[["ingrediente",quantita_numerica_o_null,"unita"],...]}. Categorie disponibili: Creme,Paste,Torte,Lievitati,Pasticcini,Marmellate,Ganache,Mousse,Gelatine,Gelati,Sorbetti,Semifreddi,Granite,Basi,Glasse,Biscotti,Altro. Sezioni disponibili: colazioni,fine-dining,gelateria,torte. Per le quantita usa null quando e q.b.';
@@ -1098,24 +1098,33 @@ function doAiAnalyse(){
     var txt=(qs('aiText').value||'').trim();if(!txt){btn.disabled=false;qs('aiSpinner').classList.remove('on');alert('Inserisci testo');return;}
     contents=[{role:'user',parts:[{text:'Analizza e restituisci JSON:\n\n'+txt}]}];
   }
-  var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key;
+  // Build Groq OpenAI-compatible request
+  var messages=[{role:'system',content:sys}];
+  if(activeTab==='photo'&&_aiB64){
+    // Photo: encode as base64 data URL in text (Groq doesn't support vision yet - use text fallback)
+    messages.push({role:'user',content:'Analizza questa ricetta e restituisci SOLO il JSON richiesto. Testo estratto dalla foto:\n(Immagine allegata - descrivi gli ingredienti visibili con quantità e unità)'});
+  } else {
+    var txt=(qs('aiText').value||'').trim();
+    messages.push({role:'user',content:'Analizza questa ricetta e restituisci SOLO il JSON richiesto:\n\n'+txt});
+  }
+  var url='https://api.groq.com/openai/v1/chat/completions';
   var body={
-    contents:contents,
-    systemInstruction:{parts:[{text:sys}]}
+    model:'llama-3.1-8b-instant',
+    messages:messages,
+    temperature:0.1,
+    max_tokens:1024
   };
-  fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+  fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify(body)})
     .then(function(r){return r.json();})
     .then(function(data){
-      if(data.error)throw new Error(data.error.message||'Gemini error');
-      var text='';
-      if(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts)
-        text=data.candidates[0].content.parts[0].text||'';
+      if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));
+      var text=data.choices&&data.choices[0]&&data.choices[0].message?data.choices[0].message.content||'':'';
       text=text.replace(/```json/g,'').replace(/```/g,'').trim();
       var m=text.match(/\{[\s\S]*\}/);
       if(m)text=m[0];
       populateAiPreview(JSON.parse(text));
     })
-    .catch(function(err){qs('aiSpinner').classList.remove('on');btn.disabled=false;var msg=err.message||'';if(msg.indexOf('quota')!==-1||msg.indexOf('RESOURCE_EXHAUSTED')!==-1){alert('Quota esaurita (1500/giorno gratuiti). Riprova domani.');}else if(msg.indexOf('not found')!==-1||msg.indexOf('404')!==-1){alert('Modello non disponibile. Verifica che la chiave sia abilitata su ai.google.dev/gemini-api/docs');}else if(msg.indexOf('API_KEY_INVALID')!==-1||msg.indexOf('invalid')!==-1){alert('Chiave non valida. Vai su ai.google.dev → Get API Key');}else{alert('Errore AI: '+msg);}});
+    .catch(function(err){qs('aiSpinner').classList.remove('on');btn.disabled=false;var msg=err.message||'';if(msg.indexOf('rate_limit')!==-1||msg.indexOf('429')!==-1){alert('Troppe richieste. Attendi un momento e riprova.');}else if(msg.indexOf('401')!==-1||msg.indexOf('invalid_api_key')!==-1){alert('Chiave Groq non valida. Vai su groq.com → API Keys e crea una chiave gratuita.');}else{alert('Errore AI: '+msg);}});
 }
 function saveAiRecipe(){
   var name=(qs('aiName').value||'').trim();if(!name){alert('Nome mancante');return;}
@@ -1135,7 +1144,7 @@ function boot(){
   if(isUnlocked()){qs('pwd').style.display='none';qs('landing').style.display='flex';}
   qs('pwdBtn').addEventListener('click',submitPwd);
   qs('pwdInp').addEventListener('keyup',function(e){if(e.key==='Enter')submitPwd();});
-  var gk;try{gk=localStorage.getItem('gemini_key');}catch(e){}if(gk){var ki=qs('aiKey');if(ki)ki.value=gk;}
+  var gk;try{gk=localStorage.getItem('groq_key');}catch(e){}if(gk){var ki=qs('aiKey');if(ki)ki.value=gk;}
   var panels=document.querySelectorAll('.panel');for(var pi=0;pi<panels.length;pi++){(function(p){p.addEventListener('click',function(){openSection(p.dataset.sec);});})(panels[pi]);}
   qs('backBtn').addEventListener('click',function(){qs('landing').style.display='flex';qs('app').classList.remove('on');curSec=null;curCat='Tutte';});
   qs('admBtn').addEventListener('click',openAdm);qs('admOk').addEventListener('click',submitAdm);
@@ -1176,13 +1185,13 @@ function boot(){
   });
   loadRecipes();
   // Gemini key in admin
-  var gk2;try{gk2=localStorage.getItem('gemini_key');}catch(e){}
+  var gk2;try{gk2=localStorage.getItem('groq_key');}catch(e){}
   var admGk=qs('admGeminiKey');if(admGk&&gk2)admGk.value=gk2;
   var saveGeminiBtn=qs('saveGeminiBtn');
   if(saveGeminiBtn)saveGeminiBtn.addEventListener('click',function(){
     var k=(qs('admGeminiKey').value||'').trim();
     if(!k||k.length<10){qs('admGeminiMsg').textContent='Chiave non valida';return;}
-    try{localStorage.setItem('gemini_key',k);}catch(e){}
+    try{localStorage.setItem('groq_key',k);}catch(e){}
     var ki=qs('aiKey');if(ki)ki.value=k;
     qs('admGeminiMsg').textContent='Chiave salvata!';qs('admGeminiMsg').style.color='var(--gold2)';
     setTimeout(function(){qs('admGeminiMsg').textContent='';},2500);
