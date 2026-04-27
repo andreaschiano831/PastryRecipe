@@ -520,7 +520,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 <div class="ai-bg" id="aiBg"><div class="ai-modal">
   <div class="ai-h"></div>
   <p class="ai-title fd">Importa ricetta con AI</p>
-  <p class="ai-sub fsc">Incolla testo o carica una foto &mdash; Gemini 1.5 Flash analizza e struttura (gratuito)</p>
+  <p class="ai-sub fsc">Incolla testo o carica una foto &mdash; Gemini 1.5 Flash Latest analizza e struttura</p>
   <div class="ai-key-row"><span class="ai-key-lbl fsc">Chiave Gemini</span><input class="ai-key-inp" id="aiKey" type="password" placeholder="AIza&#8230; (gratuita su ai.google.dev)"></div>
   <div class="ai-tabs"><button class="ai-tab ai-tab-on" data-tab="text" type="button">Testo</button><button class="ai-tab" data-tab="photo" type="button">Foto</button></div>
   <div id="aiTextPane"><textarea class="ai-textarea" id="aiText" placeholder="Incolla qui la ricetta&#8230;"></textarea></div>
@@ -1098,7 +1098,7 @@ function doAiAnalyse(){
     var txt=(qs('aiText').value||'').trim();if(!txt){btn.disabled=false;qs('aiSpinner').classList.remove('on');alert('Inserisci testo');return;}
     contents=[{role:'user',parts:[{text:'Analizza e restituisci JSON:\n\n'+txt}]}];
   }
-  var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key;
+  var url='https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key='+key;
   fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:contents,generationConfig:{responseMimeType:'application/json'}})})
     .then(function(r){return r.json();})
     .then(function(data){
@@ -1108,7 +1108,7 @@ function doAiAnalyse(){
       text=text.replace(/```json/g,'').replace(/```/g,'').trim();
       populateAiPreview(JSON.parse(text));
     })
-    .catch(function(err){qs('aiSpinner').classList.remove('on');btn.disabled=false;var msg=err.message||'';if(msg.indexOf('quota')!==-1||msg.indexOf('RESOURCE_EXHAUSTED')!==-1){alert('Quota Gemini esaurita. Riprova domani o usa nuova chiave da ai.google.dev');}else if(msg.indexOf('API_KEY_INVALID')!==-1||msg.indexOf('invalid')!==-1){alert('Chiave API non valida. Vai su ai.google.dev e copia la chiave.');}else{alert('Errore AI: '+msg);}});
+    .catch(function(err){qs('aiSpinner').classList.remove('on');btn.disabled=false;var msg=err.message||'';if(msg.indexOf('quota')!==-1||msg.indexOf('RESOURCE_EXHAUSTED')!==-1){alert('Quota esaurita (1500/giorno gratuiti). Riprova domani.');}else if(msg.indexOf('not found')!==-1||msg.indexOf('404')!==-1){alert('Modello non disponibile. Verifica che la chiave sia abilitata su ai.google.dev/gemini-api/docs');}else if(msg.indexOf('API_KEY_INVALID')!==-1||msg.indexOf('invalid')!==-1){alert('Chiave non valida. Vai su ai.google.dev → Get API Key');}else{alert('Errore AI: '+msg);}});
 }
 function saveAiRecipe(){
   var name=(qs('aiName').value||'').trim();if(!name){alert('Nome mancante');return;}
