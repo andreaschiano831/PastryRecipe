@@ -1108,17 +1108,7 @@ function doAiAnalyse(){
       text=text.replace(/```json/g,'').replace(/```/g,'').trim();
       populateAiPreview(JSON.parse(text));
     })
-    .catch(function(err){qs('aiSpinner').classList.remove('on');btn.disabled=false;var msg=err.message||'';
-    if(msg.indexOf('quota')!==-1||msg.indexOf('RESOURCE_EXHAUSTED')!==-1){
-      alert('Quota Gemini esaurita per oggi (1500/giorno gratuiti).
-Riprova domani oppure usa una nuova chiave da ai.google.dev');
-    } else if(msg.indexOf('API_KEY_INVALID')!==-1||msg.indexOf('invalid')!==-1){
-      alert('Chiave API non valida.
-Vai su ai.google.dev → Get API Key e copia la chiave corretta.');
-    } else {
-      alert('Errore AI: '+msg+'
-Verifica la chiave su ai.google.dev');
-    }});
+    .catch(function(err){qs('aiSpinner').classList.remove('on');btn.disabled=false;var msg=err.message||'';if(msg.indexOf('quota')!==-1||msg.indexOf('RESOURCE_EXHAUSTED')!==-1){alert('Quota Gemini esaurita. Riprova domani o usa nuova chiave da ai.google.dev');}else if(msg.indexOf('API_KEY_INVALID')!==-1||msg.indexOf('invalid')!==-1){alert('Chiave API non valida. Vai su ai.google.dev e copia la chiave.');}else{alert('Errore AI: '+msg);}});
 }
 function saveAiRecipe(){
   var name=(qs('aiName').value||'').trim();if(!name){alert('Nome mancante');return;}
