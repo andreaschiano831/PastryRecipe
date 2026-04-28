@@ -1255,7 +1255,244 @@ function doAiAnalyse(){
   // Build Groq OpenAI-compatible request
   var messages=[{role:'system',content:sys}];
   if(activeTab==='photo'&&_aiB64){
-    // Photo: encode as base64 data URL in text (Groq doesn't support vision yet - use text fallback)\n    messages.push({role:'user',content:'Analizza questa ricetta e restituisci SOLO il JSON richiesto. Testo estratto dalla foto:\n(Immagine allegata - descrivi gli ingredienti visibili con quantità e unità)'});\n  } else {\n    var txt=(qs('aiText').value||'').trim();\n    messages.push({role:'user',content:'Analizza questa ricetta e restituisci SOLO il JSON richiesto:\n\n'+txt});\n  }\n  var url='https://api.groq.com/openai/v1/chat/completions';\n  var body={\n    model:'llama-3.1-8b-instant',\n    messages:messages,\n    temperature:0.1,\n    max_tokens:1024\n  };\n  fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify(body)})\n    .then(function(r){return r.json();})\n    .then(function(data){\n      if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));\n      var text=data.choices&&data.choices[0]&&data.choices[0].message?data.choices[0].message.content||'':'';\n      text=text.replace(/```json/g,'').replace(/```/g,'').trim();\n      var m=text.match(/\{[\s\S]*\}/);\n      if(m)text=m[0];\n      populateAiPreview(JSON.parse(text));\n    })\n    .catch(function(err){qs('aiSpinner').classList.remove('on');btn.disabled=false;var msg=err.message||'';if(msg.indexOf('rate_limit')!==-1||msg.indexOf('429')!==-1){alert('Troppe richieste. Attendi un momento e riprova.');}else if(msg.indexOf('401')!==-1||msg.indexOf('invalid_api_key')!==-1){alert('Chiave Groq non valida. Vai su groq.com → API Keys e crea una chiave gratuita.');}else{alert('Errore AI: '+msg);}});\n}\nfunction saveAiRecipe(){\n  var name=(qs('aiName').value||'').trim();if(!name){alert('Nome mancante');return;}\n  var secV=qs('aiSec').value,catV=qs('aiCat').value;\n  var piattoV=(qs('aiPiatto').value||'').trim();\n  var procV=(qs('aiProc').value||'').trim();\n  var rows=qs('aiIngList').querySelectorAll('.ai-ing-row');var ings=[];\n  rows.forEach(function(row){var ins=row.querySelectorAll('input');var iN=(ins[0].value||'').trim(),iQ=ins[1].value?parseFloat(ins[1].value):null,iU=(ins[2].value||'').trim()||'g';if(iN)ings.push([iN,iQ,iU]);});\n  if(!ings.length){alert('Nessun ingrediente');return;}\n  var rec={n:name,c:catV,s:secV,i:ings};if(piattoV)rec.piatto=piattoV;if(procV)rec.p=procV;\n  saveRec(rec);closeAiModal();\n}\n\n\n/* ── QUICK PROCEDURE ── */\nvar _qprocRec = null;\nfunction openQuickProc(rec){\n  _qprocRec = rec;\n  var qt=qs('qprocTitle');if(qt)qt.textContent='Procedimento';\n  var qn=qs('qprocName');if(qn)qn.textContent=rec.n;\n  var qtx=qs('qprocText');if(qtx)qtx.value=rec.p||'';\n  qs('qprocBg').classList.add('on');\n  setTimeout(function(){if(qtx)qtx.focus();},200);\n}\nfunction closeQuickProc(){qs('qprocBg').classList.remove('on');_qprocRec=null;}\nfunction saveQuickProc(){\n  if(!_qprocRec)return;\n  var txt=(qs('qprocText').value||'').trim();\n  var updated=Object.assign({},_qprocRec,{p:txt||undefined});\n  if(!txt)delete updated.p;\n  if(_qprocRec._c&&_qprocRec._id){updateRec(_qprocRec,updated);}\n  else{hideBuiltin(_qprocRec.n);saveRec(updated);}\n  closeQuickProc();\n}\n\n/* ── FILE IMPORT ── */\nvar _importParsed = [];\nfunction openImport(){\n  _importParsed=[];qs('importPreview').classList.remove('on');qs('importList').innerHTML='';\n  var fi=qs('importFile');if(fi)fi.value='';\n  if(curSec&&curSec!=='tutti'){var is=qs('importSec');if(is)is.value=curSec;}\n  qs('importBg').classList.add('on');\n}\nfunction closeImport(){qs('importBg').classList.remove('on');}\n\nfunction parseRecipeText(raw){\n  // Split by double newline or numbered list patterns\n  var recipes=[];\n  // Try to detect recipe blocks: name + list of ingredients\n  var lines=raw.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});\n  var current=null;\n  lines.forEach(function(line){\n    // Detect recipe name: line ending with nothing numeric, no "gr"/"g " pattern\n    var isIng=/^\d+\s*(gr|g|kg|ml|l|n[°o]|cucchiai|cucchiaio)/i.test(line)||\n               /^(\d+[.,]?\d*\s*)(gr|g|kg|ml|n[°o])/i.test(line)||\n               /^[A-Za-z].+(\d+\s*g)/i.test(line);\n    var isTitle=!isIng&&line.length>3&&line.length<80&&!/^([-•*])/.test(line)&&\n                !/^\d+[.,]/.test(line)&&line===line.trim();\n    if(isTitle&&current&&current.i.length>0){recipes.push(current);current=null;}\n    if(isTitle&&!current){current={n:line,i:[],c:'Altro',p:''};}\n    else if(current){\n      // Parse ingredient line: qty unit name or name qty unit\n      var m=line.match(/^(\d+[.,]?\d*)\s*(gr|g|kg|ml|l|n[°o°]|cl|cucchiai|cucchiaio|pizzico|q\.b\.|qb)?\s+(.+)/i);\n      var m2=line.match(/^(.+?)\s+(\d+[.,]?\d*)\s*(gr|g|kg|ml|l|n[°o°]|cl)?$/i);\n      if(m){var qty=parseFloat(m[1].replace(',','.'));var unit=m[2]||'g';var name=m[3].trim();current.i.push([name,isNaN(qty)?null:qty,unit]);}\n      else if(m2){var qty2=parseFloat(m2[2].replace(',','.'));var unit2=m2[3]||'g';var name2=m2[1].trim();current.i.push([name2,isNaN(qty2)?null:qty2,unit2]);}\n      else if(line.toLowerCase()==='q.b.'||line.toLowerCase()==='qb'){if(current.i.length>0)current.i[current.i.length-1][1]=null;}\n      else if(line.length>2&&!current.i.length===false){current.i.push([line,null,'q.b.']);}\n    }\n  });\n  if(current&&current.i.length>0)recipes.push(current);\n  return recipes;\n}\n\nfunction renderImportList(){\n  var list=qs('importList');list.innerHTML='';\n  _importParsed.forEach(function(r,i){\n    var item=el('div','import-item');\n    var chk=document.createElement('input');chk.type='checkbox';chk.checked=true;chk.className='import-item-chk';chk.id='ic'+i;\n    var lbl=el('label','import-item-txt');lbl.htmlFor='ic'+i;\n    var nm=el('span');nm.textContent=r.n;\n    var sm=el('small');sm.textContent=r.i.length+' ingredienti';\n    lbl.appendChild(nm);lbl.appendChild(sm);\n    item.appendChild(chk);item.appendChild(lbl);list.appendChild(item);\n  });\n  qs('importPreview').classList.add('on');\n}\n\nfunction doImport(){\n  var sec=qs('importSec').value||'colazioni';\n  var chks=qs('importList').querySelectorAll('.import-item-chk');\n  var count=0;\n  chks.forEach(function(chk,i){\n    if(chk.checked&&_importParsed[i]){\n      var r=Object.assign({},_importParsed[i],{s:sec});\n      saveRec(r);count++;\n    }\n  });\n  closeImport();\n  setTimeout(function(){if(count>0)alert(count+' ricett'+(count===1?'a':'e')+' importat'+(count===1?'a':'e')+' nel database condiviso!');},300);\n}\n\n\n/* ── PIATTI MANAGER ── */\nfunction getPiatti(){\n  // Collect all unique piatti from allRecs()\n  var all=R.concat(CU);\n  var map={};\n  all.forEach(function(r){\n    if(r.piatto&&r.piatto.trim()){\n      var key=r.s+'::'+r.piatto.trim();\n      if(!map[key])map[key]={name:r.piatto.trim(),sec:r.s,count:0};\n      map[key].count++;\n    }\n  });\n  return Object.values(map);\n}\n\nfunction renderPiattiList(){\n  var list=qs('piattiList');\n  if(!list)return;\n  list.innerHTML='';\n  var piatti=getPiatti();\n  piatti.sort(function(a,b){return a.sec.localeCompare(b.sec)||a.name.localeCompare(b.name,'it');});\n  if(!piatti.length){\n    var em=el('p','piatti-empty');em.textContent='Nessun piatto creato. Crea il primo piatto sopra.';\n    list.appendChild(em);return;\n  }\n  var SLBL={colazioni:'Colazioni','fine-dining':'Fine Dining',gelateria:'Gelateria',torte:'Torte'};\n  piatti.forEach(function(p){\n    var item=el('div','piatti-item');\n    var top=el('div','piatti-item-top');\n    var nm=el('span','piatti-item-name');nm.textContent=p.name;\n    var sec=el('span','piatti-item-sec');sec.textContent=SLBL[p.sec]||p.sec;\n    var cnt=el('span','piatti-item-cnt');cnt.textContent=p.count+' ricett'+(p.count===1?'a':'e');\n    var del=el('button','piatti-item-del');del.type='button';del.textContent='×';del.title='Rimuovi piatto da tutte le ricette';\n    del.addEventListener('click',function(e){\n      e.stopPropagation();\n      if(!confirm('Rimuovere il piatto "'+p.name+'" da tutte le ricette?'))return;\n      // Remove piatto from all matching CU recipes\n      var toUpdate=CU.filter(function(r){return r.piatto===p.name&&r.s===p.sec;});\n      toUpdate.forEach(function(r){var u=Object.assign({},r);delete u.piatto;updateRec(r,u);});\n      setTimeout(renderPiattiList,500);\n    });\n    top.appendChild(nm);top.appendChild(sec);top.appendChild(cnt);top.appendChild(del);\n    item.appendChild(top);\n    // Click to assign to current recipe\n    list.appendChild(item);\n  });\n}\n\nfunction openPiattiManager(){\n  var np=qs('newPiattoName');if(np)np.value='';\n  var ns=qs('newPiattoSec');if(ns&&curSec&&curSec!=='tutti')ns.value=curSec;\n  renderPiattiList();\n  qs('piattiBg').classList.add('on');\n}\nfunction closePiattiManager(){qs('piattiBg').classList.remove('on');}\n\nfunction createPiatto(){\n  var name=(qs('newPiattoName').value||'').trim();\n  if(!name){alert('Inserisci il nome del piatto');return;}\n  var sec=qs('newPiattoSec').value||'colazioni';\n  // Piatto created by updating a recipe or saving a placeholder — just show success\n  // User assigns piatto to recipes via ✏️ or 📂\n  qs('newPiattoName').value='';\n  alert('Piatto "'+name+'" creato! Ora assegna delle ricette tramite i pulsanti ✏️ o 📂 sulle card e inserisci "'+name+'" nel campo Piatto/Gruppo.');\n  renderPiattiList();\n}\n\nfunction boot(){\n  var th;try{th=localStorage.getItem('mdl_th');}catch(e){}setTheme((th&&THEMES.indexOf(th)!==-1)?th:'t-crema');\n  var dots=document.querySelectorAll('.t-dot');for(var di=0;di<dots.length;di++){(function(d){d.addEventListener('click',function(){setTheme(d.dataset.t);});})(dots[di]);}\n  if(isUnlocked()){qs('pwd').style.display='none';qs('landing').style.display='flex';}\n  qs('pwdBtn').addEventListener('click',submitPwd);\n  qs('pwdInp').addEventListener('keyup',function(e){if(e.key==='Enter')submitPwd();});\n  var gk;try{gk=localStorage.getItem('groq_key');}catch(e){}if(gk){var ki=qs('aiKey');if(ki)ki.value=gk;}\n  var panels=document.querySelectorAll('.panel');for(var pi=0;pi<panels.length;pi++){(function(p){p.addEventListener('click',function(){openSection(p.dataset.sec);});})(panels[pi]);}\n  qs('backBtn').addEventListener('click',function(){qs('landing').style.display='flex';qs('app').classList.remove('on');curSec=null;curCat='Tutte';});\n  qs('admBtn').addEventListener('click',openAdm);qs('admOk').addEventListener('click',submitAdm);\n  qs('admCancel').addEventListener('click',closeAdm);\n  qs('admBg').addEventListener('click',function(e){if(e.target===qs('admBg'))closeAdm();});\n  qs('admPin').addEventListener('keyup',function(e){if(e.key==='Enter')submitAdm();});\n  qs('savePwdBtn').addEventListener('click',function(){\n    var np=(qs('newPwd').value||'').trim();if(!np||np.length<4){qs('admMsg').textContent='Min 4 caratteri';return;}\n    setAppPwd(np);qs('newPwd').value='';qs('admMsg').textContent='Password aggiornata!';setTimeout(function(){qs('admMsg').textContent='';},2500);\n  });\n  qs('srch').addEventListener('input',renderGrid);\n  qs('dVal').addEventListener('change',function(){dose=Math.max(0.5,parseFloat(this.value)||1);updDose();});\n  qs('dPlus').addEventListener('click',function(){dose=Math.round((dose+0.5)*10)/10;updDose();});\n  qs('dMinus').addEventListener('click',function(){dose=Math.max(0.5,Math.round((dose-0.5)*10)/10);updDose();});\n  qs('vGrid').addEventListener('click',function(){qs('grid').classList.remove('list');qs('vGrid').classList.add('vbtn-on');qs('vList').classList.remove('vbtn-on');});\n  qs('vList').addEventListener('click',function(){qs('grid').classList.add('list');qs('vList').classList.add('vbtn-on');qs('vGrid').classList.remove('vbtn-on');});\n  qs('fab').addEventListener('click',function(){var m=qs('fabMenu');var open=m.style.display!=='none';m.style.display=open?'none':'flex';qs('fab').classList.toggle('open',!open);});\n  qs('fabAi').addEventListener('click',function(){qs('fabMenu').style.display='none';qs('fab').classList.remove('open');openAiModal();});\n  qs('fabManual').addEventListener('click',function(){qs('fabMenu').style.display='none';qs('fab').classList.remove('open');openModal();});\n  qs('mCancel').addEventListener('click',closeModal);qs('mBg').addEventListener('click',function(e){if(e.target===qs('mBg'))closeModal();});\n  qs('addIngBtn').addEventListener('click',function(){addIng();});qs('mSec').addEventListener('change',togglePiattoWrap);qs('mSave').addEventListener('click',doSave);\n  qs('cfmOk').addEventListener('click',function(){if(_delRec)deleteRec(_delRec);closeCfm();});qs('cfmCancel').addEventListener('click',closeCfm);\n  qs('cfmBg').addEventListener('click',function(e){if(e.target===qs('cfmBg'))closeCfm();});\n  qs('moveSec').addEventListener('change',toggleMovePiatto);qs('moveSave').addEventListener('click',doMove);qs('moveCancel').addEventListener('click',closeMove);\n  qs('moveBg').addEventListener('click',function(e){if(e.target===qs('moveBg'))closeMove();});\n  qs('aiBg').addEventListener('click',function(e){if(e.target===qs('aiBg'))closeAiModal();});\n  var aiTabs=document.querySelectorAll('.ai-tab');for(var ti=0;ti<aiTabs.length;ti++){(function(b){b.addEventListener('click',function(){switchAiTab(b.dataset.tab);});})(aiTabs[ti]);}\n  qs('aiAnalyseBtn').addEventListener('click',doAiAnalyse);qs('aiSec').addEventListener('change',toggleAiPiatto);\n  qs('aiAddIng').addEventListener('click',function(){addAiIng();});\n  qs('aiBack').addEventListener('click',function(){qs('aiPreview').classList.remove('on');qs('aiAnalyseBtn').style.display='block';qs('aiAnalyseBtn').disabled=false;});\n  qs('aiConfirm').addEventListener('click',saveAiRecipe);\n  qs('aiFileInput').addEventListener('change',function(){\n    var file=this.files[0];if(!file)return;var reader=new FileReader();\n    reader.onload=function(ev){var result=ev.target.result;_aiMime=file.type||'image/jpeg';_aiB64=result.split(',')[1];\n      var prev=qs('aiPhotoPreview');var empty=qs('aiPhotoEmpty');var area=qs('aiPhotoArea');\n      if(prev){prev.src=result;prev.style.display='block';}if(empty)empty.style.display='none';if(area)area.classList.add('has-img');\n    };reader.readAsDataURL(file);\n  });\n  // Quick proc\n  var qprocSave=qs('qprocSave');if(qprocSave)qprocSave.addEventListener('click',saveQuickProc);\n  var qprocCancel=qs('qprocCancel');if(qprocCancel)qprocCancel.addEventListener('click',closeQuickProc);\n  var qprocBg=qs('qprocBg');if(qprocBg)qprocBg.addEventListener('click',function(e){if(e.target===qprocBg)closeQuickProc();});\n\n  // File import\n  var importCancel=qs('importCancel');if(importCancel)importCancel.addEventListener('click',closeImport);\n  var importBg=qs('importBg');if(importBg)importBg.addEventListener('click',function(e){if(e.target===importBg)closeImport();});\n  var importFile=qs('importFile');\n  if(importFile)importFile.addEventListener('change',function(){\n    var file=this.files[0];if(!file)return;\n    var reader=new FileReader();\n    reader.onload=function(ev){\n      _importParsed=parseRecipeText(ev.target.result||'');\n      if(_importParsed.length===0){alert('Nessuna ricetta trovata. Assicurati che il file sia in formato testo con nomi e ingredienti.');return;}\n      renderImportList();\n    };\n    reader.readAsText(file,'UTF-8');\n  });\n  var importSaveBtn=qs('importSaveBtn');if(importSaveBtn)importSaveBtn.addEventListener('click',doImport);\n\n  // Add import button to FAB menu\n  var fabMenu2=qs('fabMenu');\n  if(fabMenu2){\n    var fabImport=el('button','fab-item fs');fabImport.id='fabImport';fabImport.type='button';\n    var fabImportIco=el('span','fab-item-ico');fabImportIco.textContent='\ud83d\udcc2';\n    var fabImportLbl=el('span','fab-item-lbl');fabImportLbl.textContent='Importa da file';\n    fabImport.appendChild(fabImportIco);fabImport.appendChild(fabImportLbl);\n    fabImport.addEventListener('click',function(){qs('fabMenu').style.display='none';qs('fab').classList.remove('open');openImport();});\n    fabMenu2.insertBefore(fabImport,fabMenu2.children[1]||null);\n  }\n\n  // Piatti manager\n  var openPiattiBtn=qs('openPiattiBtn');\n  if(openPiattiBtn)openPiattiBtn.addEventListener('click',function(){closeAdm();openPiattiManager();});\n  var piattiClose=qs('piattiClose');\n  if(piattiClose)piattiClose.addEventListener('click',closePiattiManager);\n  var piattiBg=qs('piattiBg');\n  if(piattiBg)piattiBg.addEventListener('click',function(e){if(e.target===piattiBg)closePiattiManager();});\n  var createPiattoBtn=qs('createPiattoBtn');\n  if(createPiattoBtn)createPiattoBtn.addEventListener('click',createPiatto);\n  var newPiattoName=qs('newPiattoName');\n  if(newPiattoName)newPiattoName.addEventListener('keyup',function(e){if(e.key==='Enter')createPiatto();});\n\n  loadRecipes();\n  // Gemini key in admin\n  var gk2;try{gk2=localStorage.getItem('groq_key');}catch(e){}\n  var admGk=qs('admGeminiKey');if(admGk&&gk2)admGk.value=gk2;\n  var saveGeminiBtn=qs('saveGeminiBtn');\n  if(saveGeminiBtn)saveGeminiBtn.addEventListener('click',function(){\n    var k=(qs('admGeminiKey').value||'').trim();\n    if(!k||k.length<10){qs('admGeminiMsg').textContent='Chiave non valida';return;}\n    try{localStorage.setItem('groq_key',k);}catch(e){}\n    var ki=qs('aiKey');if(ki)ki.value=k;\n    qs('admGeminiMsg').textContent='Chiave salvata!';qs('admGeminiMsg').style.color='var(--gold2)';\n    setTimeout(function(){qs('admGeminiMsg').textContent='';},2500);\n  });\n  var testDbBtn=qs('testDbBtn');\n  if(testDbBtn)testDbBtn.addEventListener('click',testDb);\n}\n</script>
+    // Photo tab: describe what to look for
+    messages.push({role:'user',content:'Analizza questa ricetta e restituisci SOLO il JSON richiesto. Descrivi tutti gli ingredienti con quantita e unita di misura.'});
+  } else {
+    var txt=(qs('aiText').value||'').trim();
+    messages.push({role:'user',content:'Analizza e restituisci JSON:\n\n'+txt});
+  }
+  var url='https://api.groq.com/openai/v1/chat/completions';
+  fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'llama-3.1-8b-instant',messages:messages,temperature:0.1,max_tokens:1024})})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));
+      var text=data.choices&&data.choices[0]&&data.choices[0].message?data.choices[0].message.content||'':'';
+      text=text.replace(/```json/g,'').replace(/```/g,'').trim();
+      var m=text.match(/\{[\s\S]*\}/);
+      if(m)text=m[0];
+      populateAiPreview(JSON.parse(text));
+    })
+    .catch(function(err){
+      qs('aiSpinner').classList.remove('on');btn.disabled=false;
+      var msg=err.message||'';
+      if(msg.indexOf('rate_limit')!==-1||msg.indexOf('429')!==-1){alert('Troppe richieste. Attendi un momento.');}
+      else if(msg.indexOf('401')!==-1||msg.indexOf('invalid_api_key')!==-1){alert('Chiave Groq non valida. Vai su groq.com -> API Keys');}
+      else{alert('Errore AI: '+msg);}
+    });
+}
+function saveAiRecipe(){
+  var name=(qs('aiName').value||'').trim();if(!name){alert('Nome mancante');return;}
+  var secV=qs('aiSec').value,catV=qs('aiCat').value;
+  var piattoV=(qs('aiPiatto').value||'').trim();
+  var procV=(qs('aiProc').value||'').trim();
+  var rows=qs('aiIngList').querySelectorAll('.ai-ing-row');var ings=[];
+  rows.forEach(function(row){var ins=row.querySelectorAll('input');var iN=(ins[0].value||'').trim(),iQ=ins[1].value?parseFloat(ins[1].value):null,iU=(ins[2].value||'').trim()||'g';if(iN)ings.push([iN,iQ,iU]);});
+  if(!ings.length){alert('Nessun ingrediente');return;}
+  var rec={n:name,c:catV,s:secV,i:ings};if(piattoV)rec.piatto=piattoV;if(procV)rec.p=procV;
+  saveRec(rec);closeAiModal();
+}
+
+/* QUICK PROCEDURE */
+var _qprocRec=null;
+function openQuickProc(rec){
+  _qprocRec=rec;
+  var qt=qs('qprocTitle');if(qt)qt.textContent='Procedimento';
+  var qn=qs('qprocName');if(qn)qn.textContent=rec.n;
+  var qtx=qs('qprocText');if(qtx)qtx.value=rec.p||'';
+  qs('qprocBg').classList.add('on');
+  setTimeout(function(){if(qtx)qtx.focus();},200);
+}
+function closeQuickProc(){qs('qprocBg').classList.remove('on');_qprocRec=null;}
+function saveQuickProc(){
+  if(!_qprocRec)return;
+  var txt=(qs('qprocText').value||'').trim();
+  var updated=Object.assign({},_qprocRec,{p:txt||undefined});
+  if(!txt)delete updated.p;
+  if(_qprocRec._c&&_qprocRec._id){updateRec(_qprocRec,updated);}
+  else{hideBuiltin(_qprocRec.n);saveRec(updated);}
+  closeQuickProc();
+}
+
+/* FILE IMPORT */
+var _importParsed=[];
+function openImport(){
+  _importParsed=[];qs('importPreview').classList.remove('on');qs('importList').innerHTML='';
+  var fi=qs('importFile');if(fi)fi.value='';
+  if(curSec&&curSec!=='tutti'){var is=qs('importSec');if(is)is.value=curSec;}
+  qs('importBg').classList.add('on');
+}
+function closeImport(){qs('importBg').classList.remove('on');}
+function parseRecipeText(raw){
+  var recipes=[];
+  var lines=raw.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
+  var current=null;
+  lines.forEach(function(line){
+    var isIng=/^\d+\s*(gr|g|kg|ml|l|n[oo]|cucchiai)/i.test(line)||/^\d+[.,]?\d*\s*(gr|g|kg|ml)/i.test(line);
+    var isTitle=!isIng&&line.length>3&&line.length<80&&!/^[-*]/.test(line)&&!/^\d+[.,]/.test(line);
+    if(isTitle&&current&&current.i.length>0){recipes.push(current);current=null;}
+    if(isTitle&&!current){current={n:line,i:[],c:'Altro',p:''};}
+    else if(current){
+      var m=line.match(/^(\d+[.,]?\d*)\s*(gr|g|kg|ml|l|cl|n[oo]|cucchiai|cucchiaio|pizzico)?\s+(.+)/i);
+      var m2=line.match(/^(.+?)\s+(\d+[.,]?\d*)\s*(gr|g|kg|ml|l|cl)?$/i);
+      if(m){var qty=parseFloat(m[1].replace(',','.'));var unit=m[2]||'g';var name=m[3].trim();current.i.push([name,isNaN(qty)?null:qty,unit]);}
+      else if(m2){var qty2=parseFloat(m2[2].replace(',','.'));var unit2=m2[3]||'g';var name2=m2[1].trim();current.i.push([name2,isNaN(qty2)?null:qty2,unit2]);}
+      else if(line.length>2){current.i.push([line,null,'q.b.']);}
+    }
+  });
+  if(current&&current.i.length>0)recipes.push(current);
+  return recipes;
+}
+function renderImportList(){
+  var list=qs('importList');list.innerHTML='';
+  _importParsed.forEach(function(r,i){
+    var item=el('div','import-item');
+    var chk=document.createElement('input');chk.type='checkbox';chk.checked=true;chk.className='import-item-chk';chk.id='ic'+i;
+    var lbl=el('label','import-item-txt');lbl.htmlFor='ic'+i;
+    var nm=el('span');nm.textContent=r.n;
+    var sm=el('small');sm.textContent=r.i.length+' ingredienti';
+    lbl.appendChild(nm);lbl.appendChild(sm);
+    item.appendChild(chk);item.appendChild(lbl);list.appendChild(item);
+  });
+  qs('importPreview').classList.add('on');
+}
+function doImport(){
+  var sec=qs('importSec').value||'colazioni';
+  var chks=qs('importList').querySelectorAll('.import-item-chk');
+  var count=0;
+  chks.forEach(function(chk,i){if(chk.checked&&_importParsed[i]){var r=Object.assign({},_importParsed[i],{s:sec});saveRec(r);count++;}});
+  closeImport();
+  setTimeout(function(){if(count>0)alert(count+' ricett'+(count===1?'a':'e')+' importat'+(count===1?'a':'e')+'!');},400);
+}
+
+/* PIATTI MANAGER */
+function getPiatti(){
+  var all=R.concat(CU);var map={};
+  all.forEach(function(r){if(r.piatto&&r.piatto.trim()){var key=r.s+'::'+r.piatto.trim();if(!map[key])map[key]={name:r.piatto.trim(),sec:r.s,count:0};map[key].count++;}});
+  return Object.values(map);
+}
+function renderPiattiList(){
+  var list=qs('piattiList');if(!list)return;list.innerHTML='';
+  var piatti=getPiatti();
+  piatti.sort(function(a,b){return a.sec.localeCompare(b.sec)||a.name.localeCompare(b.name,'it');});
+  if(!piatti.length){var em=el('p','piatti-empty');em.textContent='Nessun piatto creato.';list.appendChild(em);return;}
+  var SLBL={colazioni:'Colazioni','fine-dining':'Fine Dining',gelateria:'Gelateria',torte:'Torte'};
+  piatti.forEach(function(p){
+    var item=el('div','piatti-item');var top=el('div','piatti-item-top');
+    var nm=el('span','piatti-item-name');nm.textContent=p.name;
+    var sec=el('span','piatti-item-sec');sec.textContent=SLBL[p.sec]||p.sec;
+    var cnt=el('span','piatti-item-cnt');cnt.textContent=p.count+' ricett'+(p.count===1?'a':'e');
+    var del=el('button','piatti-item-del');del.type='button';del.textContent='\u00d7';del.title='Rimuovi piatto';
+    del.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(!confirm('Rimuovere il piatto "'+p.name+'" da tutte le ricette?'))return;
+      CU.filter(function(r){return r.piatto===p.name&&r.s===p.sec;}).forEach(function(r){var u=Object.assign({},r);delete u.piatto;updateRec(r,u);});
+      setTimeout(renderPiattiList,600);
+    });
+    top.appendChild(nm);top.appendChild(sec);top.appendChild(cnt);top.appendChild(del);
+    item.appendChild(top);list.appendChild(item);
+  });
+}
+function openPiattiManager(){
+  var np=qs('newPiattoName');if(np)np.value='';
+  var ns=qs('newPiattoSec');if(ns&&curSec&&curSec!=='tutti')ns.value=curSec;
+  renderPiattiList();qs('piattiBg').classList.add('on');
+}
+function closePiattiManager(){qs('piattiBg').classList.remove('on');}
+function createPiatto(){
+  var name=(qs('newPiattoName').value||'').trim();
+  if(!name){alert('Inserisci il nome del piatto');return;}
+  qs('newPiattoName').value='';
+  alert('Piatto "'+name+'" creato! Assegna ricette tramite i pulsanti o 📂 e inserisci "'+name+'" nel campo Piatto/Gruppo.');
+  renderPiattiList();
+}
+
+function boot(){
+  var th;try{th=localStorage.getItem('mdl_th');}catch(e){}setTheme((th&&THEMES.indexOf(th)!==-1)?th:'t-crema');
+  var dots=document.querySelectorAll('.t-dot');for(var di=0;di<dots.length;di++){(function(d){d.addEventListener('click',function(){setTheme(d.dataset.t);});})(dots[di]);}
+  if(isUnlocked()){qs('pwd').style.display='none';qs('landing').style.display='flex';}
+  qs('pwdBtn').addEventListener('click',submitPwd);
+  qs('pwdInp').addEventListener('keyup',function(e){if(e.key==='Enter')submitPwd();});
+  var gk;try{gk=localStorage.getItem('groq_key');}catch(e){}if(gk){var ki=qs('aiKey');if(ki)ki.value=gk;}
+  var panels=document.querySelectorAll('.panel');for(var pi=0;pi<panels.length;pi++){(function(p){p.addEventListener('click',function(){openSection(p.dataset.sec);});})(panels[pi]);}
+  qs('backBtn').addEventListener('click',function(){qs('landing').style.display='flex';qs('app').classList.remove('on');curSec=null;curCat='Tutte';});
+  qs('admBtn').addEventListener('click',openAdm);qs('admOk').addEventListener('click',submitAdm);
+  qs('admCancel').addEventListener('click',closeAdm);
+  qs('admBg').addEventListener('click',function(e){if(e.target===qs('admBg'))closeAdm();});
+  qs('admPin').addEventListener('keyup',function(e){if(e.key==='Enter')submitAdm();});
+  qs('savePwdBtn').addEventListener('click',function(){
+    var np=(qs('newPwd').value||'').trim();if(!np||np.length<4){qs('admMsg').textContent='Min 4 caratteri';return;}
+    setAppPwd(np);qs('newPwd').value='';qs('admMsg').textContent='Password aggiornata!';
+    setTimeout(function(){qs('admMsg').textContent='';},2500);
+  });
+  qs('srch').addEventListener('input',renderGrid);
+  qs('dVal').addEventListener('change',function(){dose=Math.max(0.5,parseFloat(this.value)||1);updDose();});
+  qs('dPlus').addEventListener('click',function(){dose=Math.round((dose+0.5)*10)/10;updDose();});
+  qs('dMinus').addEventListener('click',function(){dose=Math.max(0.5,Math.round((dose-0.5)*10)/10);updDose();});
+  qs('vGrid').addEventListener('click',function(){qs('grid').classList.remove('list');qs('vGrid').classList.add('vbtn-on');qs('vList').classList.remove('vbtn-on');});
+  qs('vList').addEventListener('click',function(){qs('grid').classList.add('list');qs('vList').classList.add('vbtn-on');qs('vGrid').classList.remove('vbtn-on');});
+  qs('fab').addEventListener('click',function(){var m=qs('fabMenu');var open=m.style.display!=='none';m.style.display=open?'none':'flex';qs('fab').classList.toggle('open',!open);});
+  qs('fabAi').addEventListener('click',function(){qs('fabMenu').style.display='none';qs('fab').classList.remove('open');openAiModal();});
+  qs('fabManual').addEventListener('click',function(){qs('fabMenu').style.display='none';qs('fab').classList.remove('open');openModal();});
+  qs('mCancel').addEventListener('click',closeModal);qs('mBg').addEventListener('click',function(e){if(e.target===qs('mBg'))closeModal();});
+  qs('addIngBtn').addEventListener('click',function(){addIng();});qs('mSec').addEventListener('change',togglePiattoWrap);qs('mSave').addEventListener('click',doSave);
+  qs('cfmOk').addEventListener('click',function(){if(_delRec)deleteRec(_delRec);closeCfm();});qs('cfmCancel').addEventListener('click',closeCfm);
+  qs('cfmBg').addEventListener('click',function(e){if(e.target===qs('cfmBg'))closeCfm();});
+  qs('moveSec').addEventListener('change',toggleMovePiatto);qs('moveSave').addEventListener('click',doMove);qs('moveCancel').addEventListener('click',closeMove);
+  qs('moveBg').addEventListener('click',function(e){if(e.target===qs('moveBg'))closeMove();});
+  qs('aiBg').addEventListener('click',function(e){if(e.target===qs('aiBg'))closeAiModal();});
+  var aiTabs=document.querySelectorAll('.ai-tab');for(var ti=0;ti<aiTabs.length;ti++){(function(b){b.addEventListener('click',function(){switchAiTab(b.dataset.tab);});})(aiTabs[ti]);}
+  qs('aiAnalyseBtn').addEventListener('click',doAiAnalyse);qs('aiSec').addEventListener('change',toggleAiPiatto);
+  qs('aiAddIng').addEventListener('click',function(){addAiIng();});
+  qs('aiBack').addEventListener('click',function(){qs('aiPreview').classList.remove('on');qs('aiAnalyseBtn').style.display='block';qs('aiAnalyseBtn').disabled=false;});
+  qs('aiConfirm').addEventListener('click',saveAiRecipe);
+  qs('aiFileInput').addEventListener('change',function(){
+    var file=this.files[0];if(!file)return;var reader=new FileReader();
+    reader.onload=function(ev){var result=ev.target.result;_aiMime=file.type||'image/jpeg';_aiB64=result.split(',')[1];
+      var prev=qs('aiPhotoPreview');var empty=qs('aiPhotoEmpty');var area=qs('aiPhotoArea');
+      if(prev){prev.src=result;prev.style.display='block';}if(empty)empty.style.display='none';if(area)area.classList.add('has-img');
+    };reader.readAsDataURL(file);
+  });
+  var qprocSave=qs('qprocSave');if(qprocSave)qprocSave.addEventListener('click',saveQuickProc);
+  var qprocCancel=qs('qprocCancel');if(qprocCancel)qprocCancel.addEventListener('click',closeQuickProc);
+  var qprocBg=qs('qprocBg');if(qprocBg)qprocBg.addEventListener('click',function(e){if(e.target===qprocBg)closeQuickProc();});
+  var importCancel=qs('importCancel');if(importCancel)importCancel.addEventListener('click',closeImport);
+  var importBg=qs('importBg');if(importBg)importBg.addEventListener('click',function(e){if(e.target===importBg)closeImport();});
+  var importFile=qs('importFile');
+  if(importFile)importFile.addEventListener('change',function(){
+    var file=this.files[0];if(!file)return;var reader=new FileReader();
+    reader.onload=function(ev){_importParsed=parseRecipeText(ev.target.result||'');if(!_importParsed.length){alert('Nessuna ricetta trovata nel file.');return;}renderImportList();};
+    reader.readAsText(file,'UTF-8');
+  });
+  var importSaveBtn=qs('importSaveBtn');if(importSaveBtn)importSaveBtn.addEventListener('click',doImport);
+  var fabMenu2=qs('fabMenu');
+  if(fabMenu2){
+    var fabImport=el('button','fab-item fs');fabImport.id='fabImport';fabImport.type='button';
+    var fIco=el('span','fab-item-ico');fIco.textContent='\ud83d\udcc2';
+    var fLbl=el('span','fab-item-lbl');fLbl.textContent='Importa da file';
+    fabImport.appendChild(fIco);fabImport.appendChild(fLbl);
+    fabImport.addEventListener('click',function(){qs('fabMenu').style.display='none';qs('fab').classList.remove('open');openImport();});
+    fabMenu2.insertBefore(fabImport,fabMenu2.children[1]||null);
+  }
+  var openPiattiBtn=qs('openPiattiBtn');if(openPiattiBtn)openPiattiBtn.addEventListener('click',function(){closeAdm();openPiattiManager();});
+  var piattiClose=qs('piattiClose');if(piattiClose)piattiClose.addEventListener('click',closePiattiManager);
+  var piattiBg=qs('piattiBg');if(piattiBg)piattiBg.addEventListener('click',function(e){if(e.target===piattiBg)closePiattiManager();});
+  var createPiattoBtn=qs('createPiattoBtn');if(createPiattoBtn)createPiattoBtn.addEventListener('click',createPiatto);
+  var newPiattoName=qs('newPiattoName');if(newPiattoName)newPiattoName.addEventListener('keyup',function(e){if(e.key==='Enter')createPiatto();});
+  loadRecipes();
+  var gk2;try{gk2=localStorage.getItem('groq_key');}catch(e){}
+  var admGk=qs('admGeminiKey');if(admGk&&gk2)admGk.value=gk2;
+  var saveGeminiBtn=qs('saveGeminiBtn');
+  if(saveGeminiBtn)saveGeminiBtn.addEventListener('click',function(){
+    var k=(qs('admGeminiKey').value||'').trim();
+    if(!k||k.length<10){qs('admGeminiMsg').textContent='Chiave non valida';return;}
+    try{localStorage.setItem('groq_key',k);}catch(e){}
+    var ki=qs('aiKey');if(ki)ki.value=k;
+    qs('admGeminiMsg').textContent='Chiave salvata!';qs('admGeminiMsg').style.color='var(--gold2)';
+    setTimeout(function(){qs('admGeminiMsg').textContent='';},2500);
+  });
+  var testDbBtn=qs('testDbBtn');if(testDbBtn)testDbBtn.addEventListener('click',testDb);
+}
+</script>
 
 <!-- FILE IMPORT MODAL -->
 <div class="file-import-bg" id="importBg">
