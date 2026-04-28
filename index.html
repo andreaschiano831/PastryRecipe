@@ -346,6 +346,18 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 .db-status.err{background:#f44336}
 .db-status.loading{background:#FFA726;animation:pulse .8s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* DB Operation Banner */
+.db-banner{position:fixed;bottom:calc(1rem + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:200;
+  padding:.45rem 1.1rem;border-radius:20px;font-size:.7rem;letter-spacing:.07em;
+  display:none;align-items:center;gap:.45rem;white-space:nowrap;
+  box-shadow:0 4px 20px rgba(0,0,0,.2);font-family:"DM Sans",sans-serif;
+  pointer-events:none;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
+.db-banner-ok{background:#2E7D32;color:#fff}
+.db-banner-err{background:#c62828;color:#fff}
+.db-banner-loading{background:var(--gold2,#A8772A);color:#fff}
+/* DB log in admin */
+.db-log-wrap{background:var(--ctrl);border:1px solid var(--cb);border-radius:6px;padding:.5rem .6rem;margin-top:.5rem;max-height:120px;overflow-y:auto}
+#dbLogContent{font-size:.58rem;font-family:"DM Mono",monospace,sans-serif;color:var(--smoke2);line-height:1.6;white-space:pre-wrap;word-break:break-all}
 .card-proc-add{background:none;border:none;padding:.3rem .95rem .5rem;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:var(--smoke3);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:color .14s;text-align:left}
 .card-proc-add:hover,.card-proc-add:active{color:var(--gold2)}
 
@@ -595,6 +607,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
     <p class="fsc">&#128197; Database Supabase</p>
     <p id="admDbInfo" style="font-size:.58rem;color:var(--smoke2);margin-bottom:.5rem;line-height:1.5">Verifica connessione al database condiviso</p>
     <button type="button" id="openPiattiBtn" style="width:100%;background:var(--ctrl);border:1px solid var(--cb);border-radius:6px;padding:.42rem;font-size:.72rem;color:var(--ink);cursor:pointer;margin-bottom:.4rem">Gestisci Piatti / Gruppi</button>
+    <div class="db-log-wrap"><pre id="dbLogContent" style="margin:0">Log operazioni DB…</pre></div>
     <button type="button" id="testDbBtn" style="width:100%;background:var(--ctrl);border:1px solid var(--cb);border-radius:6px;padding:.42rem;font-size:.72rem;color:var(--ink);cursor:pointer">Testa connessione</button>
     <p class="adm-msg fsc" id="admDbMsg"></p>
   </div>
@@ -873,6 +886,26 @@ function submitPwd(){
 
 function sbH(extra){var h={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};if(extra)Object.assign(h,extra);return h;}
 function setDbStatus(s){var el=qs('dbStatus');if(!el)return;el.className='db-status '+s;}
+var _dbLogs=[];
+function dbLog(msg){
+  var ts=new Date().toLocaleTimeString('it-IT');
+  _dbLogs.unshift('['+ts+'] '+msg);
+  if(_dbLogs.length>30)_dbLogs.pop();
+  var logEl=qs('dbLogContent');if(logEl)logEl.textContent=_dbLogs.join('
+');
+  console.log('[DB]',msg);
+}
+var _bannerTimer=null;
+function showDbBanner(msg,type){
+  var b=qs('dbBanner');if(!b)return;
+  b.textContent=msg;
+  b.className='db-banner db-banner-'+type;
+  b.style.display='flex';
+  clearTimeout(_bannerTimer);
+  if(type==='ok'||type==='err'){
+    _bannerTimer=setTimeout(function(){b.style.display='none';},3500);
+  }
+}
 function loadRecipes(){
   setDbStatus('loading');
   var ctrl=new AbortController();
@@ -926,61 +959,113 @@ function testDb(){
 }
 function saveRec(rec){
   rec._c=true;
-  fetch(SB_URL+'/rest/v1/ricette',{method:'POST',headers:Object.assign({},sbH(),{'Prefer':'return=representation'}),body:JSON.stringify({data:rec})})
-    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-    .then(function(rows){
-      if(Array.isArray(rows)&&rows[0]){
-        rec._id=rows[0].id;CU.push(rec);
-        renderCats();renderGrid();
-      }
-    })
-    .catch(function(e){
-      alert('Errore salvataggio DB: '+e.message+'. La ricetta NON e stata salvata. Verifica la connessione.');
-    });
+  dbLog('INSERT name='+rec.n);
+  showDbBanner('Salvataggio in corso…','loading');
+  fetch(SB_URL+'/rest/v1/ricette',{
+    method:'POST',
+    headers:Object.assign({},sbH(),{'Prefer':'return=representation'}),
+    body:JSON.stringify({data:rec})
+  })
+  .then(function(r){
+    dbLog('INSERT response: '+r.status);
+    if(!r.ok)return r.text().then(function(t){throw new Error('HTTP '+r.status+': '+t);});
+    return r.json();
+  })
+  .then(function(rows){
+    if(Array.isArray(rows)&&rows[0]){
+      rec._id=rows[0].id;CU.push(rec);
+      updatePiattiDatalist();renderCats();renderGrid();
+      showDbBanner('Salvata: '+rec.n,'ok');
+      dbLog('INSERT success id='+rows[0].id);
+    }
+  })
+  .catch(function(e){
+    dbLog('INSERT error: '+e.message);
+    showDbBanner('Errore salvataggio','err');
+    alert('ERRORE salvataggio ('+e.message+').
+
+Verifica:
+1. Connessione internet
+2. Policy Supabase:
+create policy "insert" on ricette for insert with check (true);');
+  });
 }
 function updateRec(rec,nd){
   nd._c=true;nd._id=rec._id;
-  fetch(SB_URL+'/rest/v1/ricette?id=eq.'+rec._id,{method:'PATCH',headers:Object.assign({},sbH(),{'Prefer':'return=representation'}),body:JSON.stringify({data:nd})})
-    .then(function(r){return r.json();})
-    .then(function(rows){
-      if(Array.isArray(rows)&&rows[0]){var i=CU.findIndex(function(x){return x._id===rec._id;});if(i!==-1)CU[i]=nd;else CU.push(nd);renderCats();renderGrid();}
-    });
-}
-function deleteRec(rec){
-  // Optimistic: remove immediately from UI
-  CU=CU.filter(function(x){return x._id!==rec._id;});
-  // Se era una built-in promossa, la nascondo PERMANENTEMENTE
-  // (l'utente ha scelto di eliminare anche la versione custom)
-  var wasBuiltin=R.some(function(r){return r.n===rec.n;});
-  if(wasBuiltin){
-    // Tieni nascosta l'originale built-in
-    hideBuiltin(rec.n);
-  }
-  renderCats();renderGrid();
-  // Then sync with Supabase (no Prefer header = clean DELETE)
+  dbLog('UPDATE id='+rec._id+' name='+nd.n);
+  showDbBanner('Salvataggio in corso…','loading');
   fetch(SB_URL+'/rest/v1/ricette?id=eq.'+rec._id,{
-    method:'DELETE',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    method:'PATCH',
+    headers:Object.assign({},sbH(),{'Prefer':'return=representation'}),
+    body:JSON.stringify({data:nd})
   })
   .then(function(r){
-    if(!r.ok&&r.status!==204){
+    dbLog('UPDATE response: '+r.status);
+    if(!r.ok&&r.status!==204&&r.status!==200){
       return r.text().then(function(t){
-        console.error('Delete DB error:',r.status,t);
-        // Rollback UI
-        loadRecipes();
-        alert('Errore eliminazione DB ('+r.status+'). Controlla le policy Supabase:\ncreate policy "delete" on ricette for delete using (true);');
+        dbLog('UPDATE FAILED: '+t);
+        showDbBanner('Errore aggiornamento: '+r.status,'err');
+        alert('ERRORE aggiornamento ('+r.status+').
+
+Vai su Supabase → SQL Editor:
+drop policy if exists "update" on ricette;
+create policy "update" on ricette for update using (true) with check (true);
+
+Dettaglio: '+t);
       });
+      return;
     }
-    // Success — also clear from localStorage cache
-    try{
-      var loc=JSON.parse(localStorage.getItem('rc')||'[]');
-      loc=loc.filter(function(x){return x._id!==rec._id;});
-      localStorage.setItem('rc',JSON.stringify(loc));
-    }catch(e){}
+    return r.json();
+  })
+  .then(function(rows){
+    if(!rows)return;
+    var i=CU.findIndex(function(x){return x._id===rec._id;});
+    if(i!==-1)CU[i]=nd;else CU.push(nd);
+    updatePiattiDatalist();renderCats();renderGrid();
+    showDbBanner('Aggiornata: '+nd.n,'ok');
+    dbLog('UPDATE success');
   })
   .catch(function(e){
-    console.error('Delete network error:',e);
-    loadRecipes(); // reload to restore correct state
+    dbLog('UPDATE error: '+e.message);
+    showDbBanner('Errore di rete','err');
+    alert('Errore di rete durante aggiornamento: '+e.message);
+  });
+}
+function deleteRec(rec){
+  dbLog('DELETE id='+rec._id+' name='+rec.n);
+  showDbBanner('Eliminazione in corso…','loading');
+  fetch(SB_URL+'/rest/v1/ricette?id=eq.'+rec._id,{
+    method:'DELETE',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}
+  })
+  .then(function(r){
+    dbLog('DELETE response: '+r.status);
+    if(r.ok||r.status===204||r.status===200){
+      // SUCCESS: remove from CU
+      CU=CU.filter(function(x){return x._id!==rec._id;});
+      // Se era built-in promossa, tieni nascosta l'originale
+      var wasBuiltin=R.some(function(rb){return rb.n===rec.n;});
+      if(wasBuiltin) hideBuiltin(rec.n);
+      updatePiattiDatalist();renderCats();renderGrid();
+      showDbBanner('Eliminata: '+rec.n,'ok');
+    } else {
+      r.text().then(function(t){
+        dbLog('DELETE FAILED: '+t);
+        showDbBanner('Errore eliminazione: '+r.status,'err');
+        alert('ERRORE eliminazione ('+r.status+').
+
+Vai su Supabase → SQL Editor ed esegui:
+drop policy if exists "delete" on ricette;
+create policy "delete" on ricette for delete using (true);
+
+Dettaglio: '+t);
+      });
+    }
+  })
+  .catch(function(e){
+    dbLog('DELETE error: '+e.message);
+    showDbBanner('Errore di rete','err');
+    alert('Errore di rete durante eliminazione: '+e.message);
   });
 }
 
