@@ -1057,8 +1057,85 @@ function updatePiattiDatalist(){
     }
   });
 }
+
+/* SECTION NAV */
+var SLABELS={colazioni:'Colazioni','fine-dining':'Fine Dining',gelateria:'Gelateria',torte:'Torte & Pasticceria',tutti:'Tutti i Ricettari'};
+var SSUBS={colazioni:'Impasti \u00b7 Creme \u00b7 Lievitati','fine-dining':'Alta cucina \u00b7 Dessert',gelateria:'Gelati \u00b7 Sorbetti \u00b7 Semifreddi',torte:'Torte \u00b7 Mousse \u00b7 Entremet',tutti:'Tutte le ricette'};
+
+function openSection(sec){
+  curSec=sec;curCat='Tutte';
+  qs('landing').style.display='none';qs('app').classList.add('on');
+  qs('hdTitle').textContent=SLABELS[sec]||sec;
+  qs('hdSub').textContent=SSUBS[sec]||'';
+  var ms=qs('mSec');if(ms&&sec!=='tutti')ms.value=sec;
+  checkAdmin();renderCats();renderGrid();
+}
+
+/* BUILD CARD */
+function buildCard(r,idx){
+  var card=el('div','card');card.appendChild(el('div','card-stripe'));
+  var hd=el('div','card-hd');
+  var meta=el('div','card-meta');
+  var num=el('span','card-num fsc');num.textContent='Ricetta '+(idx<9?'0':'')+(idx+1);meta.appendChild(num);
+  if(r.c){var ct=el('span','card-cat fsc');ct.textContent=r.c;meta.appendChild(ct);}
+  if(curSec==='tutti'&&r.s){
+    var si=el('span');
+    si.textContent=({colazioni:'\ud83e\udd50','fine-dining':'\ud83c\udf7d',gelateria:'\ud83c\udf66',torte:'\ud83c\udf82'})[r.s]||'';
+    si.style.cssText='font-size:.65rem;opacity:.45';meta.appendChild(si);
+  }
+  hd.appendChild(meta);
+  var nm=el('div','card-name fd');nm.textContent=r.n;
+  if(r._c){var st=el('span');st.textContent=' \u2605';st.style.color='var(--gold2)';nm.appendChild(st);}
+  hd.appendChild(nm);
+  if(r.piatto){var pb=el('div','card-piatto fsc');pb.textContent='\ud83c\udf7d\ufe0f '+r.piatto;hd.appendChild(pb);}
+  if(isAdmin){
+    var acts=el('div','card-acts');
+    var eb=el('button','act-btn');eb.type='button';eb.title='Modifica';eb.textContent='\u270f\ufe0f';
+    eb.addEventListener('click',function(e){e.stopPropagation();openEdit(r);});
+    var mb2=el('button','act-btn');mb2.type='button';mb2.title='Sposta';mb2.textContent='\ud83d\udcc2';
+    mb2.addEventListener('click',function(e){e.stopPropagation();openMove(r);});
+    acts.appendChild(eb);acts.appendChild(mb2);
+    if(r._c&&r._id){
+      var db=el('button','act-btn act-btn-del');db.type='button';db.title='Elimina';db.textContent='\ud83d\uddd1\ufe0f';
+      db.addEventListener('click',function(e){e.stopPropagation();openCfm(r);});
+      acts.appendChild(db);
+    }
+    hd.appendChild(acts);
+  }
+  card.appendChild(hd);
+  if(r.p){
+    var pt=el('button','card-proc-toggle fsc');pt.type='button';pt.textContent='Procedimento \u25be';
+    var pc=el('div','card-proc fd');pc.textContent=r.p;
+    pt.addEventListener('click',function(){var open=pc.classList.contains('on');pc.classList.toggle('on',!open);pt.textContent=open?'Procedimento \u25be':'Procedimento \u25b4';});
+    card.appendChild(pt);card.appendChild(pc);
+  } else if(isAdmin){
+    var qp=el('button','card-proc-add fsc');qp.type='button';qp.textContent='+ Procedimento';
+    qp.addEventListener('click',function(e){e.stopPropagation();openQuickProc(r);});
+    card.appendChild(qp);
+  }
+  var tbl=el('table','tbl');var thead=el('thead');var tr0=el('tr');
+  var dL=(dose===Math.floor(dose))?String(dose):dose.toFixed(1);
+  [{t:'Ingrediente',c:''},{t:'Base',c:'r'},{t:'',c:''},{t:'\u00d7 '+dL,c:'sc'}].forEach(function(h){
+    var th=el('th');if(h.c)th.className=h.c;th.textContent=h.t;tr0.appendChild(th);
+  });
+  thead.appendChild(tr0);tbl.appendChild(thead);
+  var tb=el('tbody');
+  for(var i=0;i<r.i.length;i++){
+    var ing=r.i[i];var tr=el('tr');
+    var tdN=el('td');tdN.textContent=ing[0];
+    var tdB=el('td','td-r');tdB.textContent=fmtN(ing[1]);
+    var tdU=el('td');tdU.textContent=ing[2];tdU.style.cssText='color:var(--smoke2);font-size:.7rem';
+    var tdS=el('td','td-sc');
+    tdS.setAttribute('data-b',ing[1]===null?'':String(ing[1]));
+    tdS.setAttribute('data-u',ing[2]);
+    tdS.textContent=fmtD(ing[1],dose)+(ing[1]!==null?' '+ing[2]:'');
+    tr.appendChild(tdN);tr.appendChild(tdB);tr.appendChild(tdU);tr.appendChild(tdS);tb.appendChild(tr);
+  }
+  tbl.appendChild(tb);card.appendChild(tbl);return card;
+}
+
 function renderCats(){
-  updatePiattiSuggestions();
+  updatePiattiDatalist();
   var bar=qs('catBar');if(!bar)return;bar.innerHTML='';
   var a=allRecs(),cats=['Tutte'];
   a.forEach(function(r){if(r.c&&cats.indexOf(r.c)===-1)cats.push(r.c);});
@@ -1086,7 +1163,8 @@ function renderGrid(){
   });
   var cnt=qs('cnt');if(cnt)cnt.textContent=out.length+' / '+allRecs().length+' ricette';
   if(!out.length){var em=el('div','empty');em.style.gridColumn='1/-1';var ico=el('div','empty-ico');ico.textContent='\u25cb';var p=el('p','fd');p.textContent='Nessuna ricetta trovata';em.appendChild(ico);em.appendChild(p);grid.appendChild(em);return;}
-  if(curSec==='fine-dining'&&!q&&curCat==='Tutte'){
+  var hasPiatti=out.some(function(r){return r.piatto&&r.piatto.trim();});
+  if(hasPiatti&&!q&&curCat==='Tutte'){
     var grouped={},order=[];
     out.forEach(function(r){var key=r.piatto||'__none__';if(!grouped[key]){grouped[key]=[];order.push(key);}grouped[key].push(r);});
     var gi=0;
