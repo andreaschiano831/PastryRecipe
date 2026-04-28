@@ -183,7 +183,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 .card{background:var(--card);border-radius:10px;border:1px solid var(--rim);box-shadow:var(--sh);overflow:hidden;animation:fadeUp .3s ease both;position:relative;transition:box-shadow .2s,transform .2s,border-color .2s}
 @media(hover:hover){.card:hover{transform:translateY(-3px);box-shadow:var(--shm);border-color:var(--gold2)}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.card-stripe{height:3px;background:linear-gradient(90deg,var(--gold2),var(--gold3))}
+.card-stripe{height:3px;background:linear-gradient(90deg,var(--gold2),var(--gold3));flex-shrink:0}
 .card-hd{padding:.8rem .95rem .5rem;position:relative}
 .card-meta{display:flex;align-items:center;gap:.44rem;margin-bottom:.24rem;flex-wrap:wrap}
 .card-num{font-size:.5rem;letter-spacing:.18em;color:var(--smoke3)}
@@ -194,11 +194,15 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 .card-proc.on{display:block}
 .card-proc-toggle{background:none;border:1px solid var(--cb);border-radius:20px;padding:.16rem .55rem;font-size:.52rem;letter-spacing:.08em;color:var(--smoke);cursor:pointer;margin:.3rem 0 .4rem .95rem;-webkit-tap-highlight-color:transparent;transition:all .14s}
 .card-proc-toggle:hover{border-color:var(--gold2);color:var(--gold2)}
-.card-acts{position:absolute;top:.65rem;right:.65rem;display:flex;gap:.24rem;opacity:0;transition:opacity .16s}
+.card-acts{position:absolute;top:.55rem;right:.55rem;display:flex;gap:.22rem;opacity:0;transition:opacity .16s}
 .card:hover .card-acts,.card:focus-within .card-acts{opacity:1}
-.act-btn{width:26px;height:26px;border-radius:var(--r);border:1px solid var(--cb);background:var(--ctrl);color:var(--smoke2);cursor:pointer;font-size:.72rem;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:all .14s}
+/* Always visible in admin mode */
+.admin-on .card-acts{opacity:1}
+/* More padding for card name when buttons visible */
+.admin-on .card-name{padding-right:90px}
+.act-btn{width:30px;height:30px;border-radius:var(--r);border:1px solid var(--cb);background:var(--ctrl);color:var(--smoke2);cursor:pointer;font-size:.78rem;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:all .14s;box-shadow:var(--sh)}
 .act-btn:hover{background:var(--glow);border-color:var(--rim);color:var(--gold2)}
-.act-btn-del:hover{background:rgba(200,50,40,.09);border-color:rgba(200,50,40,.3);color:#c04030}
+.act-btn-del{border-color:rgba(200,50,40,.2);color:rgba(200,50,40,.6)}.act-btn-del:hover,.act-btn-del:active{background:rgba(200,50,40,.12);border-color:rgba(200,50,40,.4);color:#c04030}
 .tbl{width:100%;border-collapse:collapse;font-size:.73rem}
 .tbl thead th{font-size:.47rem;letter-spacing:.12em;text-transform:uppercase;color:var(--smoke3);padding:.27rem .95rem .22rem;border-bottom:1px solid var(--bg3);font-weight:400;text-align:left}
 .tbl thead th.r,.tbl thead th.sc{text-align:right}
@@ -341,6 +345,82 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 .db-status.err{background:#f44336}
 .db-status.loading{background:#FFA726;animation:pulse .8s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.card-proc-add{background:none;border:none;padding:.3rem .95rem .5rem;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:var(--smoke3);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:color .14s;text-align:left}
+.card-proc-add:hover,.card-proc-add:active{color:var(--gold2)}
+
+/* Piatto group badge on card */
+.piatto-badge-card{display:inline-flex;align-items:center;gap:.25rem;background:var(--glow);border:1px solid var(--rim);border-radius:20px;padding:.12rem .5rem;font-size:.52rem;letter-spacing:.1em;color:var(--gold2);text-transform:uppercase;margin-top:.14rem}
+
+/* File import modal */
+.file-import-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:85;align-items:flex-end;justify-content:center}
+.file-import-bg.on{display:flex}
+.file-import{background:var(--card);border-radius:16px 16px 0 0;padding:1.2rem 1.3rem calc(1.7rem + env(safe-area-inset-bottom));width:100%;max-width:560px;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.import-h{width:32px;height:3px;border-radius:2px;background:var(--smoke3);margin:0 auto .85rem}
+.import-title{font-size:1.1rem;font-style:italic;color:var(--gold2);margin-bottom:.15rem}
+.import-sub{font-size:.62rem;letter-spacing:.08em;color:var(--smoke2);margin-bottom:.9rem}
+.import-drop{border:2px dashed var(--cb);border-radius:12px;padding:2rem 1rem;text-align:center;cursor:pointer;background:var(--ctrl);transition:border-color .18s;position:relative;margin-bottom:.7rem}
+.import-drop:hover{border-color:var(--gold2)}
+.import-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.import-drop-ico{font-size:1.8rem;opacity:.32;margin-bottom:.35rem}
+.import-drop-lbl{font-size:.68rem;letter-spacing:.08em;color:var(--smoke2)}
+.import-preview{display:none;margin-top:.5rem}
+.import-preview.on{display:block}
+.import-preview-title{font-size:.9rem;font-style:italic;color:var(--ink);margin-bottom:.5rem;border-bottom:1px solid var(--rim);padding-bottom:.4rem}
+.import-list{display:flex;flex-direction:column;gap:.35rem;max-height:35vh;overflow-y:auto;margin-bottom:.8rem}
+.import-item{display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;background:var(--ctrl);border-radius:6px;border:1px solid var(--cb)}
+.import-item-chk{width:16px;height:16px;cursor:pointer;accent-color:var(--gold2);flex-shrink:0}
+.import-item-txt{flex:1;font-size:.8rem;color:var(--ink);min-width:0}
+.import-item-txt small{display:block;font-size:.6rem;color:var(--smoke2)}
+.import-btn{width:100%;padding:.6rem;border-radius:8px;border:none;background:linear-gradient(135deg,var(--gold2),var(--gold3));color:#fff;font-size:.9rem;font-style:italic;font-family:"Cormorant Garamond",serif;cursor:pointer}
+.import-sec-sel{width:100%;background:var(--ctrl);border:1px solid var(--cb);border-radius:6px;padding:.4rem .6rem;color:var(--ink);font-size:.85rem;outline:none;-webkit-appearance:none;margin-bottom:.6rem}
+
+/* Quick proc modal */
+.qproc-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:88;align-items:center;justify-content:center;padding:1.5rem}
+.qproc-bg.on{display:flex}
+.qproc-box{background:var(--card);border:1px solid var(--rim);border-radius:14px;padding:1.4rem;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.qproc-box h4{font-size:1.05rem;font-style:italic;color:var(--gold2);margin-bottom:.15rem}
+.qproc-box p{font-size:.62rem;letter-spacing:.06em;color:var(--smoke2);margin-bottom:.7rem;line-height:1.4}
+.qproc-box textarea{width:100%;background:var(--ctrl);border:1px solid var(--cb);border-radius:var(--r);padding:.5rem .7rem;color:var(--ink);font-family:"Cormorant Garamond",serif;font-size:.88rem;min-height:120px;resize:vertical;outline:none;-webkit-appearance:none;transition:border-color .16s}
+.qproc-box textarea:focus{border-color:var(--gold2)}
+.qproc-btns{display:flex;gap:.5rem;margin-top:.8rem}
+.qproc-btns button{flex:1;padding:.55rem;border-radius:8px;border:none;font-size:.88rem;font-family:"Cormorant Garamond",serif;cursor:pointer;transition:all .14s}
+.qproc-save{background:linear-gradient(135deg,var(--gold2),var(--gold3));color:#fff;font-style:italic}
+.qproc-cancel{background:var(--ctrl);color:var(--ink)}
+
+
+/* ── PIATTO MANAGER ── */
+.piatti-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);z-index:86;align-items:flex-end;justify-content:center}
+.piatti-bg.on{display:flex}
+.piatti-modal{background:var(--card);border-radius:16px 16px 0 0;padding:1.2rem 1.3rem calc(1.7rem + env(safe-area-inset-bottom));width:100%;max-width:560px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.piatti-h{width:32px;height:3px;border-radius:2px;background:var(--smoke3);margin:0 auto .85rem}
+.piatti-title{font-size:1.1rem;font-style:italic;color:var(--gold2);margin-bottom:.15rem}
+.piatti-sub{font-size:.62rem;letter-spacing:.08em;color:var(--smoke2);margin-bottom:.9rem}
+.piatti-create-row{display:flex;gap:.4rem;margin-bottom:.8rem}
+.piatti-create-row input{flex:1;background:var(--ctrl);border:1px solid var(--cb);border-radius:var(--r);padding:.46rem .7rem;color:var(--ink);font-family:"Cormorant Garamond",serif;font-size:.9rem;outline:none;-webkit-appearance:none;transition:border-color .16s}
+.piatti-create-row input:focus{border-color:var(--gold2)}
+.piatti-create-row button{background:linear-gradient(135deg,var(--gold2),var(--gold3));border:none;border-radius:var(--r);padding:.46rem .9rem;color:#fff;font-size:.88rem;font-style:italic;font-family:"Cormorant Garamond",serif;cursor:pointer;white-space:nowrap}
+.piatti-sec-filter{width:100%;background:var(--ctrl);border:1px solid var(--cb);border-radius:var(--r);padding:.42rem .7rem;color:var(--ink);font-size:.85rem;outline:none;-webkit-appearance:none;margin-bottom:.7rem}
+.piatti-list{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.8rem}
+.piatti-item{background:var(--ctrl);border:1px solid var(--cb);border-radius:10px;padding:.7rem .9rem;cursor:pointer;transition:border-color .18s}
+.piatti-item:hover,.piatti-item.selected{border-color:var(--gold2)}
+.piatti-item.selected{background:var(--glow)}
+.piatti-item-top{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.piatti-item-name{font-size:.95rem;font-style:italic;color:var(--ink);font-family:"Cormorant Garamond",serif}
+.piatti-item-sec{font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--smoke2)}
+.piatti-item-cnt{font-size:.58rem;letter-spacing:.06em;color:var(--gold2)}
+.piatti-item-del{background:none;border:none;color:var(--smoke3);cursor:pointer;font-size:.8rem;padding:.15rem .3rem;-webkit-tap-highlight-color:transparent;transition:color .14s}
+.piatti-item-del:hover{color:#c04030}
+.piatti-empty{font-size:.82rem;font-style:italic;color:var(--smoke3);text-align:center;padding:1.5rem}
+/* Piatto badge - più visibile */
+.card-piatto{font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold2);opacity:.85;margin-top:.15rem;display:inline-flex;align-items:center;gap:.25rem}
+/* Piatto group header nel grid - più bello */
+.piatto-group{grid-column:1/-1;display:flex;align-items:center;gap:.8rem;padding:.6rem 0 .2rem;margin-bottom:.1rem}
+.piatto-group-line{flex:1;height:1px;background:var(--rim)}
+.piatto-group-label{font-size:1rem;font-weight:300;font-style:italic;color:var(--gold2);letter-spacing:.04em;white-space:nowrap;font-family:"Cormorant Garamond",serif}
+.piatto-group-cnt{font-size:.52rem;letter-spacing:.1em;color:var(--smoke3);white-space:nowrap}
+/* Piatto filter pill - dorato */
+.cpill-piatto{background:var(--glow);border-color:var(--gold)}
+
 @media(max-width:560px){
   .land-top{padding:1.5rem 1.1rem .95rem}.land-logo{width:68px;height:68px}
   .panel{min-height:min(16vh,95px)}.panel-body{padding:1.1rem .95rem}.panel-title{font-size:1.22rem}
@@ -482,7 +562,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
     <div class="modal-h"></div>
     <p class="modal-title fd" id="mTitle">Nuova Ricetta</p>
     <label class="fsc">Ricettario</label><select id="mSec" class="fs"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select>
-    <div id="mPiattoWrap" style="display:none"><label class="fsc">Piatto (Fine Dining)</label><input type="text" id="mPiatto" class="fs" placeholder="Es. Tiramisù, Paris Brest&#8230;" autocomplete="off"></div>
+    <div id="mPiattoWrap" style="display:none"><label class="fsc">Piatto / Gruppo (sottocategoria)</label><input type="text" id="mPiatto" class="fs" placeholder="Es. Tiramisù, Paris Brest&#8230;" autocomplete="off"></div>
     <label class="fsc">Nome ricetta</label><input type="text" id="mName" class="fs" placeholder="Es. Ganache al cioccolato" autocomplete="off" autocorrect="off" autocapitalize="words">
     <label class="fsc">Categoria</label><select id="mCat" class="fs"><option>Creme</option><option>Paste</option><option>Torte</option><option>Lievitati</option><option>Pasticcini</option><option>Marmellate</option><option>Ganache</option><option>Mousse</option><option>Gelatine</option><option>Gelati</option><option>Sorbetti</option><option>Semifreddi</option><option>Granite</option><option>Basi</option><option>Glasse</option><option>Biscotti</option><option>Altro</option></select>
     <label class="fsc">Procedimento (facoltativo)</label><textarea id="mProc" class="fs" placeholder="Descrivi il procedimento&#8230;"></textarea>
@@ -513,6 +593,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
   <div class="adm-sep">
     <p class="fsc">&#128197; Database Supabase</p>
     <p id="admDbInfo" style="font-size:.58rem;color:var(--smoke2);margin-bottom:.5rem;line-height:1.5">Verifica connessione al database condiviso</p>
+    <button type="button" id="openPiattiBtn" style="width:100%;background:var(--ctrl);border:1px solid var(--cb);border-radius:6px;padding:.42rem;font-size:.72rem;color:var(--ink);cursor:pointer;margin-bottom:.4rem">Gestisci Piatti / Gruppi</button>
     <button type="button" id="testDbBtn" style="width:100%;background:var(--ctrl);border:1px solid var(--cb);border-radius:6px;padding:.42rem;font-size:.72rem;color:var(--ink);cursor:pointer">Testa connessione</button>
     <p class="adm-msg fsc" id="admDbMsg"></p>
   </div>
@@ -543,7 +624,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 <div class="move-bg" id="moveBg"><div class="move-box">
   <h4 class="fd">Sposta ricetta</h4><p class="fsc" id="moveName">Modifica sezione e categoria</p>
   <label class="fsc">Ricettario</label><select id="moveSec" class="fs"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select>
-  <div id="movePiattoWrap" style="display:none"><label class="fsc">Piatto (Fine Dining)</label><input type="text" id="movePiatto" class="fd" placeholder="Es. Tiramisù"></div>
+  <div id="movePiattoWrap" style="display:none"><label class="fsc">Piatto / Gruppo</label><input type="text" id="movePiatto" class="fd" placeholder="Es. Tiramisù"></div>
   <label class="fsc">Categoria</label><select id="moveCat" class="fs"><option>Creme</option><option>Paste</option><option>Torte</option><option>Lievitati</option><option>Pasticcini</option><option>Marmellate</option><option>Ganache</option><option>Mousse</option><option>Gelatine</option><option>Gelati</option><option>Sorbetti</option><option>Semifreddi</option><option>Granite</option><option>Basi</option><option>Glasse</option><option>Biscotti</option><option>Altro</option></select>
   <div class="move-btns"><button class="move-cancel fs" id="moveCancel" type="button">Annulla</button><button class="move-save fd" id="moveSave" type="button">Sposta</button></div>
 </div></div>
@@ -789,18 +870,22 @@ function submitPwd(){
   else{qs('pwdErr').textContent='Password non corretta';qs('pwdInp').value='';qs('pwdInp').focus();}
 }
 
-function sbH(){return{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};}
+function sbH(extra){var h={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};if(extra)Object.assign(h,extra);return h;}
 function setDbStatus(s){var el=qs('dbStatus');if(!el)return;el.className='db-status '+s;}
 function loadRecipes(){
   setDbStatus('loading');
-  fetch(SB_URL+'/rest/v1/ricette?select=id,data&order=id.asc',{headers:sbH()})
-    .then(function(r){
+  var ctrl=new AbortController();
+  var tid=setTimeout(function(){ctrl.abort();},8000);
+  fetch(SB_URL+'/rest/v1/ricette?select=id,data&order=id.asc',{headers:sbH(),signal:ctrl.signal})
+    .then(function(r){clearTimeout(tid);
       if(!r.ok)throw new Error('HTTP '+r.status);
       return r.json();
     })
     .then(function(rows){
       setDbStatus('ok');
       CU=Array.isArray(rows)?rows.map(function(row){var r=row.data;r._c=true;r._id=row.id;return r;}):[];
+      // Clean up hidden list: if a recipe was promoted+saved in DB, keep it hidden
+      // (the DB version IS the active one). Nothing to do — allRecs() handles this.
       renderCats();renderGrid();
       var info=qs('admDbInfo');if(info)info.textContent='Connesso - '+CU.length+' ricette nel DB condiviso';
     })
@@ -841,9 +926,16 @@ function testDb(){
 function saveRec(rec){
   rec._c=true;
   fetch(SB_URL+'/rest/v1/ricette',{method:'POST',headers:Object.assign({},sbH(),{'Prefer':'return=representation'}),body:JSON.stringify({data:rec})})
-    .then(function(r){return r.json();})
-    .then(function(rows){if(Array.isArray(rows)&&rows[0]){rec._id=rows[0].id;CU.push(rec);renderCats();renderGrid();}})
-    .catch(function(){CU.push(rec);renderCats();renderGrid();});
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(rows){
+      if(Array.isArray(rows)&&rows[0]){
+        rec._id=rows[0].id;CU.push(rec);
+        renderCats();renderGrid();
+      }
+    })
+    .catch(function(e){
+      alert('Errore salvataggio DB: '+e.message+'. La ricetta NON e stata salvata. Verifica la connessione.');
+    });
 }
 function updateRec(rec,nd){
   nd._c=true;nd._id=rec._id;
@@ -855,7 +947,21 @@ function updateRec(rec,nd){
 }
 function deleteRec(rec){
   fetch(SB_URL+'/rest/v1/ricette?id=eq.'+rec._id,{method:'DELETE',headers:sbH()})
-    .then(function(){CU=CU.filter(function(x){return x._id!==rec._id;});renderCats();renderGrid();});
+    .then(function(r){
+      if(r.ok||r.status===204){
+        CU=CU.filter(function(x){return x._id!==rec._id;});
+        // If this was a promoted built-in, un-hide the original
+        try{
+          var h=getHidden();
+          var idx=h.indexOf(rec.n);
+          if(idx!==-1){h.splice(idx,1);localStorage.setItem('mdl_hidden',JSON.stringify(h));}
+        }catch(e){}
+        renderCats();renderGrid();
+      } else {
+        r.text().then(function(t){alert('Errore eliminazione: '+t);});
+      }
+    })
+    .catch(function(e){alert('Errore di rete: '+e.message);});
 }
 
 function openSection(sec){
@@ -893,9 +999,14 @@ function buildCard(r,idx){
   card.appendChild(hd);
   if(r.p){
     var pt=el('button','card-proc-toggle fsc');pt.type='button';pt.textContent='Procedimento \u25be';
-    var pc=el('div','card-proc');pc.className='card-proc fd';pc.textContent=r.p;
+    var pc=el('div','card-proc fd');pc.textContent=r.p;
     pt.addEventListener('click',function(){var open=pc.classList.contains('on');pc.classList.toggle('on',!open);pt.textContent=open?'Procedimento \u25be':'Procedimento \u25b4';});
     card.appendChild(pt);card.appendChild(pc);
+  } else if(isAdmin){
+    // Quick-add procedure button
+    var qp=el('button','card-proc-add fsc');qp.type='button';qp.textContent='+ Procedimento';
+    qp.addEventListener('click',function(e){e.stopPropagation();openQuickProc(r);});
+    card.appendChild(qp);
   }
   var tbl=el('table','tbl');var thead=el('thead');var tr0=el('tr');
   var dL=(dose===Math.floor(dose))?String(dose):dose.toFixed(1);
@@ -917,7 +1028,12 @@ function renderCats(){
   var bar=qs('catBar');if(!bar)return;bar.innerHTML='';
   var a=allRecs(),cats=['Tutte'];
   a.forEach(function(r){if(r.c&&cats.indexOf(r.c)===-1)cats.push(r.c);});
-  if(curSec==='fine-dining')a.forEach(function(r){if(r.piatto){var k=r.piatto;if(cats.indexOf('P:'+k)===-1)cats.push('P:'+k);}});
+  // Add piatto pills for any section
+  var piattiSet={};
+  a.forEach(function(r){if(r.piatto&&r.piatto.trim())piattiSet[r.piatto.trim()]=true;});
+  Object.keys(piattiSet).sort(function(a,b){return a.localeCompare(b,'it');}).forEach(function(p){
+    if(cats.indexOf('P:'+p)===-1)cats.push('P:'+p);
+  });
   cats.forEach(function(c){
     var b=el('button',c===curCat?'cpill cpill-on':'cpill');
     b.textContent=(c.indexOf('P:')===0)?'\ud83c\udf7d\ufe0f '+c.slice(2):c;b.type='button';
@@ -931,7 +1047,7 @@ function renderGrid(){
   var q=(qs('srch')||{value:''}).value.toLowerCase().trim();
   var out=allRecs().filter(function(r){
     var mQ=r.n.toLowerCase().indexOf(q)!==-1;
-    var mC=curCat==='Tutte'||r.c===curCat||(curCat.indexOf('P:')===0&&r.piatto===curCat.slice(2));
+    var mC=curCat==='Tutte'||r.c===curCat||(curCat.indexOf('P:')===0&&r.piatto&&r.piatto.trim()===curCat.slice(2));
     return mQ&&mC;
   });
   var cnt=qs('cnt');if(cnt)cnt.textContent=out.length+' / '+allRecs().length+' ricette';
@@ -967,7 +1083,7 @@ function addIng(n,q,u){
   rm.addEventListener('click',function(){if(list&&list.children.length>1)list.removeChild(row);});
   row.appendChild(ni);row.appendChild(qi);row.appendChild(ui);row.appendChild(rm);if(list)list.appendChild(row);
 }
-function togglePiattoWrap(){var ms=qs('mSec');var pw=qs('mPiattoWrap');if(pw&&ms)pw.style.display=(ms.value==='fine-dining')?'block':'none';}
+function togglePiattoWrap(){var ms=qs('mSec');var pw=qs('mPiattoWrap');if(pw&&ms)pw.style.display='block';}
 function resetModal(){
   var mn=qs('mName');if(mn)mn.value='';var mp=qs('mPiatto');if(mp)mp.value='';var mpr=qs('mProc');if(mpr)mpr.value='';
   var il=qs('ingList');if(il){il.innerHTML='';addIng();}
@@ -991,7 +1107,7 @@ function openEdit(rec){
 function doSave(){
   var name=(qs('mName').value||'').trim();if(!name){alert('Inserisci il nome');return;}
   var secV=qs('mSec').value,catV=qs('mCat').value;
-  var piattoV=(secV==='fine-dining')?(qs('mPiatto').value||'').trim():'';
+  var piattoV=(qs('mPiatto').value||'').trim();
   var procV=(qs('mProc').value||'').trim();
   var rows=qs('ingList').querySelectorAll('.ing-row');var ings=[];
   rows.forEach(function(row){var ins=row.querySelectorAll('input');var iN=(ins[0].value||'').trim(),iQ=ins[1].value?parseFloat(ins[1].value):null,iU=(ins[2].value||'').trim()||'g';if(iN)ings.push([iN,iQ,iU]);});
@@ -1013,7 +1129,7 @@ function doSave(){
 function openCfm(rec){_delRec=rec;var cn=qs('cfmName');if(cn)cn.textContent='Eliminare \u00ab'+rec.n+'\u00bb?';qs('cfmBg').classList.add('on');}
 function closeCfm(){qs('cfmBg').classList.remove('on');_delRec=null;}
 
-function toggleMovePiatto(){var ms=qs('moveSec');var pr=qs('movePiattoWrap');if(pr&&ms)pr.style.display=(ms.value==='fine-dining')?'block':'none';}
+function toggleMovePiatto(){var ms=qs('moveSec');var pr=qs('movePiattoWrap');if(pr&&ms)pr.style.display='block';}
 function openMove(rec){
   _moveRec=rec;var nm=qs('moveName');if(nm)nm.textContent=rec.n;
   var ms=qs('moveSec');if(ms)ms.value=rec.s||'colazioni';var mc=qs('moveCat');if(mc)mc.value=rec.c||'Altro';
@@ -1022,7 +1138,7 @@ function openMove(rec){
 function closeMove(){qs('moveBg').classList.remove('on');_moveRec=null;}
 function doMove(){
   if(!_moveRec)return;var secV=qs('moveSec').value,catV=qs('moveCat').value;
-  var piattoV=(secV==='fine-dining')?(qs('movePiatto').value||'').trim():'';
+  var piattoV=(qs('movePiatto').value||'').trim();
   var upd=Object.assign({},_moveRec,{s:secV,c:catV});if(piattoV)upd.piatto=piattoV;else delete upd.piatto;
   if(_moveRec._c&&_moveRec._id){
     // Custom recipe: update in Supabase
@@ -1040,6 +1156,10 @@ function checkAdmin(){
   try{isAdmin=sessionStorage.getItem('adm')==='1';}catch(e){isAdmin=false;}
   var fw=qs('fabWrap');if(fw)fw.style.display=isAdmin?'flex':'none';
   var ab=qs('admBtn');if(ab)ab.textContent=isAdmin?'\ud83d\udd13 Admin':'\ud83d\udd12';
+  var appEl=qs('app');if(appEl){
+    if(isAdmin)appEl.classList.add('admin-on');
+    else appEl.classList.remove('admin-on');
+  }
   renderGrid();
 }
 function openAdm(){
@@ -1064,7 +1184,7 @@ function switchAiTab(tab){
   qs('aiTextPane').style.display=tab==='text'?'block':'none';qs('aiPhotoPane').style.display=tab==='photo'?'block':'none';
   var tabs=document.querySelectorAll('.ai-tab');for(var i=0;i<tabs.length;i++){if(tabs[i].dataset.tab===tab)tabs[i].classList.add('ai-tab-on');else tabs[i].classList.remove('ai-tab-on');}
 }
-function toggleAiPiatto(){var s=qs('aiSec');var r=qs('aiPiattoRow');if(r&&s)r.style.display=(s.value==='fine-dining')?'flex':'none';}
+function toggleAiPiatto(){var r=qs('aiPiattoRow');if(r)r.style.display='flex';}
 function addAiIng(n,q,u){
   var list=qs('aiIngList');var row=el('div','ai-ing-row');
   function inp2(t,ph,v){var e=document.createElement('input');e.type=t;e.placeholder=ph;e.value=v||'';e.className='fs';if(t==='number'){e.min='0';e.step='any';e.inputMode='decimal';}return e;}
@@ -1129,13 +1249,170 @@ function doAiAnalyse(){
 function saveAiRecipe(){
   var name=(qs('aiName').value||'').trim();if(!name){alert('Nome mancante');return;}
   var secV=qs('aiSec').value,catV=qs('aiCat').value;
-  var piattoV=(secV==='fine-dining')?(qs('aiPiatto').value||'').trim():'';
+  var piattoV=(qs('aiPiatto').value||'').trim();
   var procV=(qs('aiProc').value||'').trim();
   var rows=qs('aiIngList').querySelectorAll('.ai-ing-row');var ings=[];
   rows.forEach(function(row){var ins=row.querySelectorAll('input');var iN=(ins[0].value||'').trim(),iQ=ins[1].value?parseFloat(ins[1].value):null,iU=(ins[2].value||'').trim()||'g';if(iN)ings.push([iN,iQ,iU]);});
   if(!ings.length){alert('Nessun ingrediente');return;}
   var rec={n:name,c:catV,s:secV,i:ings};if(piattoV)rec.piatto=piattoV;if(procV)rec.p=procV;
   saveRec(rec);closeAiModal();
+}
+
+
+/* ── QUICK PROCEDURE ── */
+var _qprocRec = null;
+function openQuickProc(rec){
+  _qprocRec = rec;
+  var qt=qs('qprocTitle');if(qt)qt.textContent='Procedimento';
+  var qn=qs('qprocName');if(qn)qn.textContent=rec.n;
+  var qtx=qs('qprocText');if(qtx)qtx.value=rec.p||'';
+  qs('qprocBg').classList.add('on');
+  setTimeout(function(){if(qtx)qtx.focus();},200);
+}
+function closeQuickProc(){qs('qprocBg').classList.remove('on');_qprocRec=null;}
+function saveQuickProc(){
+  if(!_qprocRec)return;
+  var txt=(qs('qprocText').value||'').trim();
+  var updated=Object.assign({},_qprocRec,{p:txt||undefined});
+  if(!txt)delete updated.p;
+  if(_qprocRec._c&&_qprocRec._id){updateRec(_qprocRec,updated);}
+  else{hideBuiltin(_qprocRec.n);saveRec(updated);}
+  closeQuickProc();
+}
+
+/* ── FILE IMPORT ── */
+var _importParsed = [];
+function openImport(){
+  _importParsed=[];qs('importPreview').classList.remove('on');qs('importList').innerHTML='';
+  var fi=qs('importFile');if(fi)fi.value='';
+  if(curSec&&curSec!=='tutti'){var is=qs('importSec');if(is)is.value=curSec;}
+  qs('importBg').classList.add('on');
+}
+function closeImport(){qs('importBg').classList.remove('on');}
+
+function parseRecipeText(raw){
+  // Split by double newline or numbered list patterns
+  var recipes=[];
+  // Try to detect recipe blocks: name + list of ingredients
+  var lines=raw.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
+  var current=null;
+  lines.forEach(function(line){
+    // Detect recipe name: line ending with nothing numeric, no "gr"/"g " pattern
+    var isIng=/^\d+\s*(gr|g|kg|ml|l|n[°o]|cucchiai|cucchiaio)/i.test(line)||
+               /^(\d+[.,]?\d*\s*)(gr|g|kg|ml|n[°o])/i.test(line)||
+               /^[A-Za-z].+(\d+\s*g)/i.test(line);
+    var isTitle=!isIng&&line.length>3&&line.length<80&&!/^([-•*])/.test(line)&&
+                !/^\d+[.,]/.test(line)&&line===line.trim();
+    if(isTitle&&current&&current.i.length>0){recipes.push(current);current=null;}
+    if(isTitle&&!current){current={n:line,i:[],c:'Altro',p:''};}
+    else if(current){
+      // Parse ingredient line: qty unit name or name qty unit
+      var m=line.match(/^(\d+[.,]?\d*)\s*(gr|g|kg|ml|l|n[°o°]|cl|cucchiai|cucchiaio|pizzico|q\.b\.|qb)?\s+(.+)/i);
+      var m2=line.match(/^(.+?)\s+(\d+[.,]?\d*)\s*(gr|g|kg|ml|l|n[°o°]|cl)?$/i);
+      if(m){var qty=parseFloat(m[1].replace(',','.'));var unit=m[2]||'g';var name=m[3].trim();current.i.push([name,isNaN(qty)?null:qty,unit]);}
+      else if(m2){var qty2=parseFloat(m2[2].replace(',','.'));var unit2=m2[3]||'g';var name2=m2[1].trim();current.i.push([name2,isNaN(qty2)?null:qty2,unit2]);}
+      else if(line.toLowerCase()==='q.b.'||line.toLowerCase()==='qb'){if(current.i.length>0)current.i[current.i.length-1][1]=null;}
+      else if(line.length>2&&!current.i.length===false){current.i.push([line,null,'q.b.']);}
+    }
+  });
+  if(current&&current.i.length>0)recipes.push(current);
+  return recipes;
+}
+
+function renderImportList(){
+  var list=qs('importList');list.innerHTML='';
+  _importParsed.forEach(function(r,i){
+    var item=el('div','import-item');
+    var chk=document.createElement('input');chk.type='checkbox';chk.checked=true;chk.className='import-item-chk';chk.id='ic'+i;
+    var lbl=el('label','import-item-txt');lbl.htmlFor='ic'+i;
+    var nm=el('span');nm.textContent=r.n;
+    var sm=el('small');sm.textContent=r.i.length+' ingredienti';
+    lbl.appendChild(nm);lbl.appendChild(sm);
+    item.appendChild(chk);item.appendChild(lbl);list.appendChild(item);
+  });
+  qs('importPreview').classList.add('on');
+}
+
+function doImport(){
+  var sec=qs('importSec').value||'colazioni';
+  var chks=qs('importList').querySelectorAll('.import-item-chk');
+  var count=0;
+  chks.forEach(function(chk,i){
+    if(chk.checked&&_importParsed[i]){
+      var r=Object.assign({},_importParsed[i],{s:sec});
+      saveRec(r);count++;
+    }
+  });
+  closeImport();
+  setTimeout(function(){if(count>0)alert(count+' ricett'+(count===1?'a':'e')+' importat'+(count===1?'a':'e')+' nel database condiviso!');},300);
+}
+
+
+/* ── PIATTI MANAGER ── */
+function getPiatti(){
+  // Collect all unique piatti from allRecs()
+  var all=R.concat(CU);
+  var map={};
+  all.forEach(function(r){
+    if(r.piatto&&r.piatto.trim()){
+      var key=r.s+'::'+r.piatto.trim();
+      if(!map[key])map[key]={name:r.piatto.trim(),sec:r.s,count:0};
+      map[key].count++;
+    }
+  });
+  return Object.values(map);
+}
+
+function renderPiattiList(){
+  var list=qs('piattiList');
+  if(!list)return;
+  list.innerHTML='';
+  var piatti=getPiatti();
+  piatti.sort(function(a,b){return a.sec.localeCompare(b.sec)||a.name.localeCompare(b.name,'it');});
+  if(!piatti.length){
+    var em=el('p','piatti-empty');em.textContent='Nessun piatto creato. Crea il primo piatto sopra.';
+    list.appendChild(em);return;
+  }
+  var SLBL={colazioni:'Colazioni','fine-dining':'Fine Dining',gelateria:'Gelateria',torte:'Torte'};
+  piatti.forEach(function(p){
+    var item=el('div','piatti-item');
+    var top=el('div','piatti-item-top');
+    var nm=el('span','piatti-item-name');nm.textContent=p.name;
+    var sec=el('span','piatti-item-sec');sec.textContent=SLBL[p.sec]||p.sec;
+    var cnt=el('span','piatti-item-cnt');cnt.textContent=p.count+' ricett'+(p.count===1?'a':'e');
+    var del=el('button','piatti-item-del');del.type='button';del.textContent='×';del.title='Rimuovi piatto da tutte le ricette';
+    del.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(!confirm('Rimuovere il piatto "'+p.name+'" da tutte le ricette?'))return;
+      // Remove piatto from all matching CU recipes
+      var toUpdate=CU.filter(function(r){return r.piatto===p.name&&r.s===p.sec;});
+      toUpdate.forEach(function(r){var u=Object.assign({},r);delete u.piatto;updateRec(r,u);});
+      setTimeout(renderPiattiList,500);
+    });
+    top.appendChild(nm);top.appendChild(sec);top.appendChild(cnt);top.appendChild(del);
+    item.appendChild(top);
+    // Click to assign to current recipe
+    list.appendChild(item);
+  });
+}
+
+function openPiattiManager(){
+  var np=qs('newPiattoName');if(np)np.value='';
+  var ns=qs('newPiattoSec');if(ns&&curSec&&curSec!=='tutti')ns.value=curSec;
+  renderPiattiList();
+  qs('piattiBg').classList.add('on');
+}
+function closePiattiManager(){qs('piattiBg').classList.remove('on');}
+
+function createPiatto(){
+  var name=(qs('newPiattoName').value||'').trim();
+  if(!name){alert('Inserisci il nome del piatto');return;}
+  var sec=qs('newPiattoSec').value||'colazioni';
+  // Piatto created by updating a recipe or saving a placeholder — just show success
+  // User assigns piatto to recipes via ✏️ or 📂
+  qs('newPiattoName').value='';
+  alert('Piatto "'+name+'" creato! Ora assegna delle ricette tramite i pulsanti ✏️ o 📂 sulle card e inserisci "'+name+'" nel campo Piatto/Gruppo.');
+  renderPiattiList();
 }
 
 function boot(){
@@ -1183,6 +1460,50 @@ function boot(){
       if(prev){prev.src=result;prev.style.display='block';}if(empty)empty.style.display='none';if(area)area.classList.add('has-img');
     };reader.readAsDataURL(file);
   });
+  // Quick proc
+  var qprocSave=qs('qprocSave');if(qprocSave)qprocSave.addEventListener('click',saveQuickProc);
+  var qprocCancel=qs('qprocCancel');if(qprocCancel)qprocCancel.addEventListener('click',closeQuickProc);
+  var qprocBg=qs('qprocBg');if(qprocBg)qprocBg.addEventListener('click',function(e){if(e.target===qprocBg)closeQuickProc();});
+
+  // File import
+  var importCancel=qs('importCancel');if(importCancel)importCancel.addEventListener('click',closeImport);
+  var importBg=qs('importBg');if(importBg)importBg.addEventListener('click',function(e){if(e.target===importBg)closeImport();});
+  var importFile=qs('importFile');
+  if(importFile)importFile.addEventListener('change',function(){
+    var file=this.files[0];if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      _importParsed=parseRecipeText(ev.target.result||'');
+      if(_importParsed.length===0){alert('Nessuna ricetta trovata. Assicurati che il file sia in formato testo con nomi e ingredienti.');return;}
+      renderImportList();
+    };
+    reader.readAsText(file,'UTF-8');
+  });
+  var importSaveBtn=qs('importSaveBtn');if(importSaveBtn)importSaveBtn.addEventListener('click',doImport);
+
+  // Add import button to FAB menu
+  var fabMenu2=qs('fabMenu');
+  if(fabMenu2){
+    var fabImport=el('button','fab-item fs');fabImport.id='fabImport';fabImport.type='button';
+    var fabImportIco=el('span','fab-item-ico');fabImportIco.textContent='\ud83d\udcc2';
+    var fabImportLbl=el('span','fab-item-lbl');fabImportLbl.textContent='Importa da file';
+    fabImport.appendChild(fabImportIco);fabImport.appendChild(fabImportLbl);
+    fabImport.addEventListener('click',function(){qs('fabMenu').style.display='none';qs('fab').classList.remove('open');openImport();});
+    fabMenu2.insertBefore(fabImport,fabMenu2.children[1]||null);
+  }
+
+  // Piatti manager
+  var openPiattiBtn=qs('openPiattiBtn');
+  if(openPiattiBtn)openPiattiBtn.addEventListener('click',function(){closeAdm();openPiattiManager();});
+  var piattiClose=qs('piattiClose');
+  if(piattiClose)piattiClose.addEventListener('click',closePiattiManager);
+  var piattiBg=qs('piattiBg');
+  if(piattiBg)piattiBg.addEventListener('click',function(e){if(e.target===piattiBg)closePiattiManager();});
+  var createPiattoBtn=qs('createPiattoBtn');
+  if(createPiattoBtn)createPiattoBtn.addEventListener('click',createPiatto);
+  var newPiattoName=qs('newPiattoName');
+  if(newPiattoName)newPiattoName.addEventListener('keyup',function(e){if(e.key==='Enter')createPiatto();});
+
   loadRecipes();
   // Gemini key in admin
   var gk2;try{gk2=localStorage.getItem('groq_key');}catch(e){}
@@ -1200,5 +1521,63 @@ function boot(){
   if(testDbBtn)testDbBtn.addEventListener('click',testDb);
 }
 </script>
+
+<!-- FILE IMPORT MODAL -->
+<div class="file-import-bg" id="importBg">
+  <div class="file-import">
+    <div class="import-h"></div>
+    <p class="import-title fd">Importa da file</p>
+    <p class="import-sub fsc">Trascina o seleziona un file .txt o .docx con le ricette</p>
+    <div class="import-drop" id="importDrop">
+      <input type="file" id="importFile" accept=".txt,.text,text/plain">
+      <div class="import-drop-ico">&#128196;</div>
+      <p class="import-drop-lbl fsc">Tocca per selezionare un file .txt</p>
+    </div>
+    <label class="fsc" style="display:block;font-size:.54rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke);margin-bottom:.22rem">Ricettario destinazione</label>
+    <select class="import-sec-sel fs" id="importSec"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select>
+    <div class="import-preview" id="importPreview">
+      <p class="import-preview-title fd">Ricette trovate &mdash; seleziona quelle da importare</p>
+      <div class="import-list" id="importList"></div>
+      <button class="import-btn fd" id="importSaveBtn" type="button">Importa selezionate</button>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-top:.7rem">
+      <button type="button" id="importCancel" style="flex:1;padding:.5rem;border-radius:8px;border:1px solid var(--cb);background:transparent;color:var(--ink);font-size:.85rem;cursor:pointer">Annulla</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK PROCEDURE MODAL -->
+<div class="qproc-bg" id="qprocBg">
+  <div class="qproc-box">
+    <h4 class="fd" id="qprocTitle">Aggiungi procedimento</h4>
+    <p class="fsc" id="qprocName"></p>
+    <textarea id="qprocText" placeholder="Scrivi il procedimento&#8230;"></textarea>
+    <div class="qproc-btns">
+      <button class="qproc-cancel fs" id="qprocCancel" type="button">Annulla</button>
+      <button class="qproc-save fd" id="qprocSave" type="button">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIATTI MANAGER MODAL -->
+<div class="piatti-bg" id="piattiBg">
+  <div class="piatti-modal">
+    <div class="piatti-h"></div>
+    <p class="piatti-title fd">Gestione Piatti / Gruppi</p>
+    <p class="piatti-sub fsc">Crea gruppi per organizzare le ricette in sottocategorie</p>
+    <div class="piatti-create-row">
+      <input type="text" id="newPiattoName" placeholder="Nome piatto o gruppo&#8230;" autocomplete="off" class="fd">
+      <select id="newPiattoSec" style="background:var(--ctrl);border:1px solid var(--cb);border-radius:var(--r);padding:.46rem .5rem;color:var(--ink);font-size:.78rem;outline:none;-webkit-appearance:none">
+        <option value="colazioni">Colazioni</option>
+        <option value="fine-dining">Fine Dining</option>
+        <option value="gelateria">Gelateria</option>
+        <option value="torte">Torte</option>
+      </select>
+      <button type="button" id="createPiattoBtn" class="fd">+ Crea</button>
+    </div>
+    <div class="piatti-list" id="piattiList"></div>
+    <button type="button" id="piattiClose" style="width:100%;padding:.5rem;border-radius:8px;border:1px solid var(--cb);background:transparent;color:var(--ink);font-size:.85rem;cursor:pointer">Chiudi</button>
+  </div>
+</div>
 </body>
 </html>
