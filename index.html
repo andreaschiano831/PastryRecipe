@@ -235,6 +235,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 .modal-title{font-size:1.12rem;font-weight:400;font-style:italic;color:var(--gold2);margin-bottom:.85rem}
 .modal label{display:block;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke);margin:.78rem 0 .22rem}
 .modal input,.modal select,.modal textarea{width:100%;background:var(--ctrl);border:1px solid var(--cb);border-radius:var(--r);color:var(--ink);padding:.46rem .68rem;font-size:.88rem;outline:none;-webkit-appearance:none;font-family:"Cormorant Garamond",serif;transition:border-color .16s}
+.modal input[list]{-webkit-appearance:auto}
 .modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--gold2)}
 .modal textarea{min-height:80px;resize:vertical;font-size:.82rem;line-height:1.5}
 .modal-btns{display:flex;gap:.55rem;margin-top:1rem}
@@ -562,7 +563,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
     <div class="modal-h"></div>
     <p class="modal-title fd" id="mTitle">Nuova Ricetta</p>
     <label class="fsc">Ricettario</label><select id="mSec" class="fs"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select>
-    <div id="mPiattoWrap" style="display:none"><label class="fsc">Piatto / Gruppo (sottocategoria)</label><input type="text" id="mPiatto" class="fs" placeholder="Es. Tiramisù, Paris Brest&#8230;" autocomplete="off"></div>
+    <div id="mPiattoWrap" style="display:none"><label class="fsc">Piatto / Gruppo (sottocategoria)</label><input type="text" id="mPiatto" class="fs" placeholder="Es. Tiramisù, Cornetteria&#8230;" autocomplete="off" list="piattiSuggestions"></div>
     <label class="fsc">Nome ricetta</label><input type="text" id="mName" class="fs" placeholder="Es. Ganache al cioccolato" autocomplete="off" autocorrect="off" autocapitalize="words">
     <label class="fsc">Categoria</label><select id="mCat" class="fs"><option>Creme</option><option>Paste</option><option>Torte</option><option>Lievitati</option><option>Pasticcini</option><option>Marmellate</option><option>Ganache</option><option>Mousse</option><option>Gelatine</option><option>Gelati</option><option>Sorbetti</option><option>Semifreddi</option><option>Granite</option><option>Basi</option><option>Glasse</option><option>Biscotti</option><option>Altro</option></select>
     <label class="fsc">Procedimento (facoltativo)</label><textarea id="mProc" class="fs" placeholder="Descrivi il procedimento&#8230;"></textarea>
@@ -611,7 +612,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
   <div class="ai-preview" id="aiPreview">
     <p class="ai-preview-title fd">Conferma e modifica</p>
     <div class="ai-field-row"><span class="ai-field-lbl fsc">Ricettario</span><select class="ai-field-val fs" id="aiSec"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select></div>
-    <div class="ai-field-row" id="aiPiattoRow" style="display:none"><span class="ai-field-lbl fsc">Piatto</span><input type="text" class="ai-field-val fd" id="aiPiatto" placeholder="Nome piatto&#8230;"></div>
+    <div class="ai-field-row" id="aiPiattoRow" style="display:none"><span class="ai-field-lbl fsc">Piatto</span><input type="text" class="ai-field-val fd" id="aiPiatto" placeholder="Nome piatto&#8230;" list="piatti-datalist" list="piattiSuggestions" autocomplete="off"></div>
     <div class="ai-field-row"><span class="ai-field-lbl fsc">Nome</span><input type="text" class="ai-field-val fd" id="aiName" placeholder="Nome ricetta"></div>
     <div class="ai-field-row"><span class="ai-field-lbl fsc">Categoria</span><select class="ai-field-val fs" id="aiCat"><option>Creme</option><option>Paste</option><option>Torte</option><option>Lievitati</option><option>Pasticcini</option><option>Marmellate</option><option>Ganache</option><option>Mousse</option><option>Gelatine</option><option>Gelati</option><option>Sorbetti</option><option>Semifreddi</option><option>Granite</option><option>Basi</option><option>Glasse</option><option>Biscotti</option><option>Altro</option></select></div>
     <div class="ai-field-row" style="align-items:flex-start"><span class="ai-field-lbl fsc" style="padding-top:.35rem">Procedimento</span><textarea class="ai-field-val fs" id="aiProc" placeholder="Procedimento&#8230;" style="min-height:60px;resize:vertical"></textarea></div>
@@ -624,7 +625,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 <div class="move-bg" id="moveBg"><div class="move-box">
   <h4 class="fd">Sposta ricetta</h4><p class="fsc" id="moveName">Modifica sezione e categoria</p>
   <label class="fsc">Ricettario</label><select id="moveSec" class="fs"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select>
-  <div id="movePiattoWrap" style="display:none"><label class="fsc">Piatto / Gruppo</label><input type="text" id="movePiatto" class="fd" placeholder="Es. Tiramisù"></div>
+  <div id="movePiattoWrap" style="display:none"><label class="fsc">Piatto / Gruppo</label><input type="text" id="movePiatto" class="fd" placeholder="Es. Tiramisù" list="piatti-datalist" list="piattiSuggestions" autocomplete="off"></div>
   <label class="fsc">Categoria</label><select id="moveCat" class="fs"><option>Creme</option><option>Paste</option><option>Torte</option><option>Lievitati</option><option>Pasticcini</option><option>Marmellate</option><option>Ganache</option><option>Mousse</option><option>Gelatine</option><option>Gelati</option><option>Sorbetti</option><option>Semifreddi</option><option>Granite</option><option>Basi</option><option>Glasse</option><option>Biscotti</option><option>Altro</option></select>
   <div class="move-btns"><button class="move-cancel fs" id="moveCancel" type="button">Annulla</button><button class="move-save fd" id="moveSave" type="button">Sposta</button></div>
 </div></div>
@@ -886,7 +887,7 @@ function loadRecipes(){
       CU=Array.isArray(rows)?rows.map(function(row){var r=row.data;r._c=true;r._id=row.id;return r;}):[];
       // Clean up hidden list: if a recipe was promoted+saved in DB, keep it hidden
       // (the DB version IS the active one). Nothing to do — allRecs() handles this.
-      renderCats();renderGrid();
+      updatePiattiDatalist();renderCats();renderGrid();
       var info=qs('admDbInfo');if(info)info.textContent='Connesso - '+CU.length+' ricette nel DB condiviso';
     })
     .catch(function(e){
@@ -946,22 +947,41 @@ function updateRec(rec,nd){
     });
 }
 function deleteRec(rec){
-  fetch(SB_URL+'/rest/v1/ricette?id=eq.'+rec._id,{method:'DELETE',headers:sbH()})
-    .then(function(r){
-      if(r.ok||r.status===204){
-        CU=CU.filter(function(x){return x._id!==rec._id;});
-        // If this was a promoted built-in, un-hide the original
-        try{
-          var h=getHidden();
-          var idx=h.indexOf(rec.n);
-          if(idx!==-1){h.splice(idx,1);localStorage.setItem('mdl_hidden',JSON.stringify(h));}
-        }catch(e){}
-        renderCats();renderGrid();
-      } else {
-        r.text().then(function(t){alert('Errore eliminazione: '+t);});
-      }
-    })
-    .catch(function(e){alert('Errore di rete: '+e.message);});
+  // Optimistic: remove immediately from UI
+  CU=CU.filter(function(x){return x._id!==rec._id;});
+  // Se era una built-in promossa, la nascondo PERMANENTEMENTE
+  // (l'utente ha scelto di eliminare anche la versione custom)
+  var wasBuiltin=R.some(function(r){return r.n===rec.n;});
+  if(wasBuiltin){
+    // Tieni nascosta l'originale built-in
+    hideBuiltin(rec.n);
+  }
+  renderCats();renderGrid();
+  // Then sync with Supabase (no Prefer header = clean DELETE)
+  fetch(SB_URL+'/rest/v1/ricette?id=eq.'+rec._id,{
+    method:'DELETE',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+  })
+  .then(function(r){
+    if(!r.ok&&r.status!==204){
+      return r.text().then(function(t){
+        console.error('Delete DB error:',r.status,t);
+        // Rollback UI
+        loadRecipes();
+        alert('Errore eliminazione DB ('+r.status+'). Controlla le policy Supabase:\ncreate policy "delete" on ricette for delete using (true);');
+      });
+    }
+    // Success — also clear from localStorage cache
+    try{
+      var loc=JSON.parse(localStorage.getItem('rc')||'[]');
+      loc=loc.filter(function(x){return x._id!==rec._id;});
+      localStorage.setItem('rc',JSON.stringify(loc));
+    }catch(e){}
+  })
+  .catch(function(e){
+    console.error('Delete network error:',e);
+    loadRecipes(); // reload to restore correct state
+  });
 }
 
 function openSection(sec){
@@ -1024,7 +1044,34 @@ function buildCard(r,idx){
   tbl.appendChild(tb);card.appendChild(tbl);return card;
 }
 
+function updatePiattiSuggestions(){
+  var dl=document.getElementById('piattiSuggestions');
+  if(!dl)return;
+  dl.innerHTML='';
+  var seen={};
+  R.concat(CU).forEach(function(r){
+    if(r.piatto&&r.piatto.trim()&&!seen[r.piatto.trim()]){
+      seen[r.piatto.trim()]=true;
+      var opt=document.createElement('option');opt.value=r.piatto.trim();dl.appendChild(opt);
+    }
+  });
+}
+function updatePiattiDatalist(){
+  var dl=document.getElementById('piatti-datalist');
+  if(!dl)return;
+  dl.innerHTML='';
+  var seen={};
+  R.concat(CU).forEach(function(r){
+    if(r.piatto&&r.piatto.trim()&&!seen[r.piatto.trim()]){
+      seen[r.piatto.trim()]=true;
+      var opt=document.createElement('option');
+      opt.value=r.piatto.trim();
+      dl.appendChild(opt);
+    }
+  });
+}
 function renderCats(){
+  updatePiattiSuggestions();
   var bar=qs('catBar');if(!bar)return;bar.innerHTML='';
   var a=allRecs(),cats=['Tutte'];
   a.forEach(function(r){if(r.c&&cats.indexOf(r.c)===-1)cats.push(r.c);});
@@ -1579,5 +1626,8 @@ function boot(){
     <button type="button" id="piattiClose" style="width:100%;padding:.5rem;border-radius:8px;border:1px solid var(--cb);background:transparent;color:var(--ink);font-size:.85rem;cursor:pointer">Chiudi</button>
   </div>
 </div>
+
+<datalist id="piattiSuggestions"></datalist>
+<datalist id="piatti-datalist" id="piatti-datalist"></datalist>
 </body>
 </html>
