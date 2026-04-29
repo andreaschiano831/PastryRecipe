@@ -367,7 +367,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 /* File import modal */
 .file-import-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:85;align-items:flex-end;justify-content:center}
 .file-import-bg.on{display:flex}
-.file-import{background:var(--card);border-radius:16px 16px 0 0;padding:1.2rem 1.3rem calc(1.7rem + env(safe-area-inset-bottom));width:100%;max-width:560px;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.file-import{background:var(--card);border-radius:16px 16px 0 0;padding:1.1rem 1.1rem calc(1.5rem + env(safe-area-inset-bottom));width:100%;max-width:620px;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}
 .import-h{width:32px;height:3px;border-radius:2px;background:var(--smoke3);margin:0 auto .85rem}
 .import-title{font-size:1.1rem;font-style:italic;color:var(--gold2);margin-bottom:.15rem}
 .import-sub{font-size:.62rem;letter-spacing:.08em;color:var(--smoke2);margin-bottom:.9rem}
@@ -379,8 +379,8 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 .import-preview{display:none;margin-top:.5rem}
 .import-preview.on{display:block}
 .import-preview-title{font-size:.9rem;font-style:italic;color:var(--ink);margin-bottom:.5rem;border-bottom:1px solid var(--rim);padding-bottom:.4rem}
-.import-list{display:flex;flex-direction:column;gap:.35rem;max-height:35vh;overflow-y:auto;margin-bottom:.8rem}
-.import-item{display:flex;flex-direction:column;gap:0;background:var(--ctrl);border-radius:10px;border:1px solid var(--cb);overflow:hidden}
+.import-list{display:flex;flex-direction:column;gap:.42rem;margin-bottom:.8rem}
+.import-item{display:flex;flex-direction:column;gap:0;background:var(--ctrl);border-radius:10px;border:1px solid var(--cb);overflow:hidden;transition:border-color .15s}
 .import-item-chk{width:16px;height:16px;cursor:pointer;accent-color:var(--gold2);flex-shrink:0}
 .import-item-txt{flex:1;font-size:.8rem;color:var(--ink);min-width:0}
 .import-item-txt small{display:block;font-size:.6rem;color:var(--smoke2)}
@@ -506,6 +506,44 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
   .ctrl-row{padding:.45rem .85rem;gap:.35rem}.dose-lbl{display:none}
   .cat-bar,.cnt-row{padding-left:.85rem;padding-right:.85rem}
   .grid{padding:.9rem .85rem 5rem;gap:.8rem}.hd-row{padding:.7rem .85rem .45rem}}
+
+/* ═══ RESPONSIVE GLOBAL ═══ */
+/* Tablet portrait (600-900px) */
+@media(min-width:600px)and(max-width:900px){
+  .grid{grid-template-columns:repeat(2,1fr);padding:1rem 1.3rem 5.5rem}
+  .land-panels{flex-direction:row;flex-wrap:wrap}
+  .panel{min-width:50%}
+  .modal,.file-import,.ai-modal,.piatti-modal{max-width:520px}
+  .cucina-body{max-width:560px}
+}
+/* Phone landscape */
+@media(max-width:767px)and(orientation:landscape){
+  .land-panels{flex-direction:row}
+  .panel{min-height:38vh}
+  #pwd{justify-content:center;flex-direction:row;gap:2rem;padding:1rem 2rem}
+  .pwd-logo{margin-bottom:0}
+}
+/* Large screens */
+@media(min-width:900px){
+  .grid{grid-template-columns:repeat(3,1fr)}
+  .hd-row{padding:.9rem 1.5rem .65rem}
+  .ctrl-row{padding:.6rem 1.5rem}
+  .cat-bar{padding:.5rem 1.5rem}
+  .cnt-row{padding:.3rem 1.5rem}
+  .grid{padding:1.2rem 1.5rem 6rem}
+}
+/* Fix modal on tall phones */
+@media(max-height:700px){
+  .modal,.file-import{max-height:96vh}
+  .cucina-bg .cucina-body{padding-bottom:1.5rem}
+}
+/* Import modal specific */
+.file-import-bg .file-import{
+  box-sizing:border-box;
+}
+.import-sec-row{display:flex;gap:.5rem}
+.import-sec-row>div{flex:1}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
@@ -1624,16 +1662,16 @@ function renderImportList(){
     info.appendChild(nm);info.appendChild(sm);
     var toggle=el('button');
     toggle.type='button';toggle.textContent='▾ Espandi';
-    toggle.style.cssText='background:none;border:1px solid var(--cb);border-radius:12px;padding:.15rem .5rem;font-size:.58rem;color:var(--smoke2);cursor:pointer;white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent';
+    toggle.style.cssText='background:var(--bg);border:1px solid var(--cb);border-radius:12px;padding:.2rem .6rem;font-size:.6rem;letter-spacing:.04em;color:var(--smoke);cursor:pointer;white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:all .15s';
     hdr.appendChild(chk);hdr.appendChild(info);hdr.appendChild(toggle);
 
     // ── Expanded edit panel ──
     var panel=el('div');
-    panel.style.cssText='display:none;padding:.55rem .7rem .65rem;border-top:1px solid var(--cb);background:var(--bg);flex-direction:column;gap:.4rem';
+    panel.style.cssText='display:none;padding:.6rem .75rem .7rem;border-top:1px solid var(--cb);background:var(--bg2,#EDE5D0)';
 
     // Piatto field
     var pRow=el('div');pRow.style.cssText='display:flex;gap:.3rem;align-items:center';
-    var pLbl=el('span');pLbl.style.cssText='font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;color:var(--smoke2);white-space:nowrap;font-family:"Cormorant SC",serif';pLbl.textContent='Gruppo';
+    var pLbl=el('span');pLbl.style.cssText='font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke2);white-space:nowrap;font-family:"Cormorant SC",serif;width:52px;flex-shrink:0';pLbl.textContent='Gruppo';
     var pInp=document.createElement('input');
     pInp.type='text';pInp.setAttribute('list','piatti-datalist');
     pInp.placeholder='Piatto / Gruppo (opzionale)';
@@ -1645,7 +1683,7 @@ function renderImportList(){
 
     // Name edit
     var nRow=el('div');nRow.style.cssText='display:flex;gap:.3rem;align-items:center';
-    var nLbl=el('span');nLbl.style.cssText='font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;color:var(--smoke2);white-space:nowrap;font-family:"Cormorant SC",serif';nLbl.textContent='Nome';
+    var nLbl=el('span');nLbl.style.cssText='font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke2);white-space:nowrap;font-family:"Cormorant SC",serif;width:52px;flex-shrink:0';nLbl.textContent='Nome';
     var nInp=document.createElement('input');
     nInp.type='text';nInp.value=r.n;
     nInp.style.cssText='flex:1;background:var(--ctrl);border:1px solid var(--cb);border-radius:5px;padding:.28rem .5rem;font-size:.88rem;color:var(--ink);outline:none;font-family:"Cormorant Garamond",serif;font-style:italic;-webkit-appearance:none';
@@ -1654,15 +1692,15 @@ function renderImportList(){
     panel.appendChild(nRow);
 
     // Ingredients list (editable)
-    var ingLbl=el('div');ingLbl.style.cssText='font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;color:var(--smoke2);font-family:"Cormorant SC",serif;margin-top:.1rem';
+    var ingLbl=el('div');ingLbl.style.cssText='font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke2);font-family:"Cormorant SC",serif;margin:.5rem 0 .3rem';
     ingLbl.textContent='Ingredienti ('+r.i.length+')';
     panel.appendChild(ingLbl);
-    var ingWrap=el('div');ingWrap.style.cssText='display:flex;flex-direction:column;gap:.22rem;max-height:180px;overflow-y:auto';
+    var ingWrap=el('div');ingWrap.style.cssText='display:flex;flex-direction:column;gap:.2rem';
     r.i.forEach(function(ing,j){
-      var row=el('div');row.style.cssText='display:grid;grid-template-columns:1fr .42fr .35fr;gap:.2rem';
+      var row=el('div');row.style.cssText='display:grid;grid-template-columns:1fr .5fr .38fr;gap:.22rem;margin-bottom:.1rem';
       var makeInp=function(val,ph){
         var inp=document.createElement('input');inp.type='text';inp.value=val||'';inp.placeholder=ph;
-        inp.style.cssText='background:var(--ctrl);border:1px solid var(--cb);border-radius:4px;padding:.24rem .4rem;font-size:.76rem;color:var(--ink);outline:none;-webkit-appearance:none;width:100%';
+        inp.style.cssText='background:var(--bg);border:1px solid var(--cb);border-radius:5px;padding:.28rem .45rem;font-size:.8rem;color:var(--ink);outline:none;-webkit-appearance:none;width:100%;box-sizing:border-box';
         return inp;
       };
       var ni=makeInp(ing[0],'Ingrediente');ni.addEventListener('input',function(){r.i[j][0]=this.value;});
@@ -1676,10 +1714,10 @@ function renderImportList(){
 
     // Procedimento
     if(r.p){
-      var procLbl=el('div');procLbl.style.cssText='font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;color:var(--smoke2);font-family:"Cormorant SC",serif;margin-top:.1rem';
+      var procLbl=el('div');procLbl.style.cssText='font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke2);font-family:"Cormorant SC",serif;margin:.5rem 0 .3rem';
       procLbl.textContent='Procedimento';panel.appendChild(procLbl);
       var procTA=document.createElement('textarea');procTA.value=r.p;
-      procTA.style.cssText='width:100%;background:var(--ctrl);border:1px solid var(--cb);border-radius:5px;padding:.3rem .5rem;font-size:.76rem;color:var(--ink);outline:none;resize:vertical;min-height:60px;font-family:"Cormorant Garamond",serif;-webkit-appearance:none';
+      procTA.style.cssText='width:100%;background:var(--bg);border:1px solid var(--cb);border-radius:5px;padding:.35rem .5rem;font-size:.8rem;color:var(--ink);outline:none;resize:vertical;min-height:65px;font-family:"Cormorant Garamond",serif;-webkit-appearance:none;line-height:1.5;box-sizing:border-box';
       procTA.addEventListener('input',function(){r.p=this.value;});
       panel.appendChild(procTA);
     }
@@ -1689,8 +1727,11 @@ function renderImportList(){
     toggle.addEventListener('click',function(e){
       e.stopPropagation();
       isOpen=!isOpen;
-      panel.style.display=isOpen?'flex':'none';
+      panel.style.display=isOpen?'block':'none';
       toggle.textContent=isOpen?'▴ Chiudi':'▾ Espandi';
+      toggle.style.background=isOpen?'var(--glow)':'var(--bg)';
+      toggle.style.borderColor=isOpen?'var(--gold2)':'var(--cb)';
+      toggle.style.color=isOpen?'var(--gold2)':'var(--smoke)';
     });
 
     item.appendChild(hdr);item.appendChild(panel);list.appendChild(item);
@@ -2016,8 +2057,8 @@ function boot(){
       <div class="import-drop-ico">&#128196;</div>
       <p class="import-drop-lbl fsc">Tocca per selezionare un file .txt o .docx</p>
     </div>
-    <div style="display:flex;gap:.5rem;margin-bottom:.3rem">
-      <div style="flex:1">
+    <div class="import-sec-row">
+      <div>
         <label class="fsc" style="display:block;font-size:.54rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke);margin-bottom:.22rem">Ricettario</label>
         <select class="import-sec-sel fs" id="importSec" style="margin-bottom:0"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select>
     <div class="import-preview" id="importPreview">
