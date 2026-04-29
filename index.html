@@ -173,16 +173,16 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 .vbtn-on{background:var(--gold2);border-color:var(--gold2);color:#fff}
 .cat-bar{display:flex;gap:.45rem;overflow-x:auto;padding:.5rem 1.1rem;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center}
 .cat-bar::-webkit-scrollbar{display:none}
-.cpill{white-space:nowrap;border:1px solid var(--cb);background:var(--ctrl);border-radius:20px;padding:.28rem .8rem;font-size:.72rem;letter-spacing:.04em;color:var(--ink2);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .14s;flex-shrink:0;font-family:"DM Sans",sans-serif}
+.cpill{white-space:nowrap;border:1px solid var(--cb);background:var(--ctrl);border-radius:20px;padding:.3rem .85rem;font-size:.74rem;letter-spacing:.03em;color:var(--ink2);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .18s;flex-shrink:0;font-family:"DM Sans",sans-serif}
 .cpill-on{background:var(--gold2);border-color:var(--gold2);color:#fff;font-weight:500}
 .cnt-row{padding:.26rem 1.1rem;font-size:.6rem;letter-spacing:.08em;color:var(--smoke2)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:1rem;padding:1.1rem 1.1rem 5.5rem}
 .grid.list{grid-template-columns:1fr;gap:.5rem}
 
 /* CARDS */
-.card{background:var(--card);border-radius:10px;border:1px solid var(--rim);box-shadow:var(--sh);overflow:hidden;animation:fadeUp .3s ease both;position:relative;transition:box-shadow .2s,transform .2s,border-color .2s}
+.card{background:var(--card);border-radius:12px;border:1px solid var(--rim);box-shadow:var(--sh);overflow:hidden;animation:fadeUp .38s cubic-bezier(.23,1,.32,1) both;position:relative;transition:box-shadow .22s,transform .22s,border-color .22s}
 @media(hover:hover){.card:hover{transform:translateY(-3px);box-shadow:var(--shm);border-color:var(--gold2)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
 .card-stripe{height:3px;background:linear-gradient(90deg,var(--gold2),var(--gold3));flex-shrink:0}
 .card-hd{padding:.8rem .95rem .5rem;position:relative}
 .card-meta{display:flex;align-items:center;gap:.44rem;margin-bottom:.24rem;flex-wrap:wrap}
@@ -380,7 +380,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 .import-preview.on{display:block}
 .import-preview-title{font-size:.9rem;font-style:italic;color:var(--ink);margin-bottom:.5rem;border-bottom:1px solid var(--rim);padding-bottom:.4rem}
 .import-list{display:flex;flex-direction:column;gap:.35rem;max-height:35vh;overflow-y:auto;margin-bottom:.8rem}
-.import-item{display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;background:var(--ctrl);border-radius:6px;border:1px solid var(--cb)}
+.import-item{display:flex;flex-direction:column;gap:.28rem;padding:.5rem .65rem;background:var(--ctrl);border-radius:8px;border:1px solid var(--cb)}
 .import-item-chk{width:16px;height:16px;cursor:pointer;accent-color:var(--gold2);flex-shrink:0}
 .import-item-txt{flex:1;font-size:.8rem;color:var(--ink);min-width:0}
 .import-item-txt small{display:block;font-size:.6rem;color:var(--smoke2)}
@@ -433,6 +433,48 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 .piatto-group-cnt{font-size:.52rem;letter-spacing:.1em;color:var(--smoke3);white-space:nowrap}
 /* Piatto filter pill - dorato */
 .cpill-piatto{background:var(--glow);border-color:var(--gold)}
+
+
+/* CUCINA MODE */
+.cucina-bg{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;flex-direction:column}
+.cucina-bg.on{display:flex}
+.cucina-hd{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--rim);padding:env(safe-area-inset-top,0) 0 0}
+.cucina-hd-inner{display:flex;align-items:center;gap:.8rem;padding:.8rem 1.1rem .6rem}
+.cucina-close{background:none;border:none;cursor:pointer;font-size:.7rem;letter-spacing:.08em;color:var(--smoke);display:flex;align-items:center;gap:.3rem;padding:.28rem 0;-webkit-tap-highlight-color:transparent;transition:color .15s;flex-shrink:0;font-family:"DM Sans",sans-serif}
+.cucina-close:hover{color:var(--gold2)}
+.cucina-title-wrap{flex:1;min-width:0}
+.cucina-recipe-name{font-size:clamp(1.1rem,4vw,1.5rem);font-weight:300;font-style:italic;color:var(--ink);line-height:1.1}
+.cucina-recipe-cat{font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke2)}
+.cucina-body{padding:1.2rem 1.1rem calc(3rem + env(safe-area-inset-bottom));max-width:680px;width:100%;margin:0 auto}
+.cucina-dose-bar{display:flex;align-items:center;gap:.6rem;background:var(--ctrl);border-radius:12px;padding:.7rem 1rem;margin-bottom:1.2rem;border:1px solid var(--cb)}
+.cucina-dose-lbl{flex:1;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--smoke2);font-family:"Cormorant SC",serif}
+.cucina-dose-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--cb);background:var(--bg);color:var(--ink);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:background .12s}
+.cucina-dose-btn:active{background:var(--glow)}
+.cucina-dose-num{font-size:1.1rem;font-style:italic;color:var(--gold2);min-width:2rem;text-align:center;font-family:"Cormorant Garamond",serif}
+.cucina-ings-wrap{background:var(--card);border-radius:12px;border:1px solid var(--rim);overflow:hidden;margin-bottom:1.2rem}
+.cucina-ing-row{display:flex;align-items:center;padding:.75rem 1rem;border-bottom:1px solid var(--bg3);gap:.8rem;transition:background .15s,opacity .15s;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.cucina-ing-row:last-child{border-bottom:none}
+.cucina-ing-row.done{background:var(--glow);opacity:.5;text-decoration:line-through}
+.cucina-ing-chk{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--cb);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .18s;background:var(--ctrl)}
+.cucina-ing-row.done .cucina-ing-chk{background:var(--gold2);border-color:var(--gold2)}
+.cucina-ing-name{flex:1;font-size:.92rem;color:var(--ink);font-family:"Cormorant Garamond",serif;font-style:italic}
+.cucina-ing-qty{font-size:1rem;font-style:normal;color:var(--gold2);font-weight:500;white-space:nowrap;font-family:"DM Sans",sans-serif}
+.cucina-ing-unit{font-size:.7rem;color:var(--smoke2);margin-left:.18rem;font-family:"DM Sans",sans-serif}
+.cucina-proc-wrap{background:var(--card);border-radius:12px;border:1px solid var(--rim);padding:1rem 1.1rem;margin-bottom:1.2rem}
+.cucina-proc-lbl{font-size:.55rem;letter-spacing:.18em;text-transform:uppercase;color:var(--smoke2);margin-bottom:.6rem;font-family:"Cormorant SC",serif}
+.cucina-proc-body{font-size:.92rem;line-height:1.75;color:var(--ink);white-space:pre-wrap;font-family:"Cormorant Garamond",serif;font-style:italic}
+.cucina-open-btn{background:none;border:1px solid var(--cb);border-radius:20px;padding:.18rem .6rem;font-size:.54rem;letter-spacing:.09em;color:var(--smoke2);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .14s;white-space:nowrap;flex-shrink:0;font-family:"Cormorant SC",serif}
+.cucina-open-btn:hover{border-color:var(--gold2);color:var(--gold2)}
+
+/* MULTI-SELECT */
+.multi-bar{position:fixed;bottom:calc(1rem + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:100;
+  background:var(--ink);color:var(--bg);border-radius:24px;padding:.55rem 1rem;
+  display:none;align-items:center;gap:.7rem;box-shadow:0 8px 32px rgba(0,0,0,.35);white-space:nowrap}
+.multi-bar.on{display:flex}
+.multi-bar-cnt{font-style:italic;font-family:"Cormorant Garamond",serif;font-size:.9rem;color:var(--gold2)}
+.multi-bar-move{background:var(--gold2);border:none;border-radius:16px;padding:.32rem .85rem;color:#fff;font-size:.68rem;letter-spacing:.06em;cursor:pointer;font-family:"DM Sans",sans-serif}
+.multi-bar-cancel{background:transparent;border:1px solid rgba(255,255,255,.25);border-radius:16px;padding:.32rem .7rem;color:rgba(255,255,255,.7);font-size:.68rem;cursor:pointer;font-family:"DM Sans",sans-serif}
+.card.multi-sel{border-color:var(--gold2);box-shadow:0 0 0 2.5px var(--gold2),var(--sh)}
 
 @media(max-width:560px){
   .land-top{padding:1.5rem 1.1rem .95rem}.land-logo{width:68px;height:68px}
@@ -575,7 +617,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
     <div class="modal-h"></div>
     <p class="modal-title fd" id="mTitle">Nuova Ricetta</p>
     <label class="fsc">Ricettario</label><select id="mSec" class="fs"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select>
-    <div id="mPiattoWrap" style="display:none"><label class="fsc">Piatto / Gruppo (sottocategoria)</label><input type="text" id="mPiatto" class="fs" placeholder="Es. Tiramisù, Cornetteria&#8230;" autocomplete="off" list="piattiSuggestions"></div>
+    <div id="mPiattoWrap"><label class="fsc">Piatto / Gruppo (sottocategoria)</label><input type="text" id="mPiatto" class="fs" placeholder="Es. Tiramisù, Cornetteria&#8230;" autocomplete="off" list="piatti-datalist"></div>
     <label class="fsc">Nome ricetta</label><input type="text" id="mName" class="fs" placeholder="Es. Ganache al cioccolato" autocomplete="off" autocorrect="off" autocapitalize="words">
     <label class="fsc">Categoria</label><select id="mCat" class="fs"><option>Creme</option><option>Paste</option><option>Torte</option><option>Lievitati</option><option>Pasticcini</option><option>Marmellate</option><option>Ganache</option><option>Mousse</option><option>Gelatine</option><option>Gelati</option><option>Sorbetti</option><option>Semifreddi</option><option>Granite</option><option>Basi</option><option>Glasse</option><option>Biscotti</option><option>Altro</option></select>
     <label class="fsc">Procedimento (facoltativo)</label><textarea id="mProc" class="fs" placeholder="Descrivi il procedimento&#8230;"></textarea>
@@ -625,7 +667,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
   <div class="ai-preview" id="aiPreview">
     <p class="ai-preview-title fd">Conferma e modifica</p>
     <div class="ai-field-row"><span class="ai-field-lbl fsc">Ricettario</span><select class="ai-field-val fs" id="aiSec"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select></div>
-    <div class="ai-field-row" id="aiPiattoRow" style="display:none"><span class="ai-field-lbl fsc">Piatto</span><input type="text" class="ai-field-val fd" id="aiPiatto" placeholder="Nome piatto&#8230;" list="piatti-datalist" list="piattiSuggestions" autocomplete="off"></div>
+    <div class="ai-field-row" id="aiPiattoRow" style="display:none"><span class="ai-field-lbl fsc">Piatto</span><input type="text" class="ai-field-val fd" id="aiPiatto" placeholder="Nome piatto&#8230;" list="piatti-datalist" list="piatti-datalist" autocomplete="off"></div>
     <div class="ai-field-row"><span class="ai-field-lbl fsc">Nome</span><input type="text" class="ai-field-val fd" id="aiName" placeholder="Nome ricetta"></div>
     <div class="ai-field-row"><span class="ai-field-lbl fsc">Categoria</span><select class="ai-field-val fs" id="aiCat"><option>Creme</option><option>Paste</option><option>Torte</option><option>Lievitati</option><option>Pasticcini</option><option>Marmellate</option><option>Ganache</option><option>Mousse</option><option>Gelatine</option><option>Gelati</option><option>Sorbetti</option><option>Semifreddi</option><option>Granite</option><option>Basi</option><option>Glasse</option><option>Biscotti</option><option>Altro</option></select></div>
     <div class="ai-field-row" style="align-items:flex-start"><span class="ai-field-lbl fsc" style="padding-top:.35rem">Procedimento</span><textarea class="ai-field-val fs" id="aiProc" placeholder="Procedimento&#8230;" style="min-height:60px;resize:vertical"></textarea></div>
@@ -638,7 +680,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 <div class="move-bg" id="moveBg"><div class="move-box">
   <h4 class="fd">Sposta ricetta</h4><p class="fsc" id="moveName">Modifica sezione e categoria</p>
   <label class="fsc">Ricettario</label><select id="moveSec" class="fs"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select>
-  <div id="movePiattoWrap" style="display:none"><label class="fsc">Piatto / Gruppo</label><input type="text" id="movePiatto" class="fd" placeholder="Es. Tiramisù" list="piatti-datalist" list="piattiSuggestions" autocomplete="off"></div>
+  <div id="movePiattoWrap" style="display:none"><label class="fsc">Piatto / Gruppo</label><input type="text" id="movePiatto" class="fd" placeholder="Es. Tiramisù" list="piatti-datalist" list="piatti-datalist" autocomplete="off"></div>
   <label class="fsc">Categoria</label><select id="moveCat" class="fs"><option>Creme</option><option>Paste</option><option>Torte</option><option>Lievitati</option><option>Pasticcini</option><option>Marmellate</option><option>Ganache</option><option>Mousse</option><option>Gelatine</option><option>Gelati</option><option>Sorbetti</option><option>Semifreddi</option><option>Granite</option><option>Basi</option><option>Glasse</option><option>Biscotti</option><option>Altro</option></select>
   <div class="move-btns"><button class="move-cancel fs" id="moveCancel" type="button">Annulla</button><button class="move-save fd" id="moveSave" type="button">Sposta</button></div>
 </div></div>
@@ -1088,6 +1130,11 @@ function buildCard(r,idx){
   if(r._c){var st=el('span');st.textContent=' \u2605';st.style.color='var(--gold2)';nm.appendChild(st);}
   hd.appendChild(nm);
   if(r.piatto){var pb=el('div','card-piatto fsc');pb.textContent='\ud83c\udf7d\ufe0f '+r.piatto;hd.appendChild(pb);}
+  // Cucina button
+  var cucinaBtnEl=el('button','cucina-open-btn fsc');cucinaBtnEl.type='button';cucinaBtnEl.textContent='Cucina';
+  cucinaBtnEl.addEventListener('click',function(e){e.stopPropagation();openCucina(r);});
+  hd.appendChild(cucinaBtnEl);
+
   if(isAdmin){
     var acts=el('div','card-acts');
     var eb=el('button','act-btn');eb.type='button';eb.title='Modifica';eb.textContent='\u270f\ufe0f';
@@ -1101,6 +1148,13 @@ function buildCard(r,idx){
       acts.appendChild(db);
     }
     hd.appendChild(acts);
+  }
+  if(isAdmin){
+    var _lpt=null;
+    card.addEventListener('touchstart',function(){_lpt=setTimeout(function(){if(!_multiMode)toggleMultiMode(true);toggleSelCard(r,card);},600);},{passive:true});
+    card.addEventListener('touchend',function(){clearTimeout(_lpt);},{passive:true});
+    card.addEventListener('touchmove',function(){clearTimeout(_lpt);},{passive:true});
+    card.addEventListener('click',function(e){if(_multiMode){e.stopPropagation();toggleSelCard(r,card);}});
   }
   card.appendChild(hd);
   if(r.p){
@@ -1265,7 +1319,12 @@ function doMove(){
 }
 
 function checkAdmin(){
-  try{isAdmin=sessionStorage.getItem('adm')==='1';}catch(e){isAdmin=false;}
+  try{
+    var today=new Date().toDateString();
+    var stored=localStorage.getItem('mdl_adm');
+    isAdmin=(sessionStorage.getItem('adm')==='1')||(stored===today);
+    if(isAdmin) sessionStorage.setItem('adm','1');
+  }catch(e){isAdmin=false;}
   var fw=qs('fabWrap');if(fw)fw.style.display=isAdmin?'flex':'none';
   var ab=qs('admBtn');if(ab)ab.textContent=isAdmin?'\ud83d\udd13 Admin':'\ud83d\udd12';
   var appEl=qs('app');if(appEl){
@@ -1275,13 +1334,13 @@ function checkAdmin(){
   renderGrid();
 }
 function openAdm(){
-  if(isAdmin){try{sessionStorage.removeItem('adm');}catch(e){}isAdmin=false;checkAdmin();return;}
+  if(isAdmin){try{sessionStorage.removeItem('adm');localStorage.removeItem('mdl_adm');}catch(e){}isAdmin=false;checkAdmin();return;}
   qs('admPin').value='';qs('admErr').textContent='';qs('admBg').classList.add('on');setTimeout(function(){qs('admPin').focus();},100);
 }
 function closeAdm(){qs('admBg').classList.remove('on');}
 function submitAdm(){
   var val=(qs('admPin').value||'').trim();
-  if(val===ADMIN_PIN){try{sessionStorage.setItem('adm','1');}catch(e){}isAdmin=true;closeAdm();checkAdmin();}
+  if(val===ADMIN_PIN){try{sessionStorage.setItem('adm','1');localStorage.setItem('mdl_adm',new Date().toDateString());}catch(e){}isAdmin=true;closeAdm();checkAdmin();}
   else{qs('admErr').textContent='PIN non corretto';qs('admPin').value='';qs('admPin').focus();}
 }
 
@@ -1400,46 +1459,109 @@ function openImport(){
   qs('importBg').classList.add('on');
 }
 function closeImport(){qs('importBg').classList.remove('on');}
+function parseIngLine(line){
+  // Pattern 1: "250gr burro" / "250 g burro" / "250gr di burro"
+  var m1=line.match(/^(N[.°]?\s*)?(\d+[.,]?\d*)\s*(gr|g|kg|ml|l|cl|n[.°o]?|pz|cucchiai[o]?|pizzico|bustina[e]?)\.?\s+(?:di\s+)?(.+)/i);
+  if(m1){
+    var qty=parseFloat(m1[2].replace(',','.'));
+    var unit=(m1[1]?'n°':m1[3])||'g';
+    var name=m1[4].trim();
+    return[name,isNaN(qty)?null:qty,unit];
+  }
+  // Pattern 2: "burro 250g" / "burro 250 gr"
+  var m2=line.match(/^(.+?)\s+(\d+[.,]?\d*)\s*(gr|g|kg|ml|l|cl)$/i);
+  if(m2){
+    var qty2=parseFloat(m2[2].replace(',','.'));
+    return[m2[1].trim(),isNaN(qty2)?null:qty2,m2[3]||'g'];
+  }
+  // Pattern 3: "q.b." / "qb" at end or alone
+  var m3=line.match(/^(.+?)\s+q\.?b\.?$/i);
+  if(m3)return[m3[1].trim(),null,'q.b.'];
+  if(/^q\.?b\.?$/i.test(line))return[line,null,'q.b.'];
+  // Default: whole line = ingredient name, no qty
+  if(line.length>1&&line.length<80)return[line,null,'q.b.'];
+  return null;
+}
+
 function parseRecipeText(raw){
   var recipes=[];
-  var lines=raw.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
+  raw=raw.replace(/\t/g,' ').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  var blocks=raw.split(/\n[ \t]*\n/);
+  if(blocks.length>1){
+    blocks.forEach(function(block){
+      var lines=block.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
+      if(lines.length<2)return;
+      var title=lines[0];
+      if(/^\d/.test(title))return;
+      var ings=[];var proc='';var inProc=false;
+      for(var i=1;i<lines.length;i++){
+        var line=lines[i];
+        if(/^(procedimento|preparazione|metodo|note)[\s:]/i.test(line)){inProc=true;continue;}
+        if(inProc){proc+=(proc?'\n':'')+line;}
+        else{var ing=parseIngLine(line);if(ing)ings.push(ing);}
+      }
+      recipes.push({n:title,i:ings,c:'Altro',p:proc});
+    });
+    if(recipes.length>0)return recipes;
+  }
+  var lines2=raw.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
   var current=null;
-  lines.forEach(function(line){
-    var isIng=/^\d+\s*(gr|g|kg|ml|l|n[oo]|cucchiai)/i.test(line)||/^\d+[.,]?\d*\s*(gr|g|kg|ml)/i.test(line);
-    var isTitle=!isIng&&line.length>3&&line.length<80&&!/^[-*]/.test(line)&&!/^\d+[.,]/.test(line);
+  lines2.forEach(function(line){
+    var isIng=parseIngLine(line)!==null&&/\d/.test(line);
+    var isTitle=!isIng&&line.length>3&&line.length<100&&!/^[-]/.test(line);
     if(isTitle&&current&&current.i.length>0){recipes.push(current);current=null;}
     if(isTitle&&!current){current={n:line,i:[],c:'Altro',p:''};}
-    else if(current){
-      var m=line.match(/^(\d+[.,]?\d*)\s*(gr|g|kg|ml|l|cl|n[oo]|cucchiai|cucchiaio|pizzico)?\s+(.+)/i);
-      var m2=line.match(/^(.+?)\s+(\d+[.,]?\d*)\s*(gr|g|kg|ml|l|cl)?$/i);
-      if(m){var qty=parseFloat(m[1].replace(',','.'));var unit=m[2]||'g';var name=m[3].trim();current.i.push([name,isNaN(qty)?null:qty,unit]);}
-      else if(m2){var qty2=parseFloat(m2[2].replace(',','.'));var unit2=m2[3]||'g';var name2=m2[1].trim();current.i.push([name2,isNaN(qty2)?null:qty2,unit2]);}
-      else if(line.length>2){current.i.push([line,null,'q.b.']);}
-    }
+    else if(current){var ing=parseIngLine(line);if(ing)current.i.push(ing);}
   });
   if(current&&current.i.length>0)recipes.push(current);
   return recipes;
 }
 function renderImportList(){
   var list=qs('importList');list.innerHTML='';
+  if(!_importParsed.length){qs('importPreview').classList.remove('on');return;}
   _importParsed.forEach(function(r,i){
-    var item=el('div','import-item');
+    var item=el('div','import-item');item.style.flexDirection='column';item.style.alignItems='stretch';item.style.gap='.3rem';
+    // Row 1: checkbox + name
+    var row1=el('div');row1.style.cssText='display:flex;align-items:center;gap:.5rem';
     var chk=document.createElement('input');chk.type='checkbox';chk.checked=true;chk.className='import-item-chk';chk.id='ic'+i;
     var lbl=el('label','import-item-txt');lbl.htmlFor='ic'+i;
-    var nm=el('span');nm.textContent=r.n;
-    var sm=el('small');sm.textContent=r.i.length+' ingredienti';
+    var nm=el('b');nm.style.cssText='font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.95rem';nm.textContent=r.n;
+    var sm=el('small');sm.style.cssText='display:block;font-size:.6rem;color:var(--smoke2);margin-top:.12rem';
+    sm.textContent=r.i.length+' ingredienti'+(r.p?' · procedimento':'');
     lbl.appendChild(nm);lbl.appendChild(sm);
-    item.appendChild(chk);item.appendChild(lbl);list.appendChild(item);
+    row1.appendChild(chk);row1.appendChild(lbl);
+    // Row 2: piatto input
+    var row2=el('div');row2.style.cssText='display:flex;gap:.3rem;padding-left:1.6rem';
+    var piattoInp=document.createElement('input');
+    piattoInp.type='text';piattoInp.placeholder='Piatto / Gruppo (opzionale)';
+    piattoInp.setAttribute('list','piatti-datalist');
+    piattoInp.style.cssText='flex:1;background:var(--ctrl);border:1px solid var(--cb);border-radius:5px;padding:.28rem .5rem;font-size:.78rem;color:var(--ink);outline:none;font-family:"Cormorant Garamond",serif;-webkit-appearance:none';
+    piattoInp.addEventListener('change',function(){r.piatto=this.value.trim();});
+    piattoInp.addEventListener('input',function(){r.piatto=this.value.trim();});
+    row2.appendChild(piattoInp);
+    item.appendChild(row1);item.appendChild(row2);list.appendChild(item);
   });
+  // Show count
+  var cnt=qs('importPreviewTitle');
+  if(cnt)cnt.textContent=_importParsed.length+' ricett'+(_importParsed.length===1?'a trovata':'e trovate')+' — seleziona quelle da importare';
   qs('importPreview').classList.add('on');
 }
 function doImport(){
   var sec=qs('importSec').value||'colazioni';
+  var cat=qs('importCat').value||'Altro';
   var chks=qs('importList').querySelectorAll('.import-item-chk');
   var count=0;
-  chks.forEach(function(chk,i){if(chk.checked&&_importParsed[i]){var r=Object.assign({},_importParsed[i],{s:sec});saveRec(r);count++;}});
+  chks.forEach(function(chk,i){
+    if(chk.checked&&_importParsed[i]){
+      var r=Object.assign({},_importParsed[i],{s:sec,c:cat});
+      if(!r.piatto)delete r.piatto;
+      saveRec(r);count++;
+    }
+  });
   closeImport();
-  setTimeout(function(){if(count>0)alert(count+' ricett'+(count===1?'a':'e')+' importat'+(count===1?'a':'e')+'!');},400);
+  setTimeout(function(){
+    if(count>0)showDbBanner(count+' ricett'+(count===1?'a':'e')+' importat'+(count===1?'a':'e'),'ok');
+  },400);
 }
 
 /* PIATTI MANAGER */
@@ -1484,6 +1606,76 @@ function createPiatto(){
   renderPiattiList();
 }
 
+
+var _cucinaRec=null, _cucinaDose=1;
+function openCucina(rec){
+  _cucinaRec=rec; _cucinaDose=dose;
+  qs('cucinaName').textContent=rec.n;
+  qs('cucinaCat').textContent=(rec.c||'')+(rec.piatto?' · '+rec.piatto:'');
+  qs('cucinaDoseVal').textContent=fmtN(_cucinaDose);
+  buildCucinaIngs();
+  var proc=qs('cucinaProc');
+  if(rec.p){proc.style.display='block';qs('cucinaProcText').textContent=rec.p;}
+  else{proc.style.display='none';}
+  qs('cucinaBg').classList.add('on');
+  qs('cucinaBg').scrollTop=0;
+  try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(function(){});}catch(e){}
+}
+function closeCucina(){qs('cucinaBg').classList.remove('on');_cucinaRec=null;}
+function buildCucinaIngs(){
+  var list=qs('cucinaIngs');if(!list||!_cucinaRec)return;
+  list.innerHTML='';
+  (_cucinaRec.i||[]).forEach(function(ing){
+    var row=el('div','cucina-ing-row');
+    var chk=el('div','cucina-ing-chk');
+    var nm=el('div','cucina-ing-name');nm.textContent=ing[0];
+    var qtyWrap=el('div');qtyWrap.style.cssText='display:flex;align-items:baseline;gap:.12rem;flex-shrink:0';
+    var qty=el('span','cucina-ing-qty');
+    var val=ing[1];
+    if(val===null||val===undefined){qty.textContent='q.b.';}
+    else{var calc=val*_cucinaDose;qty.textContent=(calc===Math.floor(calc))?String(calc):calc.toFixed(1);}
+    qty.setAttribute('data-base',val===null?'':String(val));
+    var unit=el('span','cucina-ing-unit');unit.textContent=(val===null)?'':ing[2];
+    qtyWrap.appendChild(qty);qtyWrap.appendChild(unit);
+    row.appendChild(chk);row.appendChild(nm);row.appendChild(qtyWrap);
+    row.addEventListener('click',function(){row.classList.toggle('done');});
+    list.appendChild(row);
+  });
+}
+function updateCucinaDose(){
+  qs('cucinaDoseVal').textContent=fmtN(_cucinaDose);
+  var qtys=qs('cucinaIngs').querySelectorAll('.cucina-ing-qty');
+  qtys.forEach(function(q){
+    var b=q.getAttribute('data-base');
+    if(b===''||b===null){q.textContent='q.b.';}
+    else{var calc=parseFloat(b)*_cucinaDose;q.textContent=(calc===Math.floor(calc))?String(calc):calc.toFixed(1);}
+  });
+}
+
+/* MULTI-SELECT */
+var _multiSel=[],_multiMode=false;
+function toggleMultiMode(on){
+  _multiMode=on;
+  if(!on){_multiSel=[];renderGrid();}
+  var bar=qs('multiBar');if(bar)bar.classList.toggle('on',on);
+}
+function updateMultiBar(){var c=qs('multiCnt');if(c)c.textContent=_multiSel.length;}
+function toggleSelCard(rec,cardEl){
+  var idx=_multiSel.findIndex(function(r){return r._id&&r._id===rec._id||(r.n===rec.n&&r.s===rec.s);});
+  if(idx===-1){_multiSel.push(rec);cardEl.classList.add('multi-sel');}
+  else{_multiSel.splice(idx,1);cardEl.classList.remove('multi-sel');}
+  updateMultiBar();
+  if(_multiSel.length===0)toggleMultiMode(false);
+}
+function openMultiMove(){
+  if(!_multiSel.length)return;
+  var nm=qs('moveName');if(nm)nm.textContent=_multiSel.length+' ricette selezionate';
+  var ms=qs('moveSec');if(ms&&curSec&&curSec!=='tutti')ms.value=curSec;
+  var mp=qs('movePiatto');if(mp)mp.value='';
+  toggleMovePiatto();
+  qs('moveBg').classList.add('on');
+}
+
 function boot(){
   var th;try{th=localStorage.getItem('mdl_th');}catch(e){}setTheme((th&&THEMES.indexOf(th)!==-1)?th:'t-crema');
   var dots=document.querySelectorAll('.t-dot');for(var di=0;di<dots.length;di++){(function(d){d.addEventListener('click',function(){setTheme(d.dataset.t);});})(dots[di]);}
@@ -1492,7 +1684,18 @@ function boot(){
   qs('pwdInp').addEventListener('keyup',function(e){if(e.key==='Enter')submitPwd();});
   var gk;try{gk=localStorage.getItem('groq_key');}catch(e){}if(gk){var ki=qs('aiKey');if(ki)ki.value=gk;}
   var panels=document.querySelectorAll('.panel');for(var pi=0;pi<panels.length;pi++){(function(p){p.addEventListener('click',function(){openSection(p.dataset.sec);});})(panels[pi]);}
-  qs('backBtn').addEventListener('click',function(){qs('landing').style.display='flex';qs('app').classList.remove('on');curSec=null;curCat='Tutte';});
+  function goToLanding(){qs('landing').style.display='flex';qs('app').classList.remove('on');curSec=null;curCat='Tutte';}
+  qs('backBtn').addEventListener('click',goToLanding);
+  var _swX=0,_swY=0;
+  var appEl2=qs('app');
+  if(appEl2){
+    appEl2.addEventListener('touchstart',function(e){_swX=e.touches[0].clientX;_swY=e.touches[0].clientY;},{passive:true});
+    appEl2.addEventListener('touchend',function(e){
+      var dx=e.changedTouches[0].clientX-_swX;
+      var dy=Math.abs(e.changedTouches[0].clientY-_swY);
+      if(dx>80&&dy<60) goToLanding();
+    },{passive:true});
+  }
   qs('admBtn').addEventListener('click',openAdm);qs('admOk').addEventListener('click',submitAdm);
   qs('admCancel').addEventListener('click',closeAdm);
   qs('admBg').addEventListener('click',function(e){if(e.target===qs('admBg'))closeAdm();});
@@ -1530,6 +1733,19 @@ function boot(){
       if(prev){prev.src=result;prev.style.display='block';}if(empty)empty.style.display='none';if(area)area.classList.add('has-img');
     };reader.readAsDataURL(file);
   });
+  // Cucina
+  var cucinaClose=qs('cucinaClose');if(cucinaClose)cucinaClose.addEventListener('click',closeCucina);
+  var cucinaPlus=qs('cucinaPlus');if(cucinaPlus)cucinaPlus.addEventListener('click',function(){_cucinaDose=Math.round((_cucinaDose+0.5)*10)/10;updateCucinaDose();});
+  var cucinaMinus=qs('cucinaMinus');if(cucinaMinus)cucinaMinus.addEventListener('click',function(){_cucinaDose=Math.max(0.5,Math.round((_cucinaDose-0.5)*10)/10);updateCucinaDose();});
+  var cucinaBg2=qs('cucinaBg');
+  if(cucinaBg2){
+    var _csX=0,_csY=0;
+    cucinaBg2.addEventListener('touchstart',function(e){_csX=e.touches[0].clientX;_csY=e.touches[0].clientY;},{passive:true});
+    cucinaBg2.addEventListener('touchend',function(e){var dx=e.changedTouches[0].clientX-_csX;var dy=Math.abs(e.changedTouches[0].clientY-_csY);if(dx>90&&dy<70)closeCucina();},{passive:true});
+  }
+  // Multi-select
+  var multiMoveBtn=qs('multiMoveBtn');if(multiMoveBtn)multiMoveBtn.addEventListener('click',openMultiMove);
+  var multiCancelBtn=qs('multiCancelBtn');if(multiCancelBtn)multiCancelBtn.addEventListener('click',function(){toggleMultiMode(false);});
   var qprocSave=qs('qprocSave');if(qprocSave)qprocSave.addEventListener('click',saveQuickProc);
   var qprocCancel=qs('qprocCancel');if(qprocCancel)qprocCancel.addEventListener('click',closeQuickProc);
   var qprocBg=qs('qprocBg');if(qprocBg)qprocBg.addEventListener('click',function(e){if(e.target===qprocBg)closeQuickProc();});
@@ -1583,10 +1799,12 @@ function boot(){
       <div class="import-drop-ico">&#128196;</div>
       <p class="import-drop-lbl fsc">Tocca per selezionare un file .txt</p>
     </div>
-    <label class="fsc" style="display:block;font-size:.54rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke);margin-bottom:.22rem">Ricettario destinazione</label>
-    <select class="import-sec-sel fs" id="importSec"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select>
+    <div style="display:flex;gap:.5rem;margin-bottom:.3rem">
+      <div style="flex:1">
+        <label class="fsc" style="display:block;font-size:.54rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke);margin-bottom:.22rem">Ricettario</label>
+        <select class="import-sec-sel fs" id="importSec" style="margin-bottom:0"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select>
     <div class="import-preview" id="importPreview">
-      <p class="import-preview-title fd">Ricette trovate &mdash; seleziona quelle da importare</p>
+      <p class="import-preview-title fd" id="importPreviewTitle">Ricette trovate &mdash; seleziona quelle da importare</p>
       <div class="import-list" id="importList"></div>
       <button class="import-btn fd" id="importSaveBtn" type="button">Importa selezionate</button>
     </div>
@@ -1631,6 +1849,40 @@ function boot(){
 </div>
 
 <datalist id="piattiSuggestions"></datalist>
-<datalist id="piatti-datalist" id="piatti-datalist"></datalist>
+<datalist id="piatti-datalist"></datalist>
+
+<div class="cucina-bg" id="cucinaBg">
+  <header class="cucina-hd">
+    <div class="cucina-hd-inner">
+      <button class="cucina-close" id="cucinaClose">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="12" height="12"><polyline points="10,3 4,8 10,13"/></svg>
+        Indietro
+      </button>
+      <div class="cucina-title-wrap">
+        <div class="cucina-recipe-name fd" id="cucinaName"></div>
+        <div class="cucina-recipe-cat fsc" id="cucinaCat"></div>
+      </div>
+    </div>
+  </header>
+  <div class="cucina-body">
+    <div class="cucina-dose-bar">
+      <span class="cucina-dose-lbl">Dosi per</span>
+      <button class="cucina-dose-btn" id="cucinaMinus" type="button">&#8722;</button>
+      <span class="cucina-dose-num fd" id="cucinaDoseVal">1</span>
+      <button class="cucina-dose-btn" id="cucinaPlus" type="button">+</button>
+    </div>
+    <div class="cucina-ings-wrap" id="cucinaIngs"></div>
+    <div class="cucina-proc-wrap" id="cucinaProc" style="display:none">
+      <div class="cucina-proc-lbl">Procedimento</div>
+      <div class="cucina-proc-body fd" id="cucinaProcText"></div>
+    </div>
+  </div>
+</div>
+<div class="multi-bar" id="multiBar">
+  <span class="fsc" style="font-size:.62rem">Selezionati:</span>
+  <span class="multi-bar-cnt" id="multiCnt">0</span>
+  <button class="multi-bar-move" id="multiMoveBtn" type="button">Sposta</button>
+  <button class="multi-bar-cancel" id="multiCancelBtn" type="button">&#10005;</button>
+</div>
 </body>
 </html>
