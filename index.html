@@ -380,7 +380,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 .import-preview.on{display:block}
 .import-preview-title{font-size:.9rem;font-style:italic;color:var(--ink);margin-bottom:.5rem;border-bottom:1px solid var(--rim);padding-bottom:.4rem}
 .import-list{display:flex;flex-direction:column;gap:.35rem;max-height:35vh;overflow-y:auto;margin-bottom:.8rem}
-.import-item{display:flex;flex-direction:column;gap:.28rem;padding:.5rem .65rem;background:var(--ctrl);border-radius:8px;border:1px solid var(--cb)}
+.import-item{display:flex;flex-direction:column;gap:0;background:var(--ctrl);border-radius:10px;border:1px solid var(--cb);overflow:hidden}
 .import-item-chk{width:16px;height:16px;cursor:pointer;accent-color:var(--gold2);flex-shrink:0}
 .import-item-txt{flex:1;font-size:.8rem;color:var(--ink);min-width:0}
 .import-item-txt small{display:block;font-size:.6rem;color:var(--smoke2)}
@@ -1559,48 +1559,126 @@ function renderImportList(){
   var list=qs('importList');list.innerHTML='';
   if(!_importParsed.length){qs('importPreview').classList.remove('on');return;}
   _importParsed.forEach(function(r,i){
-    var item=el('div','import-item');item.style.flexDirection='column';item.style.alignItems='stretch';item.style.gap='.3rem';
-    // Row 1: checkbox + name
-    var row1=el('div');row1.style.cssText='display:flex;align-items:center;gap:.5rem';
-    var chk=document.createElement('input');chk.type='checkbox';chk.checked=true;chk.className='import-item-chk';chk.id='ic'+i;
-    var lbl=el('label','import-item-txt');lbl.htmlFor='ic'+i;
-    var nm=el('b');nm.style.cssText='font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.95rem';nm.textContent=r.n;
-    var sm=el('small');sm.style.cssText='display:block;font-size:.6rem;color:var(--smoke2);margin-top:.12rem';
+    var item=el('div','import-item');
+    item.style.cssText='flex-direction:column;gap:0;padding:0;overflow:hidden;border-radius:10px';
+
+    // ── Header row ──
+    var hdr=el('div');
+    hdr.style.cssText='display:flex;align-items:center;gap:.5rem;padding:.5rem .65rem;cursor:pointer;-webkit-tap-highlight-color:transparent';
+    var chk=document.createElement('input');chk.type='checkbox';chk.checked=true;
+    chk.className='import-item-chk';chk.id='ic'+i;chk.style.cssText='width:17px;height:17px;cursor:pointer;accent-color:var(--gold2);flex-shrink:0';
+    chk.addEventListener('click',function(e){e.stopPropagation();});
+    var info=el('label','import-item-txt');info.htmlFor='ic'+i;info.style.cssText='flex:1;cursor:pointer';
+    var nm=el('b');nm.style.cssText='font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.95rem;display:block';
+    nm.textContent=r.n;
+    var sm=el('small');sm.style.cssText='font-size:.6rem;color:var(--smoke2)';
     sm.textContent=r.i.length+' ingredienti'+(r.p?' · procedimento':'');
-    lbl.appendChild(nm);lbl.appendChild(sm);
-    row1.appendChild(chk);row1.appendChild(lbl);
-    // Row 2: piatto input
-    var row2=el('div');row2.style.cssText='display:flex;gap:.3rem;padding-left:1.6rem';
-    var piattoInp=document.createElement('input');
-    piattoInp.type='text';piattoInp.placeholder='Piatto / Gruppo (opzionale)';
-    piattoInp.setAttribute('list','piatti-datalist');
-    piattoInp.style.cssText='flex:1;background:var(--ctrl);border:1px solid var(--cb);border-radius:5px;padding:.28rem .5rem;font-size:.78rem;color:var(--ink);outline:none;font-family:"Cormorant Garamond",serif;-webkit-appearance:none';
-    piattoInp.addEventListener('change',function(){r.piatto=this.value.trim();});
-    piattoInp.addEventListener('input',function(){r.piatto=this.value.trim();});
-    row2.appendChild(piattoInp);
-    item.appendChild(row1);item.appendChild(row2);list.appendChild(item);
+    info.appendChild(nm);info.appendChild(sm);
+    var toggle=el('button');
+    toggle.type='button';toggle.textContent='▾ Espandi';
+    toggle.style.cssText='background:none;border:1px solid var(--cb);border-radius:12px;padding:.15rem .5rem;font-size:.58rem;color:var(--smoke2);cursor:pointer;white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent';
+    hdr.appendChild(chk);hdr.appendChild(info);hdr.appendChild(toggle);
+
+    // ── Expanded edit panel ──
+    var panel=el('div');
+    panel.style.cssText='display:none;padding:.55rem .7rem .65rem;border-top:1px solid var(--cb);background:var(--bg);flex-direction:column;gap:.4rem';
+
+    // Piatto field
+    var pRow=el('div');pRow.style.cssText='display:flex;gap:.3rem;align-items:center';
+    var pLbl=el('span');pLbl.style.cssText='font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;color:var(--smoke2);white-space:nowrap;font-family:"Cormorant SC",serif';pLbl.textContent='Gruppo';
+    var pInp=document.createElement('input');
+    pInp.type='text';pInp.setAttribute('list','piatti-datalist');
+    pInp.placeholder='Piatto / Gruppo (opzionale)';
+    pInp.style.cssText='flex:1;background:var(--ctrl);border:1px solid var(--cb);border-radius:5px;padding:.28rem .5rem;font-size:.8rem;color:var(--ink);outline:none;font-family:"Cormorant Garamond",serif;-webkit-appearance:none';
+    if(r.piatto)pInp.value=r.piatto;
+    pInp.addEventListener('input',function(){r.piatto=this.value.trim();});
+    pRow.appendChild(pLbl);pRow.appendChild(pInp);
+    panel.appendChild(pRow);
+
+    // Name edit
+    var nRow=el('div');nRow.style.cssText='display:flex;gap:.3rem;align-items:center';
+    var nLbl=el('span');nLbl.style.cssText='font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;color:var(--smoke2);white-space:nowrap;font-family:"Cormorant SC",serif';nLbl.textContent='Nome';
+    var nInp=document.createElement('input');
+    nInp.type='text';nInp.value=r.n;
+    nInp.style.cssText='flex:1;background:var(--ctrl);border:1px solid var(--cb);border-radius:5px;padding:.28rem .5rem;font-size:.88rem;color:var(--ink);outline:none;font-family:"Cormorant Garamond",serif;font-style:italic;-webkit-appearance:none';
+    nInp.addEventListener('input',function(){r.n=this.value;nm.textContent=this.value;});
+    nRow.appendChild(nLbl);nRow.appendChild(nInp);
+    panel.appendChild(nRow);
+
+    // Ingredients list (editable)
+    var ingLbl=el('div');ingLbl.style.cssText='font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;color:var(--smoke2);font-family:"Cormorant SC",serif;margin-top:.1rem';
+    ingLbl.textContent='Ingredienti ('+r.i.length+')';
+    panel.appendChild(ingLbl);
+    var ingWrap=el('div');ingWrap.style.cssText='display:flex;flex-direction:column;gap:.22rem;max-height:180px;overflow-y:auto';
+    r.i.forEach(function(ing,j){
+      var row=el('div');row.style.cssText='display:grid;grid-template-columns:1fr .42fr .35fr;gap:.2rem';
+      var makeInp=function(val,ph){
+        var inp=document.createElement('input');inp.type='text';inp.value=val||'';inp.placeholder=ph;
+        inp.style.cssText='background:var(--ctrl);border:1px solid var(--cb);border-radius:4px;padding:.24rem .4rem;font-size:.76rem;color:var(--ink);outline:none;-webkit-appearance:none;width:100%';
+        return inp;
+      };
+      var ni=makeInp(ing[0],'Ingrediente');ni.addEventListener('input',function(){r.i[j][0]=this.value;});
+      var qi=makeInp(ing[1]!==null?String(ing[1]):'','Qtà');qi.type='number';qi.min='0';qi.step='any';
+      qi.addEventListener('input',function(){r.i[j][1]=this.value?parseFloat(this.value):null;});
+      var ui=makeInp(ing[2],'u.m.');ui.addEventListener('input',function(){r.i[j][2]=this.value;});
+      row.appendChild(ni);row.appendChild(qi);row.appendChild(ui);
+      ingWrap.appendChild(row);
+    });
+    panel.appendChild(ingWrap);
+
+    // Procedimento
+    if(r.p){
+      var procLbl=el('div');procLbl.style.cssText='font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;color:var(--smoke2);font-family:"Cormorant SC",serif;margin-top:.1rem';
+      procLbl.textContent='Procedimento';panel.appendChild(procLbl);
+      var procTA=document.createElement('textarea');procTA.value=r.p;
+      procTA.style.cssText='width:100%;background:var(--ctrl);border:1px solid var(--cb);border-radius:5px;padding:.3rem .5rem;font-size:.76rem;color:var(--ink);outline:none;resize:vertical;min-height:60px;font-family:"Cormorant Garamond",serif;-webkit-appearance:none';
+      procTA.addEventListener('input',function(){r.p=this.value;});
+      panel.appendChild(procTA);
+    }
+
+    // Toggle expand
+    var isOpen=false;
+    toggle.addEventListener('click',function(e){
+      e.stopPropagation();
+      isOpen=!isOpen;
+      panel.style.display=isOpen?'flex':'none';
+      toggle.textContent=isOpen?'▴ Chiudi':'▾ Espandi';
+    });
+
+    item.appendChild(hdr);item.appendChild(panel);list.appendChild(item);
   });
-  // Show count
+
   var cnt=qs('importPreviewTitle');
-  if(cnt)cnt.textContent=_importParsed.length+' ricett'+(_importParsed.length===1?'a trovata':'e trovate')+' — seleziona quelle da importare';
+  if(cnt)cnt.textContent=_importParsed.length+' ricett'+(_importParsed.length===1?'a trovata':'e trovate')+' — espandi per modificare';
   qs('importPreview').classList.add('on');
 }
+
+
 function doImport(){
   var sec=qs('importSec').value||'colazioni';
-  var cat=qs('importCat').value||'Altro';
+  var cat=qs('importCat')?qs('importCat').value||'Altro':'Altro';
   var chks=qs('importList').querySelectorAll('.import-item-chk');
   var count=0;
   chks.forEach(function(chk,i){
     if(chk.checked&&_importParsed[i]){
-      var r=Object.assign({},_importParsed[i],{s:sec,c:cat});
-      if(!r.piatto)delete r.piatto;
+      var base=_importParsed[i];
+      // Build clean recipe
+      var r={
+        n:(base.n||'Ricetta senza nome').trim(),
+        c:base.c||cat,
+        s:base.s||sec,
+        i:base.i||[]
+      };
+      if(base.piatto&&base.piatto.trim())r.piatto=base.piatto.trim();
+      if(base.p&&base.p.trim())r.p=base.p.trim();
+      if(!r.i.length)r.i=[['(nessun ingrediente)',null,'']];
       saveRec(r);count++;
     }
   });
   closeImport();
   setTimeout(function(){
     if(count>0)showDbBanner(count+' ricett'+(count===1?'a':'e')+' importat'+(count===1?'a':'e'),'ok');
-  },400);
+  },500);
 }
 
 /* PIATTI MANAGER */
