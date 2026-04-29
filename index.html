@@ -1499,62 +1499,110 @@ function openImport(){
 }
 function closeImport(){qs('importBg').classList.remove('on');}
 function parseIngLine(line){
-  // Pattern 1: "250gr burro" / "250 g burro" / "250gr di burro"
-  var m1=line.match(/^(N[.°]?\s*)?(\d+[.,]?\d*)\s*(gr|g|kg|ml|l|cl|n[.°o]?|pz|cucchiai[o]?|pizzico|bustina[e]?)\.?\s+(?:di\s+)?(.+)/i);
-  if(m1){
-    var qty=parseFloat(m1[2].replace(',','.'));
-    var unit=(m1[1]?'n°':m1[3])||'g';
-    var name=m1[4].trim();
+  var t=line.trim();
+  if(!t||t.length<2)return null;
+  // Verb-first lines = procedure, not ingredients
+  if(/^(impastare|portare|versare|aggiungere|unire|mescolare|incorporare|montare|cuocere|infornare|lasciare|far\s|poi\s|quindi|procedere|infine|togliere|stendere|formare|mettere|riporre|lavorare|sciogliere|bollire|frullare|pesare|setacciare|tagliare|far\s)/i.test(t))return null;
+  // Numbered steps = procedure
+  if(/^\d+[).\-]\s+[A-Z]/i.test(t))return null;
+  // Pattern: number + unit + name — "250gr burro", "250 g di burro", "N3 uova"
+  var m1=t.match(/^[Nn]\.?\s*[°o]?\s*(\d+[.,]?\d*)\s+(.+)/);
+  if(m1){return[m1[2].trim(),parseFloat(m1[1].replace(',','.')),'\u00b0'];}
+  var m2=t.match(/^(\d+[.,]?\d*)\s*(gr|g|kg|ml|l|cl|n\.?[°o]?|pz|bustine?|cucchiai[o]?|pizzico|q\.?b\.?)\.?\s+(?:di\s+)?(.+)/i);
+  if(m2){
+    var qty=parseFloat(m2[1].replace(',','.'));
+    var unit=m2[2].replace(/\.$/,'');
+    var name=m2[3].trim();
+    if(name.length<2)return null;
     return[name,isNaN(qty)?null:qty,unit];
   }
-  // Pattern 2: "burro 250g" / "burro 250 gr"
-  var m2=line.match(/^(.+?)\s+(\d+[.,]?\d*)\s*(gr|g|kg|ml|l|cl)$/i);
-  if(m2){
-    var qty2=parseFloat(m2[2].replace(',','.'));
-    return[m2[1].trim(),isNaN(qty2)?null:qty2,m2[3]||'g'];
+  // Pattern: name + number + unit — "burro 250g", "farina 500 gr"
+  var m3=t.match(/^(.+?)\s+(\d+[.,]?\d*)\s*(gr|g|kg|ml|l|cl)\.?$/i);
+  if(m3){var q3=parseFloat(m3[2].replace(',','.'));return[m3[1].trim(),isNaN(q3)?null:q3,m3[3]];}
+  // q.b. lines
+  if(/q\.?b\.?/i.test(t)){
+    var nm=t.replace(/q\.?b\.?/i,'').replace(/[-:]/g,'').trim();
+    return[nm||t,null,'q.b.'];
   }
-  // Pattern 3: "q.b." / "qb" at end or alone
-  var m3=line.match(/^(.+?)\s+q\.?b\.?$/i);
-  if(m3)return[m3[1].trim(),null,'q.b.'];
-  if(/^q\.?b\.?$/i.test(line))return[line,null,'q.b.'];
-  // Default: whole line = ingredient name, no qty
-  if(line.length>1&&line.length<80)return[line,null,'q.b.'];
+  // Lines that look like pure ingredient names (no numbers, short, no verbs)
+  if(t.length<60&&!/\s{2,}/.test(t)&&/^[A-Za-z\u00C0-\u024F\s]+$/.test(t)){
+    return[t,null,'q.b.'];
+  }
   return null;
+}
+
+function isRecipeTitle(line, prevWasIng){
+  var t=line.trim();
+  if(!t||t.length<3||t.length>100)return false;
+  // Starts with verb = procedure step
+  if(/^(impastare|portare|versare|aggiungere|unire|mescolare|incorporare|montare|cuocere|infornare|lasciare|far\s|poi\s|quindi|procedere|infine|togliere|stendere|formare|mettere|riporre|lavorare|sciogliere|bollire|frullare|pesare|setacciare|tagliare)/i.test(t))return false;
+  // Numbered step
+  if(/^\d+[).\-]\s/.test(t))return false;
+  // Has numbers with units = ingredient, not title
+  if(/\d+\s*(gr|g|kg|ml|l|n\.?[°o])/i.test(t))return false;
+  // Contains q.b. = ingredient
+  if(/q\.?b\.?/i.test(t))return false;
+  // Pure uppercase or title-case word(s) = likely a title
+  var words=t.split(/\s+/);
+  if(words.length<=6&&!/^\d/.test(t))return true;
+  return false;
 }
 
 function parseRecipeText(raw){
   var recipes=[];
-  raw=raw.replace(/\t/g,' ').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
-  var blocks=raw.split(/\n[ \t]*\n/);
+  raw=raw.replace(/\t/g,'  ').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  // Split by blank lines first
+  var blocks=raw.split(/\n[ \t]*\n+/);
   if(blocks.length>1){
     blocks.forEach(function(block){
       var lines=block.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
       if(lines.length<2)return;
       var title=lines[0];
-      if(/^\d/.test(title))return;
-      var ings=[];var proc='';var inProc=false;
+      // Title must not start with number or verb
+      if(/^\d/.test(title)||!isRecipeTitle(title,false))return;
+      var ings=[],proc='',inProc=false;
       for(var i=1;i<lines.length;i++){
         var line=lines[i];
-        if(/^(procedimento|preparazione|metodo|note)[\s:]/i.test(line)){inProc=true;continue;}
-        if(inProc){proc+=(proc?'\n':'')+line;}
-        else{var ing=parseIngLine(line);if(ing)ings.push(ing);}
+        if(/^(procedimento|preparazione|metodo|note|come\s)/i.test(line)){inProc=true;continue;}
+        if(inProc){proc+=(proc?'\n':'')+line;continue;}
+        // Try to parse as ingredient
+        var ing=parseIngLine(line);
+        if(ing){ings.push(ing);}
+        else if(line.length>30){
+          // Long non-ingredient line = probably procedure
+          proc+=(proc?'\n':'')+line;
+        }
       }
-      recipes.push({n:title,i:ings,c:'Altro',p:proc});
+      if(ings.length>0||title){
+        recipes.push({n:title.replace(/:$/,'').trim(),i:ings,c:'Altro',p:proc});
+      }
     });
     if(recipes.length>0)return recipes;
   }
-  var lines2=raw.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
+  // Fallback: line-by-line scan
+  var lines=raw.split('\n').map(function(l){return l.trim();});
   var current=null;
-  lines2.forEach(function(line){
-    var isIng=parseIngLine(line)!==null&&/\d/.test(line);
-    var isTitle=!isIng&&line.length>3&&line.length<100&&!/^[-]/.test(line);
+  var prevWasIng=false;
+  lines.forEach(function(line){
+    if(!line){
+      // Blank line = end of current recipe if it has ingredients
+      if(current&&current.i.length>0){recipes.push(current);current=null;}
+      prevWasIng=false;return;
+    }
+    var ing=parseIngLine(line);
+    var isTitle=!ing&&isRecipeTitle(line,prevWasIng);
     if(isTitle&&current&&current.i.length>0){recipes.push(current);current=null;}
-    if(isTitle&&!current){current={n:line,i:[],c:'Altro',p:''};}
-    else if(current){var ing=parseIngLine(line);if(ing)current.i.push(ing);}
+    if(isTitle&&!current){current={n:line.replace(/:$/,'').trim(),i:[],c:'Altro',p:''};prevWasIng=false;}
+    else if(current){
+      if(ing){current.i.push(ing);prevWasIng=true;}
+      else if(line.length>20){current.p+=(current.p?'\n':'')+line;prevWasIng=false;}
+    }
   });
-  if(current&&current.i.length>0)recipes.push(current);
+  if(current&&(current.i.length>0||current.n))recipes.push(current);
   return recipes;
 }
+
+
 function renderImportList(){
   var list=qs('importList');list.innerHTML='';
   if(!_importParsed.length){qs('importPreview').classList.remove('on');return;}
@@ -1897,6 +1945,14 @@ function boot(){
           .then(function(result){
             var text=result.value||'';
             if(!text.trim()){alert('Il file .docx sembra vuoto o non leggibile.');return;}
+            // Remove common docx artifacts (single words, author names, dates at top)
+            var lines=text.split('\n');
+            while(lines.length>0&&lines[0].trim().split(/\s+/).length<=2&&!/\d+(gr|g|kg|ml)/i.test(lines[0])){
+              // Keep only if it looks like a real recipe title (3+ chars, not a single word like "AD")
+              if(lines[0].trim().length>3&&lines[0].trim().indexOf(' ')>-1)break;
+              lines.shift();
+            }
+            text=lines.join('\n');
             _importParsed=parseRecipeText(text);
             if(!_importParsed.length){alert('Nessuna ricetta trovata. Assicurati che il file contenga nomi di ricette seguiti dagli ingredienti.');return;}
             renderImportList();
