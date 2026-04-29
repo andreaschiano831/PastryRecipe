@@ -1530,12 +1530,80 @@ function saveQuickProc(){
 /* FILE IMPORT */
 var _importParsed=[];
 function openImport(){
-  _importParsed=[];qs('importPreview').classList.remove('on');qs('importList').innerHTML='';
+  _importParsed=[];
+  qs('importPreview').classList.remove('on');
+  qs('importList').innerHTML='';
   var fi=qs('importFile');if(fi)fi.value='';
   if(curSec&&curSec!=='tutti'){var is=qs('importSec');if(is)is.value=curSec;}
+  // Check if Groq key available
+  var key='';try{key=localStorage.getItem('groq_key')||'';}catch(e){}
+  var aiKey=qs('aiKey');if(aiKey&&aiKey.value)key=aiKey.value;
+  var note=qs('importAiStatus');
+  if(note){
+    if(key){note.textContent='✓ Chiave Groq attiva — parsing AI automatico';}
+    else{note.textContent='Nessuna chiave Groq — usa il parser manuale. Aggiungi la chiave in Admin.';}
+  }
   qs('importBg').classList.add('on');
 }
 function closeImport(){qs('importBg').classList.remove('on');}
+
+/* ── AI-POWERED RECIPE PARSER ── */
+function parseWithAI(rawText, onSuccess, onFallback){
+  var key='';
+  try{key=localStorage.getItem('groq_key')||'';}catch(e){}
+  var aiKey=qs('aiKey');if(aiKey&&aiKey.value)key=aiKey.value;
+  if(!key){onFallback(rawText);return;}
+
+  // Show loading state
+  var prevTitle=qs('importPreviewTitle');
+  if(prevTitle)prevTitle.textContent='Analisi AI in corso\u2026';
+  qs('importPreview').classList.add('on');
+
+  var sys='Sei un assistente di cucina professionale. Analizza il testo di un ricettario e restituisci SOLO un array JSON valido. Ogni elemento deve avere: {"n":"nome ricetta","c":"categoria","s":"sezione","piatto":"gruppo opzionale","p":"procedimento o stringa vuota","i":[["ingrediente",quantita_numerica_o_null,"unita"],...]}. Categorie: Creme,Paste,Torte,Lievitati,Pasticcini,Marmellate,Ganache,Mousse,Gelati,Sorbetti,Semifreddi,Granite,Basi,Glasse,Altro. Sezioni: colazioni,fine-dining,gelateria,torte. Unita comuni: g,kg,ml,l,n\u00b0,q.b. Per dosi senza quantita usa null. Raggruppa ingredienti e procedimenti in modo intelligente. Rispondi SOLO con il JSON array, nessun testo aggiuntivo.';
+
+  var prompt='Analizza questo ricettario e restituisci il JSON array delle ricette:\n\n'+rawText.substring(0,8000);
+
+  fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({
+      model:'llama-3.1-8b-instant',
+      messages:[{role:'system',content:sys},{role:'user',content:prompt}],
+      temperature:0.1,
+      max_tokens:4000
+    })
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if(data.error)throw new Error(data.error.message||'Groq error');
+    var text=data.choices&&data.choices[0]&&data.choices[0].message?data.choices[0].message.content||'':'';
+    text=text.replace(/```json/g,'').replace(/```/g,'').trim();
+    // Find JSON array
+    var m=text.match(/\[[\s\S]*\]/);
+    if(m)text=m[0];
+    var parsed=JSON.parse(text);
+    if(!Array.isArray(parsed)||!parsed.length)throw new Error('Nessuna ricetta trovata');
+    // Normalize
+    parsed=parsed.map(function(r){
+      return{
+        n:(r.n||'Ricetta').trim(),
+        c:r.c||'Altro',
+        s:r.s||'colazioni',
+        piatto:r.piatto||'',
+        p:r.p||'',
+        i:Array.isArray(r.i)?r.i.map(function(ing){
+          return[String(ing[0]||''),ing[1]===null||ing[1]===undefined?null:parseFloat(ing[1])||null,String(ing[2]||'g')];
+        }):[]
+      };
+    });
+    onSuccess(parsed);
+  })
+  .catch(function(err){
+    console.warn('AI parse failed:',err.message,'\u2014 falling back to manual parser');
+    onFallback(rawText);
+  });
+}
+
 function parseIngLine(line){
   var t=line.trim();
   if(!t||t.length<2)return null;
@@ -1658,7 +1726,8 @@ function renderImportList(){
     var nm=el('b');nm.style.cssText='font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.95rem;display:block';
     nm.textContent=r.n;
     var sm=el('small');sm.style.cssText='font-size:.6rem;color:var(--smoke2)';
-    sm.textContent=r.i.length+' ingredienti'+(r.p?' · procedimento':'');
+    var SLBL2={colazioni:'Colazioni','fine-dining':'Fine Dining',gelateria:'Gelateria',torte:'Torte'};
+    sm.textContent=r.i.length+' ingredienti'+(r.p?' · proc.':'')+(r.s?' · '+(SLBL2[r.s]||r.s):'');
     info.appendChild(nm);info.appendChild(sm);
     var toggle=el('button');
     toggle.type='button';toggle.textContent='▾ Espandi';
@@ -1690,6 +1759,19 @@ function renderImportList(){
     nInp.addEventListener('input',function(){r.n=this.value;nm.textContent=this.value;});
     nRow.appendChild(nLbl);nRow.appendChild(nInp);
     panel.appendChild(nRow);
+    // Section selector
+    var sRow=el('div');sRow.style.cssText='display:flex;gap:.3rem;align-items:center;margin-top:.1rem';
+    var sLbl=el('span');sLbl.style.cssText='font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke2);white-space:nowrap;font-family:"Cormorant SC",serif;width:52px;flex-shrink:0';sLbl.textContent='Sezione';
+    var sSel=document.createElement('select');
+    sSel.style.cssText='flex:1;background:var(--bg);border:1px solid var(--cb);border-radius:5px;padding:.28rem .45rem;font-size:.82rem;color:var(--ink);outline:none;-webkit-appearance:none';
+    [['colazioni','Colazioni'],['fine-dining','Fine Dining'],['gelateria','Gelateria'],['torte','Torte']].forEach(function(o){
+      var opt=document.createElement('option');opt.value=o[0];opt.textContent=o[1];
+      if(r.s===o[0])opt.selected=true;
+      sSel.appendChild(opt);
+    });
+    sSel.addEventListener('change',function(){r.s=this.value;sm.textContent=r.i.length+' ingredienti'+(r.p?' · proc.':'')+(r.s?' · '+(SLBL2[r.s]||r.s):'');});
+    sRow.appendChild(sLbl);sRow.appendChild(sSel);
+    panel.appendChild(sRow);
 
     // Ingredients list (editable)
     var ingLbl=el('div');ingLbl.style.cssText='font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke2);font-family:"Cormorant SC",serif;margin:.5rem 0 .3rem';
@@ -1986,17 +2068,14 @@ function boot(){
           .then(function(result){
             var text=result.value||'';
             if(!text.trim()){alert('Il file .docx sembra vuoto o non leggibile.');return;}
-            // Remove common docx artifacts (single words, author names, dates at top)
-            var lines=text.split('\n');
-            while(lines.length>0&&lines[0].trim().split(/\s+/).length<=2&&!/\d+(gr|g|kg|ml)/i.test(lines[0])){
-              // Keep only if it looks like a real recipe title (3+ chars, not a single word like "AD")
-              if(lines[0].trim().length>3&&lines[0].trim().indexOf(' ')>-1)break;
-              lines.shift();
-            }
-            text=lines.join('\n');
-            _importParsed=parseRecipeText(text);
-            if(!_importParsed.length){alert('Nessuna ricetta trovata. Assicurati che il file contenga nomi di ricette seguiti dagli ingredienti.');return;}
-            renderImportList();
+            parseWithAI(text,
+              function(aiParsed){_importParsed=aiParsed;renderImportList();},
+              function(rawText){
+                _importParsed=parseRecipeText(rawText);
+                if(!_importParsed.length){alert('Nessuna ricetta trovata nel file.');return;}
+                renderImportList();
+              }
+            );
           })
           .catch(function(err){alert('Errore lettura .docx: '+err.message);});
       };
@@ -2006,9 +2085,14 @@ function boot(){
       var reader2=new FileReader();
       reader2.onload=function(ev){
         var text=ev.target.result||'';
-        _importParsed=parseRecipeText(text);
-        if(!_importParsed.length){alert('Nessuna ricetta trovata nel file.');return;}
-        renderImportList();
+        parseWithAI(text,
+          function(aiParsed){_importParsed=aiParsed;renderImportList();},
+          function(rawText){
+            _importParsed=parseRecipeText(rawText);
+            if(!_importParsed.length){alert('Nessuna ricetta trovata nel file.');return;}
+            renderImportList();
+          }
+        );
       };
       reader2.readAsText(file,'UTF-8');
     }
@@ -2052,6 +2136,10 @@ function boot(){
     <div class="import-h"></div>
     <p class="import-title fd">Importa da file</p>
     <p class="import-sub fsc">Seleziona un file .txt o .docx con le ricette</p>
+    <div id="importAiNote" style="display:flex;align-items:center;gap:.45rem;background:var(--glow);border:1px solid var(--rim);border-radius:8px;padding:.42rem .7rem;margin-bottom:.6rem;font-size:.62rem;color:var(--gold2);font-family:'DM Sans',sans-serif">
+      <span>&#10024;</span>
+      <span id="importAiStatus">Con chiave Groq: parsing AI automatico. Senza: parser manuale.</span>
+    </div>
     <div class="import-drop" id="importDrop">
       <input type="file" id="importFile" accept=".txt,.text,.docx,text/plain">
       <div class="import-drop-ico">&#128196;</div>
