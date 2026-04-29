@@ -680,7 +680,21 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
     <div class="modal-h"></div>
     <p class="modal-title fd" id="mTitle">Nuova Ricetta</p>
     <label class="fsc">Ricettario</label><select id="mSec" class="fs"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select>
-    <div id="mPiattoWrap"><label class="fsc">Piatto / Gruppo (sottocategoria)</label><input type="text" id="mPiatto" class="fs" placeholder="Es. Tiramisù, Cornetteria&#8230;" autocomplete="off" list="piatti-datalist"></div>
+    <div id="mPiattoWrap">
+      <label class="fsc">Piatto / Gruppo</label>
+      <div style="display:flex;gap:.38rem;align-items:center">
+        <input type="text" id="mPiatto" class="fs" placeholder="Scegli o digita un nuovo gruppo&#8230;" autocomplete="off" list="piatti-datalist" style="flex:1">
+        <button type="button" id="mPiattoNewBtn" title="Crea nuovo gruppo" style="background:none;border:1.5px solid var(--cb);border-radius:var(--r);padding:.46rem .7rem;font-size:.8rem;color:var(--smoke2);cursor:pointer;white-space:nowrap;transition:all .15s;-webkit-tap-highlight-color:transparent">+ Nuovo</button>
+      </div>
+      <div id="mPiattoNewWrap" style="display:none;margin-top:.35rem;background:var(--glow);border:1px solid var(--rim);border-radius:8px;padding:.5rem .6rem">
+        <p style="font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold2);font-family:'Cormorant SC',serif;margin-bottom:.3rem">Crea nuovo gruppo</p>
+        <div style="display:flex;gap:.3rem">
+          <input type="text" id="mPiattoNewName" placeholder="Nome gruppo&#8230;" autocomplete="off" style="flex:1;background:var(--ctrl);border:1px solid var(--cb);border-radius:5px;padding:.38rem .55rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.9rem;color:var(--ink);outline:none;-webkit-appearance:none">
+          <button type="button" id="mPiattoNewSave" style="background:linear-gradient(135deg,var(--gold2),var(--gold3));border:none;border-radius:5px;padding:.38rem .8rem;color:#fff;font-size:.82rem;font-style:italic;font-family:'Cormorant Garamond',serif;cursor:pointer">Crea</button>
+          <button type="button" id="mPiattoNewCancel" style="background:none;border:1px solid var(--cb);border-radius:5px;padding:.38rem .6rem;color:var(--smoke);font-size:.78rem;cursor:pointer">&times;</button>
+        </div>
+      </div>
+    </div>
     <label class="fsc">Nome ricetta</label><input type="text" id="mName" class="fs" placeholder="Es. Ganache al cioccolato" autocomplete="off" autocorrect="off" autocapitalize="words">
     <label class="fsc">Categoria</label><select id="mCat" class="fs"><option>Creme</option><option>Paste</option><option>Torte</option><option>Lievitati</option><option>Pasticcini</option><option>Marmellate</option><option>Ganache</option><option>Mousse</option><option>Gelatine</option><option>Gelati</option><option>Sorbetti</option><option>Semifreddi</option><option>Granite</option><option>Basi</option><option>Glasse</option><option>Biscotti</option><option>Altro</option></select>
     <label class="fsc">Procedimento (facoltativo)</label><textarea id="mProc" class="fs" placeholder="Descrivi il procedimento&#8230;"></textarea>
@@ -1329,7 +1343,7 @@ function resetModal(){
   var ms=qs('mSec');if(ms&&curSec&&curSec!=='tutti')ms.value=curSec;togglePiattoWrap();
 }
 function openModal(){resetModal();qs('mBg').classList.add('on');}
-function closeModal(){qs('mBg').classList.remove('on');_editRec=null;var mt=qs('mTitle');if(mt)mt.textContent='Nuova Ricetta';var ms2=qs('mSave');if(ms2)ms2.textContent='Salva ricetta';}
+function closeModal(){qs('mBg').classList.remove('on');_editRec=null;var mt=qs('mTitle');if(mt)mt.textContent='Nuova Ricetta';var ms2=qs('mSave');if(ms2)ms2.textContent='Salva ricetta';var npw=qs('mPiattoNewWrap');if(npw)npw.style.display='none';var npn=qs('mPiattoNewName');if(npn)npn.value='';}
 function openEdit(rec){
   _editRec=rec;resetModal();
   var mn=qs('mName');if(mn)mn.value=rec.n;var mc=qs('mCat');if(mc)mc.value=rec.c;
@@ -1874,25 +1888,54 @@ function getPiatti(){
 function renderPiattiList(){
   var list=qs('piattiList');if(!list)return;list.innerHTML='';
   var piatti=getPiatti();
-  piatti.sort(function(a,b){return a.sec.localeCompare(b.sec)||a.name.localeCompare(b.name,'it');});
-  if(!piatti.length){var em=el('p','piatti-empty');em.textContent='Nessun piatto creato.';list.appendChild(em);return;}
+  if(!piatti.length){
+    var em=el('p','piatti-empty-msg');em.textContent='Nessun gruppo creato. Usa il campo sopra per creare il primo.';
+    list.appendChild(em);return;
+  }
   var SLBL={colazioni:'Colazioni','fine-dining':'Fine Dining',gelateria:'Gelateria',torte:'Torte'};
-  piatti.forEach(function(p){
-    var item=el('div','piatti-item');var top=el('div','piatti-item-top');
-    var nm=el('span','piatti-item-name');nm.textContent=p.name;
-    var sec=el('span','piatti-item-sec');sec.textContent=SLBL[p.sec]||p.sec;
-    var cnt=el('span','piatti-item-cnt');cnt.textContent=p.count+' ricett'+(p.count===1?'a':'e');
-    var del=el('button','piatti-item-del');del.type='button';del.textContent='\u00d7';del.title='Rimuovi piatto';
-    del.addEventListener('click',function(e){
-      e.stopPropagation();
-      if(!confirm('Rimuovere il piatto "'+p.name+'" da tutte le ricette?'))return;
-      CU.filter(function(r){return r.piatto===p.name&&r.s===p.sec;}).forEach(function(r){var u=Object.assign({},r);delete u.piatto;updateRec(r,u);});
-      setTimeout(renderPiattiList,600);
+  var bySec={};
+  piatti.forEach(function(p){var sec=p.sec||'colazioni';if(!bySec[sec])bySec[sec]=[];bySec[sec].push(p);});
+  Object.keys(bySec).sort().forEach(function(sec){
+    var grp=el('div','piatti-sec-group');
+    var title=el('div','piatti-sec-title');title.textContent=SLBL[sec]||sec;
+    grp.appendChild(title);
+    bySec[sec].sort(function(a,b){return a.name.localeCompare(b.name,'it');}).forEach(function(p){
+      var card=el('div','piatti-card');
+      var ico=el('span','piatti-card-icon');ico.textContent='??️';
+      var nm=el('span','piatti-card-name');nm.textContent=p.name;
+      var cnt=el('span','piatti-card-cnt');cnt.textContent=p.count+' ricett'+(p.count===1?'a':'e');
+      // Rename
+      var ren=el('button');ren.type='button';ren.textContent='✏️';ren.title='Rinomina';
+      ren.style.cssText='background:none;border:1px solid var(--rim);border-radius:6px;color:var(--gold2);cursor:pointer;font-size:.72rem;padding:.18rem .38rem;-webkit-tap-highlight-color:transparent;flex-shrink:0';
+      ren.addEventListener('click',function(e){
+        e.stopPropagation();
+        var newName=prompt('Rinomina "'+p.name+'":', p.name);
+        if(!newName||!newName.trim()||newName.trim()===p.name)return;
+        newName=newName.trim();
+        CU.filter(function(r){return r.piatto===p.name;}).forEach(function(r){updateRec(r,Object.assign({},r,{piatto:newName}));});
+        try{var c2=JSON.parse(localStorage.getItem('mdl_piatti_custom')||'[]');c2=c2.map(function(k){return k===p.sec+'::'+p.name?p.sec+'::'+newName:k;});localStorage.setItem('mdl_piatti_custom',JSON.stringify(c2));}catch(ex){}
+        nm.textContent=newName;p.name=newName;
+        updatePiattiDatalist();
+        setTimeout(renderPiattiList,700);
+      });
+      // Delete
+      var del=el('button','piatti-card-del');del.type='button';del.textContent='×';del.title='Rimuovi';
+      del.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(!confirm('Rimuovere il gruppo "'+p.name+'" da tutte le ricette?'))return;
+        try{var c3=JSON.parse(localStorage.getItem('mdl_piatti_custom')||'[]');c3=c3.filter(function(k){return k.indexOf('::'+p.name)===-1;});localStorage.setItem('mdl_piatti_custom',JSON.stringify(c3));}catch(ex){}
+        CU.filter(function(r){return r.piatto===p.name;}).forEach(function(r){var u=Object.assign({},r);delete u.piatto;updateRec(r,u);});
+        setTimeout(renderPiattiList,700);
+      });
+      // Tap = filter
+      card.addEventListener('click',function(){closePiattiManager();curCat='P:'+p.name;renderCats();renderGrid();});
+      card.appendChild(ico);card.appendChild(nm);card.appendChild(cnt);card.appendChild(ren);card.appendChild(del);
+      grp.appendChild(card);
     });
-    top.appendChild(nm);top.appendChild(sec);top.appendChild(cnt);top.appendChild(del);
-    item.appendChild(top);list.appendChild(item);
+    list.appendChild(grp);
   });
 }
+
 function openPiattiManager(){
   var np=qs('newPiattoName');if(np)np.value='';
   var ns=qs('newPiattoSec');if(ns){ns.value=curSec&&curSec!=='tutti'?curSec:'';}
@@ -2048,6 +2091,41 @@ function boot(){
   // Multi-select
   var multiMoveBtn=qs('multiMoveBtn');if(multiMoveBtn)multiMoveBtn.addEventListener('click',openMultiMove);
   var multiCancelBtn=qs('multiCancelBtn');if(multiCancelBtn)multiCancelBtn.addEventListener('click',function(){toggleMultiMode(false);});
+  // Modal piatto: "+ Nuovo" button
+  var mPiattoNewBtn=qs('mPiattoNewBtn');
+  var mPiattoNewWrap=qs('mPiattoNewWrap');
+  if(mPiattoNewBtn&&mPiattoNewWrap){
+    mPiattoNewBtn.addEventListener('click',function(){
+      mPiattoNewWrap.style.display='block';
+      mPiattoNewBtn.style.borderColor='var(--gold2)';
+      mPiattoNewBtn.style.color='var(--gold2)';
+      setTimeout(function(){var ni=qs('mPiattoNewName');if(ni)ni.focus();},100);
+    });
+  }
+  var mPiattoNewSave=qs('mPiattoNewSave');
+  if(mPiattoNewSave)mPiattoNewSave.addEventListener('click',function(){
+    var ni=qs('mPiattoNewName');var val=(ni?ni.value:'').trim();
+    if(!val)return;
+    var sec=qs('mSec')?qs('mSec').value:'colazioni';
+    // Save to custom list
+    try{var custom=JSON.parse(localStorage.getItem('mdl_piatti_custom')||'[]');var key=sec+'::'+val;if(custom.indexOf(key)===-1){custom.push(key);localStorage.setItem('mdl_piatti_custom',JSON.stringify(custom));}}catch(e){}
+    updatePiattiDatalist();
+    // Set the piatto field
+    var mPiatto=qs('mPiatto');if(mPiatto)mPiatto.value=val;
+    // Close creation panel
+    if(mPiattoNewWrap)mPiattoNewWrap.style.display='none';
+    if(ni)ni.value='';
+    if(mPiattoNewBtn){mPiattoNewBtn.style.borderColor='';mPiattoNewBtn.style.color='';}
+    showDbBanner('Gruppo "'+val+'" creato','ok');
+  });
+  var mPiattoNewCancel=qs('mPiattoNewCancel');
+  if(mPiattoNewCancel)mPiattoNewCancel.addEventListener('click',function(){
+    if(mPiattoNewWrap)mPiattoNewWrap.style.display='none';
+    if(mPiattoNewBtn){mPiattoNewBtn.style.borderColor='';mPiattoNewBtn.style.color='';}
+  });
+  // Enter key in new name field
+  var mPiattoNewName=qs('mPiattoNewName');
+  if(mPiattoNewName)mPiattoNewName.addEventListener('keyup',function(e){if(e.key==='Enter'&&qs('mPiattoNewSave'))qs('mPiattoNewSave').click();});
   var qprocSave=qs('qprocSave');if(qprocSave)qprocSave.addEventListener('click',saveQuickProc);
   var qprocCancel=qs('qprocCancel');if(qprocCancel)qprocCancel.addEventListener('click',closeQuickProc);
   var qprocBg=qs('qprocBg');if(qprocBg)qprocBg.addEventListener('click',function(e){if(e.target===qprocBg)closeQuickProc();});
