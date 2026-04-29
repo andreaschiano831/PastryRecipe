@@ -507,6 +507,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
   .cat-bar,.cnt-row{padding-left:.85rem;padding-right:.85rem}
   .grid{padding:.9rem .85rem 5rem;gap:.8rem}.hd-row{padding:.7rem .85rem .45rem}}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
 <body onload="boot()">
 
@@ -1805,9 +1806,37 @@ function boot(){
   var importBg=qs('importBg');if(importBg)importBg.addEventListener('click',function(e){if(e.target===importBg)closeImport();});
   var importFile=qs('importFile');
   if(importFile)importFile.addEventListener('change',function(){
-    var file=this.files[0];if(!file)return;var reader=new FileReader();
-    reader.onload=function(ev){_importParsed=parseRecipeText(ev.target.result||'');if(!_importParsed.length){alert('Nessuna ricetta trovata nel file.');return;}renderImportList();};
-    reader.readAsText(file,'UTF-8');
+    var file=this.files[0];if(!file)return;
+    var isDOCX=file.name.toLowerCase().endsWith('.docx')||file.type==='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    if(isDOCX){
+      // Use mammoth.js to extract text from .docx
+      var reader=new FileReader();
+      reader.onload=function(ev){
+        if(typeof mammoth==='undefined'){
+          alert('Libreria mammoth.js non caricata. Verifica la connessione internet e riprova.');return;
+        }
+        mammoth.extractRawText({arrayBuffer:ev.target.result})
+          .then(function(result){
+            var text=result.value||'';
+            if(!text.trim()){alert('Il file .docx sembra vuoto o non leggibile.');return;}
+            _importParsed=parseRecipeText(text);
+            if(!_importParsed.length){alert('Nessuna ricetta trovata. Assicurati che il file contenga nomi di ricette seguiti dagli ingredienti.');return;}
+            renderImportList();
+          })
+          .catch(function(err){alert('Errore lettura .docx: '+err.message);});
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      // Plain text
+      var reader2=new FileReader();
+      reader2.onload=function(ev){
+        var text=ev.target.result||'';
+        _importParsed=parseRecipeText(text);
+        if(!_importParsed.length){alert('Nessuna ricetta trovata nel file.');return;}
+        renderImportList();
+      };
+      reader2.readAsText(file,'UTF-8');
+    }
   });
   var importSaveBtn=qs('importSaveBtn');if(importSaveBtn)importSaveBtn.addEventListener('click',doImport);
   var fabMenu2=qs('fabMenu');
@@ -1847,11 +1876,11 @@ function boot(){
   <div class="file-import">
     <div class="import-h"></div>
     <p class="import-title fd">Importa da file</p>
-    <p class="import-sub fsc">Trascina o seleziona un file .txt o .docx con le ricette</p>
+    <p class="import-sub fsc">Seleziona un file .txt o .docx con le ricette</p>
     <div class="import-drop" id="importDrop">
-      <input type="file" id="importFile" accept=".txt,.text,text/plain">
+      <input type="file" id="importFile" accept=".txt,.text,.docx,text/plain">
       <div class="import-drop-ico">&#128196;</div>
-      <p class="import-drop-lbl fsc">Tocca per selezionare un file .txt</p>
+      <p class="import-drop-lbl fsc">Tocca per selezionare un file .txt o .docx</p>
     </div>
     <div style="display:flex;gap:.5rem;margin-bottom:.3rem">
       <div style="flex:1">
