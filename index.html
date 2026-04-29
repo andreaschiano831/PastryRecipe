@@ -476,6 +476,30 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 .multi-bar-cancel{background:transparent;border:1px solid rgba(255,255,255,.25);border-radius:16px;padding:.32rem .7rem;color:rgba(255,255,255,.7);font-size:.68rem;cursor:pointer;font-family:"DM Sans",sans-serif}
 .card.multi-sel{border-color:var(--gold2);box-shadow:0 0 0 2.5px var(--gold2),var(--sh)}
 
+
+/* Piatti panel redesign */
+.piatti-modal{background:var(--card);border-radius:16px 16px 0 0;padding:1.2rem 1.3rem calc(1.7rem + env(safe-area-inset-bottom));width:100%;max-width:560px;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.piatti-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem}
+.piatti-header-title{font-size:1.1rem;font-style:italic;color:var(--gold2);font-family:"Cormorant Garamond",serif}
+.piatti-header-sub{font-size:.58rem;letter-spacing:.08em;color:var(--smoke2);font-family:"DM Sans",sans-serif}
+/* Quick create */
+.piatti-quick-create{display:flex;gap:.4rem;margin-bottom:.9rem;background:var(--glow);border:1px solid var(--rim);border-radius:10px;padding:.6rem .8rem;align-items:center}
+.piatti-quick-inp{flex:1;background:var(--ctrl);border:1px solid var(--cb);border-radius:6px;padding:.42rem .65rem;font-family:"Cormorant Garamond",serif;font-size:.95rem;font-style:italic;color:var(--ink);outline:none;-webkit-appearance:none;transition:border-color .16s;min-width:0}
+.piatti-quick-inp:focus{border-color:var(--gold2)}
+.piatti-quick-sec{background:var(--ctrl);border:1px solid var(--cb);border-radius:6px;padding:.42rem .45rem;font-size:.78rem;color:var(--ink);outline:none;-webkit-appearance:none;flex-shrink:0}
+.piatti-quick-btn{background:linear-gradient(135deg,var(--gold2),var(--gold3));border:none;border-radius:6px;padding:.42rem .8rem;color:#fff;font-size:.85rem;font-style:italic;font-family:"Cormorant Garamond",serif;cursor:pointer;white-space:nowrap;flex-shrink:0}
+/* Piatti grouped list */
+.piatti-sec-group{margin-bottom:.8rem}
+.piatti-sec-title{font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;color:var(--smoke2);font-family:"Cormorant SC",serif;padding:.2rem 0 .35rem;border-bottom:1px solid var(--rim);margin-bottom:.35rem}
+.piatti-card{display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;background:var(--ctrl);border:1px solid var(--cb);border-radius:8px;margin-bottom:.28rem;transition:border-color .15s}
+.piatti-card:hover{border-color:var(--gold2)}
+.piatti-card-icon{font-size:.9rem;flex-shrink:0;opacity:.7}
+.piatti-card-name{flex:1;font-size:.95rem;font-style:italic;color:var(--ink);font-family:"Cormorant Garamond",serif}
+.piatti-card-cnt{font-size:.6rem;letter-spacing:.08em;color:var(--gold2);white-space:nowrap;font-family:"DM Sans",sans-serif}
+.piatti-card-del{background:none;border:1px solid rgba(200,50,40,.2);border-radius:6px;color:rgba(200,50,40,.5);cursor:pointer;font-size:.75rem;padding:.2rem .4rem;-webkit-tap-highlight-color:transparent;transition:all .14s;flex-shrink:0}
+.piatti-card-del:hover{background:rgba(200,50,40,.08);border-color:rgba(200,50,40,.4);color:#c04030}
+.piatti-empty-msg{font-size:.82rem;font-style:italic;color:var(--smoke3);text-align:center;padding:1.2rem;font-family:"Cormorant Garamond",serif}
+
 @media(max-width:560px){
   .land-top{padding:1.5rem 1.1rem .95rem}.land-logo{width:68px;height:68px}
   .panel{min-height:min(16vh,95px)}.panel-body{padding:1.1rem .95rem}.panel-title{font-size:1.22rem}
@@ -1090,14 +1114,24 @@ function updatePiattiDatalist(){
   if(!dl)return;
   dl.innerHTML='';
   var seen={};
+  // From recipes
   R.concat(CU).forEach(function(r){
     if(r.piatto&&r.piatto.trim()&&!seen[r.piatto.trim()]){
       seen[r.piatto.trim()]=true;
-      var opt=document.createElement('option');
-      opt.value=r.piatto.trim();
-      dl.appendChild(opt);
+      var opt=document.createElement('option');opt.value=r.piatto.trim();dl.appendChild(opt);
     }
   });
+  // From custom-created piatti
+  try{
+    var custom=JSON.parse(localStorage.getItem('mdl_piatti_custom')||'[]');
+    custom.forEach(function(key){
+      var name=key.split('::')[1];
+      if(name&&!seen[name]){
+        seen[name]=true;
+        var opt=document.createElement('option');opt.value=name;dl.appendChild(opt);
+      }
+    });
+  }catch(e){}
 }
 
 /* SECTION NAV */
@@ -1320,10 +1354,14 @@ function doMove(){
 
 function checkAdmin(){
   try{
-    var today=new Date().toDateString();
-    var stored=localStorage.getItem('mdl_adm');
-    isAdmin=(sessionStorage.getItem('adm')==='1')||(stored===today);
-    if(isAdmin) sessionStorage.setItem('adm','1');
+    // sessionStorage = source of truth for this tab
+    if(sessionStorage.getItem('adm')==='1'){isAdmin=true;}
+    else{
+      // Check if logged in today from localStorage
+      var today=new Date().toDateString();
+      isAdmin=(localStorage.getItem('mdl_adm')===today);
+      if(isAdmin)sessionStorage.setItem('adm','1');
+    }
   }catch(e){isAdmin=false;}
   var fw=qs('fabWrap');if(fw)fw.style.display=isAdmin?'flex':'none';
   var ab=qs('admBtn');if(ab)ab.textContent=isAdmin?'\ud83d\udd13 Admin':'\ud83d\udd12';
@@ -1567,7 +1605,20 @@ function doImport(){
 /* PIATTI MANAGER */
 function getPiatti(){
   var all=R.concat(CU);var map={};
-  all.forEach(function(r){if(r.piatto&&r.piatto.trim()){var key=r.s+'::'+r.piatto.trim();if(!map[key])map[key]={name:r.piatto.trim(),sec:r.s,count:0};map[key].count++;}});
+  all.forEach(function(r){
+    if(r.piatto&&r.piatto.trim()){
+      var key=(r.s||'tutti')+'::'+r.piatto.trim();
+      if(!map[key])map[key]={name:r.piatto.trim(),sec:r.s||'tutti',count:0};
+      map[key].count++;
+    }
+  });
+  // Include custom-created piatti (even if no recipes assigned yet)
+  try{
+    var custom=JSON.parse(localStorage.getItem('mdl_piatti_custom')||'[]');
+    custom.forEach(function(key){
+      if(!map[key]){var parts=key.split('::');map[key]={name:parts[1],sec:parts[0],count:0};}
+    });
+  }catch(e){}
   return Object.values(map);
 }
 function renderPiattiList(){
@@ -1594,8 +1645,9 @@ function renderPiattiList(){
 }
 function openPiattiManager(){
   var np=qs('newPiattoName');if(np)np.value='';
-  var ns=qs('newPiattoSec');if(ns&&curSec&&curSec!=='tutti')ns.value=curSec;
-  renderPiattiList();qs('piattiBg').classList.add('on');
+  var ns=qs('newPiattoSec');if(ns){ns.value=curSec&&curSec!=='tutti'?curSec:'';}
+  renderPiattiList();
+  qs('piattiBg').classList.add('on');
 }
 function closePiattiManager(){qs('piattiBg').classList.remove('on');}
 function createPiatto(){
@@ -1767,6 +1819,8 @@ function boot(){
     fabImport.addEventListener('click',function(){qs('fabMenu').style.display='none';qs('fab').classList.remove('open');openImport();});
     fabMenu2.insertBefore(fabImport,fabMenu2.children[1]||null);
   }
+  // Piatti button in header (always visible)
+  var piattiBtn=qs('piattiBtn');if(piattiBtn)piattiBtn.addEventListener('click',openPiattiManager);
   var openPiattiBtn=qs('openPiattiBtn');if(openPiattiBtn)openPiattiBtn.addEventListener('click',function(){closeAdm();openPiattiManager();});
   var piattiClose=qs('piattiClose');if(piattiClose)piattiClose.addEventListener('click',closePiattiManager);
   var piattiBg=qs('piattiBg');if(piattiBg)piattiBg.addEventListener('click',function(e){if(e.target===piattiBg)closePiattiManager();});
@@ -1827,24 +1881,32 @@ function boot(){
   </div>
 </div>
 
-<!-- PIATTI MANAGER MODAL -->
+<!-- PIATTI MANAGER PANEL -->
 <div class="piatti-bg" id="piattiBg">
   <div class="piatti-modal">
-    <div class="piatti-h"></div>
-    <p class="piatti-title fd">Gestione Piatti / Gruppi</p>
-    <p class="piatti-sub fsc">Crea gruppi per organizzare le ricette in sottocategorie</p>
-    <div class="piatti-create-row">
-      <input type="text" id="newPiattoName" placeholder="Nome piatto o gruppo&#8230;" autocomplete="off" class="fd">
-      <select id="newPiattoSec" style="background:var(--ctrl);border:1px solid var(--cb);border-radius:var(--r);padding:.46rem .5rem;color:var(--ink);font-size:.78rem;outline:none;-webkit-appearance:none">
+    <div class="piatti-h" style="width:32px;height:3px;border-radius:2px;background:var(--smoke3);margin:0 auto .9rem"></div>
+    <div class="piatti-header-row">
+      <div>
+        <div class="piatti-header-title">Gruppi ricette</div>
+        <div class="piatti-header-sub">Tocca un gruppo per filtrare &middot; Tieni premuto per rinominare</div>
+      </div>
+      <button type="button" id="piattiClose" style="background:none;border:1px solid var(--cb);border-radius:20px;padding:.28rem .7rem;font-size:.65rem;color:var(--smoke);cursor:pointer">Chiudi</button>
+    </div>
+    <!-- Quick create -->
+    <div class="piatti-quick-create">
+      <input type="text" class="piatti-quick-inp" id="newPiattoName" placeholder="Nome nuovo gruppo&#8230;" autocomplete="off">
+      <select class="piatti-quick-sec" id="newPiattoSec">
+        <option value="">Sez. attuale</option>
         <option value="colazioni">Colazioni</option>
         <option value="fine-dining">Fine Dining</option>
         <option value="gelateria">Gelateria</option>
         <option value="torte">Torte</option>
+        <option value="tutti">Tutte</option>
       </select>
-      <button type="button" id="createPiattoBtn" class="fd">+ Crea</button>
+      <button type="button" class="piatti-quick-btn" id="createPiattoBtn">+ Crea</button>
     </div>
-    <div class="piatti-list" id="piattiList"></div>
-    <button type="button" id="piattiClose" style="width:100%;padding:.5rem;border-radius:8px;border:1px solid var(--cb);background:transparent;color:var(--ink);font-size:.85rem;cursor:pointer">Chiudi</button>
+    <!-- List grouped by section -->
+    <div id="piattiList"></div>
   </div>
 </div>
 
