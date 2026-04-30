@@ -621,9 +621,9 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 /* Fixed hamburger always visible */
 #globalMenuBtn {
   position: fixed;
-  top: max(env(safe-area-inset-top, 0px), 12px);
+  top: 12px;
   right: 12px;
-  z-index: 500;
+  z-index: 9000;
   background: var(--card);
   border: 1.5px solid var(--cb);
   border-radius: 10px;
@@ -1161,6 +1161,7 @@ function unlockApp(){
   try{sessionStorage.setItem('mdl_ul','1');}catch(e){}
   var ps=qs('pwd');if(ps){ps.classList.add('gone');setTimeout(function(){ps.style.display='none';},320);}
   qs('landing').style.display='flex';
+  var gmb=qs('globalMenuBtn');if(gmb)gmb.style.display='flex';
 }
 function submitPwd(){
   var val=(qs('pwdInp').value||'');
@@ -2191,7 +2192,13 @@ function openMultiMove(){
 function boot(){
   var th;try{th=localStorage.getItem('mdl_th');}catch(e){}setTheme((th&&THEMES.indexOf(th)!==-1)?th:'t-crema');
   var dots=document.querySelectorAll('.t-dot');for(var di=0;di<dots.length;di++){(function(d){d.addEventListener('click',function(){setTheme(d.dataset.t);});})(dots[di]);}
-  if(isUnlocked()){qs('pwd').style.display='none';qs('landing').style.display='flex';}
+  var _gmb=qs('globalMenuBtn');
+  if(isUnlocked()){
+    qs('pwd').style.display='none';qs('landing').style.display='flex';
+    if(_gmb)_gmb.style.display='flex';
+  } else {
+    if(_gmb)_gmb.style.display='none';
+  }
   qs('pwdBtn').addEventListener('click',submitPwd);
   qs('pwdInp').addEventListener('keyup',function(e){if(e.key==='Enter')submitPwd();});
   var gk;try{gk=localStorage.getItem('groq_key');}catch(e){}if(gk){var ki=qs('aiKey');if(ki)ki.value=gk;}
