@@ -544,6 +544,61 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 .import-sec-row{display:flex;gap:.5rem}
 .import-sec-row>div{flex:1}
 
+
+/* DRAWER */
+.drawer-overlay{position:fixed;inset:0;z-index:399;background:rgba(0,0,0,0);pointer-events:none;transition:background .3s}
+.drawer-overlay.open{background:rgba(0,0,0,.55);pointer-events:all}
+.drawer{position:fixed;top:0;right:0;bottom:0;z-index:400;width:min(320px,88vw);
+  background:var(--card);transform:translateX(100%);transition:transform .32s cubic-bezier(.23,1,.32,1);
+  display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.18);overflow:hidden}
+.drawer.open{transform:translateX(0)}
+.drawer-hd{padding:calc(env(safe-area-inset-top,0) + 1rem) 1.2rem .8rem;border-bottom:1px solid var(--rim);
+  display:flex;align-items:center;justify-content:space-between;background:var(--bg2);flex-shrink:0}
+.drawer-title{font-size:1.05rem;font-style:italic;color:var(--gold2);font-family:"Cormorant Garamond",serif;font-weight:300}
+.drawer-close{background:none;border:1px solid var(--cb);border-radius:50%;width:30px;height:30px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--smoke);font-size:1.1rem;
+  -webkit-tap-highlight-color:transparent;flex-shrink:0;transition:all .15s}
+.drawer-close:active{border-color:var(--gold2);color:var(--gold2)}
+.drawer-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.4rem 0 calc(env(safe-area-inset-bottom,0) + 1rem)}
+.drawer-section{padding:.65rem 1.1rem .28rem;font-size:.5rem;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--smoke3);font-family:"Cormorant SC",serif}
+.drawer-item{display:flex;align-items:center;gap:.7rem;padding:.7rem 1.1rem;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:background .14s;border:none;background:none;width:100%;text-align:left}
+.drawer-item:active{background:var(--glow)}
+.drawer-item-ico{font-size:1rem;flex-shrink:0;width:22px;text-align:center;opacity:.75}
+.drawer-item-lbl{font-size:.88rem;font-style:italic;color:var(--ink);font-family:"Cormorant Garamond",serif;display:block}
+.drawer-item-sub{font-size:.58rem;letter-spacing:.04em;color:var(--smoke2);font-family:"DM Sans",sans-serif;display:block;margin-top:.06rem}
+.drawer-sep{height:1px;background:var(--rim);margin:.25rem 1.1rem}
+.drawer-field{padding:.3rem 1.1rem}
+.drawer-field label{display:block;font-size:.5rem;letter-spacing:.16em;text-transform:uppercase;color:var(--smoke);font-family:"Cormorant SC",serif;margin-bottom:.22rem}
+.drawer-field-row{display:flex;gap:.32rem}
+.drawer-field-row input{flex:1;background:var(--ctrl);border:1px solid var(--cb);border-radius:6px;
+  padding:.4rem .6rem;font-size:.85rem;color:var(--ink);outline:none;-webkit-appearance:none;
+  font-family:"Cormorant Garamond",serif;box-sizing:border-box;transition:border-color .16s;min-width:0}
+.drawer-field-row input:focus{border-color:var(--gold2)}
+.drawer-field-btn{background:linear-gradient(135deg,var(--gold2),var(--gold3));border:none;border-radius:6px;
+  padding:.4rem .75rem;color:#fff;font-size:.8rem;font-style:italic;font-family:"Cormorant Garamond",serif;
+  cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;flex-shrink:0}
+.drawer-field-msg{font-size:.58rem;color:var(--gold2);font-family:"DM Sans",sans-serif;margin-top:.25rem;min-height:.8rem}
+.drawer-admin-badge{margin:.2rem 1.1rem .35rem;background:var(--glow);border:1px solid var(--rim);
+  border-radius:8px;padding:.45rem .75rem;display:flex;align-items:center;justify-content:space-between}
+.drawer-admin-lbl{font-size:.72rem;font-style:italic;color:var(--ink);font-family:"Cormorant Garamond",serif}
+.drawer-admin-btn{background:none;border:1px solid var(--cb);border-radius:20px;padding:.18rem .6rem;
+  font-size:.6rem;color:var(--smoke);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .14s}
+.drawer-admin-btn:active{border-color:var(--gold2);color:var(--gold2)}
+.drawer-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;padding:.35rem 1.1rem .5rem}
+.drawer-theme-btn{display:flex;align-items:center;gap:.45rem;padding:.38rem .5rem;border-radius:8px;
+  cursor:pointer;border:1.5px solid transparent;transition:all .18s;-webkit-tap-highlight-color:transparent}
+.drawer-theme-btn.active{border-color:var(--gold2);background:var(--glow)}
+.drawer-theme-dot{width:16px;height:16px;border-radius:50%;flex-shrink:0}
+.drawer-theme-lbl{font-size:.72rem;font-style:italic;color:var(--ink);font-family:"Cormorant Garamond",serif}
+.menu-btn{background:var(--ctrl);border:1.5px solid var(--cb);border-radius:8px;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:all .18s;color:var(--ink);
+  display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;
+  width:36px;height:34px;padding:0;flex-shrink:0}
+.menu-btn:active{border-color:var(--gold2);background:var(--glow)}
+.menu-btn span{display:block;width:16px;height:1.5px;background:var(--ink);border-radius:1px}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
@@ -639,10 +694,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="12" height="12"><polyline points="10,3 4,8 10,13"/></svg>Sezioni
       </button>
       <div class="hd-title"><h1 class="fd" id="hdTitle">Colazioni</h1><p class="fsc" id="hdSub">Impasti &middot; Creme &middot; Lievitati</p></div>
-      <div class="hd-right">
-      <span class="db-status" id="dbStatus" title="Stato database">&#9679;</span>
-      <button class="ico-btn fs" id="admBtn">&#128274;</button>
-    </div>
+      <div class="hd-right" style="gap:.4rem"><span class="db-status" id="dbStatus"></span><button class="menu-btn" id="menuBtn" type="button"><span></span><span></span><span></span></button></div>
     </div>
   </header>
   <div class="ctrl-shell">
@@ -761,7 +813,64 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
   <label class="fsc">Categoria</label><select id="moveCat" class="fs"><option>Creme</option><option>Paste</option><option>Torte</option><option>Lievitati</option><option>Pasticcini</option><option>Marmellate</option><option>Ganache</option><option>Mousse</option><option>Gelatine</option><option>Gelati</option><option>Sorbetti</option><option>Semifreddi</option><option>Granite</option><option>Basi</option><option>Glasse</option><option>Biscotti</option><option>Altro</option></select>
   <div class="move-btns"><button class="move-cancel fs" id="moveCancel" type="button">Annulla</button><button class="move-save fd" id="moveSave" type="button">Sposta</button></div>
 </div></div>
-<script>var SB_URL='https://tedjmlbpojdohtawepvr.supabase.co';
+<script>
+var THEME_META=[
+  {id:'t-crema',lbl:'Crema',color:'#C4933A'},
+  {id:'t-ebano',lbl:'Ebano',color:'#1A1810'},
+  {id:'t-bordeaux',lbl:'Bordeaux',color:'#6B1428'},
+  {id:'t-ottanio',lbl:'Ottanio',color:'#0D4050'},
+  {id:'t-carta',lbl:'Carta',color:'#C8A060'},
+  {id:'t-avorio',lbl:'Avorio',color:'#C8BE8C'}
+];
+function buildDrawerThemes(){
+  var grid=qs('drawerThemeGrid');if(!grid)return;grid.innerHTML='';
+  var cur='t-crema';try{cur=localStorage.getItem('mdl_th')||'t-crema';}catch(ex){}
+  THEME_META.forEach(function(tm){
+    var btn=el('div','drawer-theme-btn'+(tm.id===cur?' active':''));
+    btn.addEventListener('click',function(){setTheme(tm.id);buildDrawerThemes();});
+    var dot=el('div','drawer-theme-dot');dot.style.background=tm.color;
+    if(tm.id==='t-ebano')dot.style.boxShadow='0 0 0 1px rgba(255,255,255,.2)';
+    var lbl=el('span','drawer-theme-lbl');lbl.textContent=tm.lbl;
+    btn.appendChild(dot);btn.appendChild(lbl);grid.appendChild(btn);
+  });
+}
+function updateDrawerState(){
+  var lbl=qs('drawerAdminLbl');var toggle=qs('drawerAdminToggle');
+  var pinWrap=qs('drawerPinWrap');var pwdWrap=qs('drawerPwdWrap');
+  if(isAdmin){
+    if(lbl)lbl.textContent='Admin attivo';
+    if(toggle){toggle.textContent='Esci';toggle.style.color='#c04030';toggle.style.borderColor='rgba(200,50,40,.3)';}
+    if(pinWrap)pinWrap.style.display='none';if(pwdWrap)pwdWrap.style.display='block';
+  }else{
+    if(lbl)lbl.textContent='Non amministratore';
+    if(toggle){toggle.textContent='Accedi';toggle.style.color='';toggle.style.borderColor='';}
+    if(pinWrap)pinWrap.style.display='block';if(pwdWrap)pwdWrap.style.display='none';
+  }
+  var dot=qs('drawerDbDot');var dbSt=qs('dbStatus');
+  if(dot&&dbSt)dot.className='db-status '+dbSt.className.replace('db-status','').trim();
+  var info=qs('drawerDbInfo');var admInfo=qs('admDbInfo');
+  if(info&&admInfo&&admInfo.textContent)info.textContent=admInfo.textContent;
+}
+function openDrawer(){
+  var dr=qs('drawer');var ov=qs('drawerOverlay');if(!dr||!ov)return;
+  dr.classList.add('open');ov.classList.add('open');document.body.style.overflow='hidden';
+  updateDrawerState();buildDrawerThemes();
+  var gk;try{gk=localStorage.getItem('groq_key')||'';}catch(ex){}
+  var dGk=qs('drawerGroqKey');if(dGk&&gk)dGk.value=gk;
+}
+function closeDrawer(){
+  var dr=qs('drawer');var ov=qs('drawerOverlay');
+  if(dr)dr.classList.remove('open');if(ov)ov.classList.remove('open');
+  document.body.style.overflow='';
+}
+function goToLanding(){
+  qs('landing').style.display='flex';qs('app').classList.remove('on');curSec=null;curCat='Tutte';
+}
+/* iOS Polyfills */
+if(!Array.prototype.findIndex){Array.prototype.findIndex=function(fn){for(var i=0;i<this.length;i++){if(fn(this[i],i,this))return i;}return -1;};}
+if(!Array.prototype.find){Array.prototype.find=function(fn){for(var i=0;i<this.length;i++){if(fn(this[i],i,this))return this[i];}return undefined;};}
+if(!Object.assign){Object.assign=function(t){for(var i=1;i<arguments.length;i++){var s=arguments[i];if(s){for(var k in s){if(Object.prototype.hasOwnProperty.call(s,k))t[k]=s[k];}}}return t;};}
+var SB_URL='https://tedjmlbpojdohtawepvr.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlZGptbGJwb2pkb2h0YXdlcHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNjY1OTMsImV4cCI6MjA5Mjc0MjU5M30.5aelZWmJOqbkKekQPUmY2RL-EcH__T1uT1d3q_7C4JI';
 var ADMIN_PIN='MDL2025';
 var R = [
@@ -1422,6 +1531,7 @@ function checkAdmin(){
     if(isAdmin)appEl.classList.add('admin-on');
     else appEl.classList.remove('admin-on');
   }
+  if(typeof updateDrawerState==='function')updateDrawerState();
   renderGrid();
 }
 function openAdm(){
@@ -1467,7 +1577,7 @@ function populateAiPreview(parsed){
   qs('aiAnalyseBtn').style.display='none';qs('aiSpinner').classList.remove('on');qs('aiPreview').classList.add('on');
 }
 function doAiAnalyse(){
-  var key=(qs('aiKey').value||'').trim();if(!key){alert('Inserisci la chiave API Groq (gratuita su groq.com → API Keys)');return;}
+  var key=(qs('aiKey').value||'').trim();if(!key){alert('Inserisci la chiave API Groq (gratuita su groq.com > API Keys)');return;}
   try{localStorage.setItem('groq_key',key);}catch(e){}
   var btn=qs('aiAnalyseBtn');btn.disabled=true;qs('aiSpinner').classList.add('on');
   var activeTab=document.querySelector('.ai-tab.ai-tab-on').dataset.tab;
@@ -1744,7 +1854,7 @@ function renderImportList(){
     sm.textContent=r.i.length+' ingredienti'+(r.p?' · proc.':'')+(r.s?' · '+(SLBL2[r.s]||r.s):'');
     info.appendChild(nm);info.appendChild(sm);
     var toggle=el('button');
-    toggle.type='button';toggle.textContent='▾ Espandi';
+    toggle.type='button';toggle.textContent='Espandi v';
     toggle.style.cssText='background:var(--bg);border:1px solid var(--cb);border-radius:12px;padding:.2rem .6rem;font-size:.6rem;letter-spacing:.04em;color:var(--smoke);cursor:pointer;white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:all .15s';
     hdr.appendChild(chk);hdr.appendChild(info);hdr.appendChild(toggle);
 
@@ -1824,7 +1934,7 @@ function renderImportList(){
       e.stopPropagation();
       isOpen=!isOpen;
       panel.style.display=isOpen?'block':'none';
-      toggle.textContent=isOpen?'▴ Chiudi':'▾ Espandi';
+      toggle.textContent=isOpen?'Chiudi ^':'Espandi v';
       toggle.style.background=isOpen?'var(--glow)':'var(--bg)';
       toggle.style.borderColor=isOpen?'var(--gold2)':'var(--cb)';
       toggle.style.color=isOpen?'var(--gold2)':'var(--smoke)';
@@ -1883,7 +1993,7 @@ function getPiatti(){
       if(!map[key]){var parts=key.split('::');map[key]={name:parts[1],sec:parts[0],count:0};}
     });
   }catch(e){}
-  return Object.values(map);
+  return Object.keys(map).map(function(k){return map[k];});
 }
 function renderPiattiList(){
   var list=qs('piattiList');if(!list)return;list.innerHTML='';
@@ -1947,7 +2057,7 @@ function createPiatto(){
   var name=(qs('newPiattoName').value||'').trim();
   if(!name){alert('Inserisci il nome del piatto');return;}
   qs('newPiattoName').value='';
-  alert('Piatto "'+name+'" creato! Assegna ricette tramite i pulsanti o 📂 e inserisci "'+name+'" nel campo Piatto/Gruppo.');
+  alert('Piatto "'+name+'" creato! Assegna ricette tramite i pulsanti o  e inserisci "'+name+'" nel campo Piatto/Gruppo.');
   renderPiattiList();
 }
 
@@ -1964,7 +2074,7 @@ function openCucina(rec){
   else{proc.style.display='none';}
   qs('cucinaBg').classList.add('on');
   qs('cucinaBg').scrollTop=0;
-  try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(function(){});}catch(e){}
+  try{if(navigator&&navigator.wakeLock)navigator.wakeLock.request('screen').then(function(){}).catch(function(){});}catch(e){}
 }
 function closeCucina(){qs('cucinaBg').classList.remove('on');_cucinaRec=null;}
 function buildCucinaIngs(){
@@ -2041,7 +2151,7 @@ function boot(){
       if(dx>80&&dy<60) goToLanding();
     },{passive:true});
   }
-  qs('admBtn').addEventListener('click',openAdm);qs('admOk').addEventListener('click',submitAdm);
+  // admBtn replaced by drawerqs('admOk').addEventListener('click',submitAdm);
   qs('admCancel').addEventListener('click',closeAdm);
   qs('admBg').addEventListener('click',function(e){if(e.target===qs('admBg'))closeAdm();});
   qs('admPin').addEventListener('keyup',function(e){if(e.key==='Enter')submitAdm();});
@@ -2316,5 +2426,75 @@ function boot(){
   <button class="multi-bar-move" id="multiMoveBtn" type="button">Sposta</button>
   <button class="multi-bar-cancel" id="multiCancelBtn" type="button">&#10005;</button>
 </div>
+
+<!-- DRAWER MENU -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true">
+  <div class="drawer-hd">
+    <span class="drawer-title">Ricettario MDL</span>
+    <button class="drawer-close" id="drawerClose" type="button" aria-label="Chiudi">&times;</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section">Account</div>
+    <div class="drawer-admin-badge">
+      <span class="drawer-admin-lbl" id="drawerAdminLbl">Non amministratore</span>
+      <button class="drawer-admin-btn" type="button" id="drawerAdminToggle">Accedi</button>
+    </div>
+    <div class="drawer-field" id="drawerPinWrap">
+      <label>PIN Admin (default MDL2025)</label>
+      <div class="drawer-field-row">
+        <input type="password" id="drawerPin" placeholder="PIN..." maxlength="12">
+        <button type="button" class="drawer-field-btn" id="drawerPinOk">OK</button>
+      </div>
+      <div class="drawer-field-msg" id="drawerPinMsg"></div>
+    </div>
+    <div class="drawer-field" id="drawerPwdWrap" style="display:none">
+      <label>Cambia password accesso app</label>
+      <div class="drawer-field-row">
+        <input type="password" id="drawerNewPwd" placeholder="Nuova password..." maxlength="32">
+        <button type="button" class="drawer-field-btn" id="drawerPwdSave">OK</button>
+      </div>
+      <div class="drawer-field-msg" id="drawerPwdMsg"></div>
+    </div>
+    <div class="drawer-sep"></div>
+    <div class="drawer-section">Intelligenza Artificiale</div>
+    <div class="drawer-field">
+      <label>Chiave Groq AI (gratuita su groq.com)</label>
+      <div class="drawer-field-row">
+        <input type="password" id="drawerGroqKey" placeholder="gsk_...">
+        <button type="button" class="drawer-field-btn" id="drawerGroqSave">OK</button>
+      </div>
+      <div class="drawer-field-msg" id="drawerGroqMsg"></div>
+    </div>
+    <div class="drawer-sep"></div>
+    <div class="drawer-section">Azioni</div>
+    <button class="drawer-item" type="button" id="drawerPiattiBtn">
+      <span class="drawer-item-ico">&#128194;</span>
+      <span><span class="drawer-item-lbl">Gruppi ricette</span><span class="drawer-item-sub">Crea e gestisci i gruppi</span></span>
+    </button>
+    <button class="drawer-item" type="button" id="drawerAddBtn">
+      <span class="drawer-item-ico">&#43;</span>
+      <span><span class="drawer-item-lbl">Aggiungi ricetta</span><span class="drawer-item-sub">Manuale o con AI</span></span>
+    </button>
+    <button class="drawer-item" type="button" id="drawerImportBtn">
+      <span class="drawer-item-ico">&#128196;</span>
+      <span><span class="drawer-item-lbl">Importa da file</span><span class="drawer-item-sub">.txt o .docx con AI</span></span>
+    </button>
+    <div class="drawer-sep"></div>
+    <div class="drawer-section">Database</div>
+    <div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 1.1rem;font-size:.72rem;color:var(--smoke2);font-family:'DM Sans',sans-serif">
+      <span class="db-status" id="drawerDbDot"></span>
+      <span id="drawerDbInfo">Connessione...</span>
+    </div>
+    <button class="drawer-item" type="button" id="drawerTestDb">
+      <span class="drawer-item-ico">&#128197;</span>
+      <span><span class="drawer-item-lbl">Testa connessione</span></span>
+    </button>
+    <div class="drawer-sep"></div>
+    <div class="drawer-section">Tema</div>
+    <div class="drawer-theme-grid" id="drawerThemeGrid"></div>
+  </div>
+</aside>
+
 </body>
 </html>
