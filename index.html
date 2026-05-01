@@ -2189,7 +2189,18 @@ function openMultiMove(){
 
 /* ════ MENU MDL ════ */
 var _TH=[{id:'t-crema',l:'Crema',c:'#C4933A'},{id:'t-ebano',l:'Ebano',c:'#2A2418'},{id:'t-bordeaux',l:'Bordeaux',c:'#6B1428'},{id:'t-ottanio',l:'Ottanio',c:'#0D4050'},{id:'t-carta',l:'Carta',c:'#C8A060'},{id:'t-avorio',l:'Avorio',c:'#C8BE8C'}];
-function MDL_OPEN(){var d=document.getElementById('MDL_DRW'),o=document.getElementById('MDL_OV');if(d)d.style.display='block';if(o)o.style.display='block';document.body.style.overflow='hidden';MDL_REFRESH();}
+function MDL_OPEN(){
+  var d=document.getElementById('MDL_DRW');
+  var o=document.getElementById('MDL_OV');
+  if(!d||!o)return;
+  // Sposta a document.body se non già lì (fix iOS Safari)
+  if(d.parentNode!==document.body)document.body.appendChild(d);
+  if(o.parentNode!==document.body)document.body.appendChild(o);
+  d.style.display='block';
+  o.style.display='block';
+  document.body.style.overflow='hidden';
+  setTimeout(function(){try{MDL_REFRESH();}catch(ex){}},10);
+}
 function MDL_CLOSE(){var d=document.getElementById('MDL_DRW'),o=document.getElementById('MDL_OV');if(d)d.style.display='none';if(o)o.style.display='none';document.body.style.overflow='';}
 function MDL_REFRESH(){
   var adm=false;try{adm=sessionStorage.getItem('adm')==='1'||(localStorage.getItem('mdl_adm')===new Date().toDateString());}catch(ex){}
@@ -2626,6 +2637,8 @@ function boot(){
 
 <button id="globalMenuBtn" type="button" aria-label="Menu"><span></span><span></span><span></span></button>
 
+
+
 <div id="MDL_OV" onclick="MDL_CLOSE()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:9998"></div>
 <div id="MDL_DRW" style="display:none;position:fixed;top:0;right:0;bottom:0;width:88vw;max-width:310px;background:#FAF8F2;z-index:9999;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:-3px 0 24px rgba(0,0,0,.22)">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1rem .8rem;border-bottom:1px solid #e8e0d0">
@@ -2676,6 +2689,5 @@ function boot(){
     <button onclick="testDb&&testDb()" style="display:flex;align-items:center;gap:.7rem;padding:.7rem 1rem;border:none;background:none;width:100%;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent"><span>&#128197;</span><span style="font-style:italic;font-family:Cormorant Garamond,serif;font-size:.88rem;color:#333">Testa DB</span></button>
   </div>
 </div>
-
 </body>
 </html>
