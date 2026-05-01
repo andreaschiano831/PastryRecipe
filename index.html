@@ -1493,15 +1493,24 @@ function updDose(){
 }
 
 function buildIngDatalist(){
-  var dl=document.getElementById('ing-datalist');if(!dl)return;
+  var dl=document.getElementById('ing-datalist');
+  if(!dl){dl=document.createElement('datalist');dl.id='ing-datalist';document.body.appendChild(dl);}
   var names={};
-  if(typeof recs!=='undefined'&&recs){
-    recs.forEach(function(r){
-      if(r.i&&Array.isArray(r.i)){r.i.forEach(function(ing){if(ing[0])names[ing[0].trim()]=1;});}
-    });
-  }
+  // Da tutte le ricette caricate
+  var allR=[];
+  try{if(typeof allRecs==='function')allR=allRecs();}catch(ex){}
+  if(!allR.length&&typeof CU!=='undefined'&&CU.length)allR=CU;
+  allR.forEach(function(r){
+    var ing=r.i||r.ingredienti||[];
+    if(Array.isArray(ing)){ing.forEach(function(x){
+      var nm=Array.isArray(x)?x[0]:x.nome||x.n||x.name||'';
+      if(nm&&nm.trim().length>1)names[nm.trim()]=1;
+    });}
+  });
   dl.innerHTML='';
-  Object.keys(names).sort().forEach(function(n){var o=document.createElement('option');o.value=n;dl.appendChild(o);});
+  Object.keys(names).sort().forEach(function(n){
+    var o=document.createElement('option');o.value=n;dl.appendChild(o);
+  });
 }
 function addIng(n,q,u){
   var list=qs('ingList');var row=el('div','ing-row');
