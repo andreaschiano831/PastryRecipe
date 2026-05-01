@@ -1952,8 +1952,11 @@ function parseRecipeText(raw){
 
 
 function renderImportList(){
-  var list=qs('importList');list.innerHTML='';
-  if(!_importParsed.length){qs('importPreview').classList.remove('on');return;}
+  var list=qs('importList');
+  if(!list){console.error('importList not found');return;}
+  list.innerHTML='';
+  var prev=qs('importPreview');
+  if(!_importParsed.length){if(prev)prev.classList.remove('on');return;}
   _importParsed.forEach(function(r,i){
     var item=el('div','import-item');
     item.style.cssText='flex-direction:column;gap:0;padding:0;overflow:hidden;border-radius:10px';
@@ -2062,8 +2065,14 @@ function renderImportList(){
   });
 
   var cnt=qs('importPreviewTitle');
-  if(cnt)cnt.textContent=_importParsed.length+' ricett'+(_importParsed.length===1?'a trovata':'e trovate')+' — espandi per modificare';
-  qs('importPreview').classList.add('on');
+  if(cnt)cnt.textContent=_importParsed.length+' ricett'+(_importParsed.length===1?'a trovata':'e trovate')+' — tocca per espandere e modificare';
+  var prev2=qs('importPreview');
+  if(prev2){
+    prev2.classList.add('on');
+    prev2.style.display='block';
+  }
+  // Scroll alla lista
+  if(list)setTimeout(function(){list.scrollIntoView({behavior:'smooth',block:'nearest'});},100);
 }
 
 
@@ -2463,7 +2472,11 @@ function boot(){
             return;
           }
           if(status)status.textContent='✓ Trovate '+_importParsed.length+' ricett'+ (_importParsed.length===1?'a':'e');
-          try{renderImportList();}catch(ex){if(status)status.textContent='Errore visualizzazione: '+ex.message;}
+          try{
+            renderImportList();
+            var _pr2=document.getElementById('importPreview');
+            if(_pr2){_pr2.style.cssText='display:block!important;margin-top:.5rem';}
+          }catch(ex){if(status)status.textContent='Errore: '+ex.message;}
         }catch(ex){if(status)status.textContent='Errore parser: '+ex.message;}
       }
       if(key){
@@ -2472,7 +2485,17 @@ function boot(){
           function(aiParsed){
             _importParsed=aiParsed;
             if(status)status.textContent='✓ AI: trovate '+aiParsed.length+' ricett'+(aiParsed.length===1?'a':'e');
-            try{renderImportList();}catch(ex){doManual();}
+            try{
+              renderImportList();
+              // Forza visibilità
+              var _pr=document.getElementById('importPreview');
+              if(_pr){_pr.style.cssText='display:block!important;margin-top:.5rem';}
+              var _ibg=document.getElementById('importBg');
+              if(_ibg){_ibg.style.overflowY='auto';_ibg.scrollTop=0;}
+            }catch(ex){
+              if(status)status.textContent='Errore: '+ex.message;
+              doManual();
+            }
           },
           function(){doManual();}
         );
