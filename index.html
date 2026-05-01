@@ -1839,87 +1839,114 @@ function isRecipeTitle(line, prevWasIng){
 
 function parseRecipeText(raw){
   var recipes=[];
-  // Normalizza il testo
   var text=raw.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim();
-  // Divide per separatori comuni: ===, ---, numerazione, titoli in maiuscolo
-  var blocks=text.split(/\n(?=(?:\d+[\.\)]\s+|#{1,3}\s|[A-Z][A-Z\s]{3,}\n|[-=]{3,}))/);
-  if(blocks.length<=1){
-    // Prova con linee vuote doppie
-    blocks=text.split(/\n{2,}/);
+  if(!text)return recipes;
+
+  // Strategia 1: dividi per separatori forti
+  var blocks=[];
+  var sep1=text.split(/\n[-=*]{3,}\n/);
+  if(sep1.length>1){blocks=sep1;}
+  else{
+    // Strategia 2: dividi per riga con solo testo (titolo) seguita da ingredienti
+    var sep2=text.split(/\n(?=[A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖÙÚÛÜÝ][^\n]{2,60}\n)/);
+    if(sep2.length>1){blocks=sep2;}
+    else{
+      // Strategia 3: dividi per numeri o # all'inizio riga
+      var sep3=text.split(/\n(?=(?:\d{1,2}[\.\)\-\s]|#{1,3}\s)[A-Z])/);
+      if(sep3.length>1){blocks=sep3;}
+      else{
+        // Strategia 4: dividi per righe vuote doppie
+        blocks=text.split(/\n\s*\n\s*\n/);
+        if(blocks.length<=1){blocks=text.split(/\n\s*\n/);}
+      }
+    }
   }
+
+  // Se ancora un solo blocco, trattalo come una ricetta sola
+  if(blocks.length<=1 && text.length>50){blocks=[text];}
+
+  var unitRx=/\b(\d+(?:[,\.]\d+)?)\s*(g|kg|ml|l|cl|dl|cc|n°|nr|pz|cucchiai[o]?|cucchiaini?|tazz[ae]|q\.?b\.?|qb|spicchi?|fogli[o]?|bustine?|lt?|minuti?|ore?|gradi?|°C)\b/gi;
+
   blocks.forEach(function(block){
     block=block.trim();
-    if(!block||block.length<20)return;
+    if(!block||block.length<10)return;
     var lines=block.split('\n').map(function(l){return l.trim();}).filter(Boolean);
     if(!lines.length)return;
-    // Nome: prima riga non vuota (rimuovi numerazione)
-    var nome=lines[0].replace(/^(\d+[\.\)]\s*|#{1,3}\s*)/,'').trim();
-    if(!nome||nome.length<2)return;
-    // Cerca ingredienti: righe con numeri seguiti da unità
+
+    // Nome: prima riga non vuota, ripulita
+    var nome=lines[0]
+      .replace(/^(\d{1,2}[\.\)\-\s]+|#{1,3}\s*)/,'')
+      .replace(/[:—–]+$/,'').trim();
+    if(!nome||nome.length<2||nome.length>100)return;
+
     var ingredients=[];
     var proc_lines=[];
     var in_proc=false;
-    var unitPattern=/\b(g|kg|ml|l|cl|dl|cc|n°|nr|pz|pezzi|cucchiai?|cucchiaini?|tazze?|q\.b\.|qb)\b/i;
+    var proc_kw=/^(procedimento|preparazione|metodo|istruzioni|esecuzione|lavorazione|come\s+si\s+fa|preparaz)/i;
+    var ing_kw=/^(ingredienti|occorre|necessario|per\s+la\s+ricetta)/i;
+
     for(var j=1;j<lines.length;j++){
       var line=lines[j];
-      if(/^(procedimento|preparazione|metodo|istruzioni|esecuzione|lavorazione|ricetta)[\s:]*/i.test(line)){
-        in_proc=true;continue;
-      }
+      if(proc_kw.test(line)){in_proc=true;continue;}
+      if(ing_kw.test(line)){in_proc=false;continue;}
+
       if(in_proc){proc_lines.push(line);continue;}
-      // Prova a parsare come ingrediente
-      // Pattern: "Farina 500 g" o "500 g farina" o "- Farina: 500g"
-      line=line.replace(/^[-•*·]\s*/,'');
-      var m=line.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(g|kg|ml|l|cl|dl|n°|nr|pz|q\.b\.|qb|cucchiai?|cucchiaini?|tazze?)\.?\s*$/i);
-      if(!m)m=line.match(/^(\d+(?:[.,]\d+)?)\s*(g|kg|ml|l|cl|dl|n°|nr|pz|q\.b\.|qb|cucchiai?|cucchiaini?|tazze?)\.?\s+(.+)$/i);
-      if(m){
-        var ing_name,ing_qty,ing_unit;
-        if(m.length===4&&isNaN(m[1].charAt(0))){
-          ing_name=m[1];ing_qty=parseFloat(m[2].replace(',','.'));ing_unit=m[3].toLowerCase();
-        } else if(m.length===4){
-          ing_qty=parseFloat(m[1].replace(',','.'));ing_unit=m[2].toLowerCase();ing_name=m[3];
+
+      // Rimuovi prefissi lista
+      var clean=line.replace(/^[-•*·◦▪]\s*/,'').replace(/^\d+[\.\)]\s*/,'');
+
+      // Cerca pattern ingrediente con quantità
+      // Pattern A: "Nome 500 g" o "Nome: 500 g"
+      var mA=clean.match(/^(.+?)\s*:?\s+(\d+(?:[,\.]\d+)?)\s*(g|kg|ml|l|cl|dl|cc|n°|nr|pz|q\.?b\.?|qb|cucchiai[o]?|cucchiaini?|tazz[ae]|spicchi?|fogli[o]?|bustine?)\s*\.?$/i);
+      // Pattern B: "500 g Nome"
+      var mB=clean.match(/^(\d+(?:[,\.]\d+)?)\s*(g|kg|ml|l|cl|dl|cc|n°|nr|pz|q\.?b\.?|qb|cucchiai[o]?|cucchiaini?|tazz[ae]|spicchi?|fogli[o]?|bustine?)\s+(.+)$/i);
+      // Pattern C: "Nome q.b." o "Nome al gusto"
+      var mC=clean.match(/^(.+?)\s+(q\.?b\.?|qb|al\s+gusto|quanto\s+basta)\s*\.?$/i);
+
+      if(mA){
+        ingredients.push([mA[1].trim(),parseFloat(mA[2].replace(',','.')),mA[3].toLowerCase()]);
+      } else if(mB){
+        ingredients.push([mB[3].trim(),parseFloat(mB[1].replace(',','.')),mB[2].toLowerCase()]);
+      } else if(mC){
+        ingredients.push([mC[1].trim(),null,'q.b.']);
+      } else if(unitRx.test(clean)&&clean.length<80){
+        // Ha un numero+unità da qualche parte - prova a estrarre
+        unitRx.lastIndex=0;
+        var um=unitRx.exec(clean);
+        if(um){
+          var before=clean.substring(0,um.index).trim().replace(/[:·\-]+$/,'').trim();
+          var after=clean.substring(um.index+um[0].length).trim().replace(/^[:·\-]+/,'').trim();
+          var ingName=before||after;
+          if(ingName&&ingName.length>0&&ingName.length<60){
+            ingredients.push([ingName,parseFloat(um[1].replace(',','.')),um[2].toLowerCase()]);
+          }
+        }
+        unitRx.lastIndex=0;
+      } else if(ingredients.length>0&&clean.length>3&&clean.length<100&&!in_proc){
+        // Dopo aver trovato almeno un ingrediente, righe brevi senza quantità = q.b.
+        if(!/^\d{4}/.test(clean)&&!/^(nota|note|consigl|tip|variante|attenzione)/i.test(clean)){
+          ingredients.push([clean,null,'q.b.']);
         } else {
-          ing_name=m[1];ing_qty=parseFloat(m[2].replace(',','.'));ing_unit=m[3].toLowerCase();
+          proc_lines.push(clean);
         }
-        // Normalizza unità
-        ing_unit=ing_unit.replace(/cucchiai(no)?/i,function(s,p1){return p1?'cucchiaino':'cucchiaio';});
-        if(ing_unit.toLowerCase()==='q.b.'||ing_unit.toLowerCase()==='qb')ing_unit='q.b.';
-        ingredients.push([ing_name.trim(),ing_qty,ing_unit]);
-      } else if(unitPattern.test(line)){
-        // Formato meno standard - prova comunque
-        var parts=line.split(/\s+/);
-        var qty_idx=-1,qty_val=null;
-        for(var k=0;k<parts.length;k++){
-          var n=parseFloat(parts[k].replace(',','.'));
-          if(!isNaN(n)){qty_idx=k;qty_val=n;break;}
-        }
-        if(qty_idx>0){
-          ing_name=parts.slice(0,qty_idx).join(' ');
-          ing_unit=parts[qty_idx+1]||'g';
-          ingredients.push([ing_name,qty_val,ing_unit]);
-        } else if(qty_idx===0&&parts.length>=2){
-          ing_unit=parts[1];
-          ing_name=parts.slice(2).join(' ');
-          if(ing_name)ingredients.push([ing_name,qty_val,ing_unit]);
-        } else {
-          // Ingrediente senza quantità
-          if(line.length<60)ingredients.push([line,null,'q.b.']);
-        }
-      } else if(ingredients.length>0&&line.length<60&&!/^\d{4}/.test(line)){
-        // Dopo i primi ingredienti, linee corte = probabili ingredienti senza qty
-        if(!/^(nota|note|consigl|tip|variante)/i.test(line))
-          proc_lines.push(line);
+      } else if(clean.length>10){
+        proc_lines.push(clean);
       }
     }
-    if(ingredients.length===0&&proc_lines.length===0)return;
-    recipes.push({
-      n:nome,
-      c:'Altro',
-      s:curSec&&curSec!=='tutti'?curSec:'colazioni',
-      piatto:'',
-      p:proc_lines.join('\n'),
-      i:ingredients
-    });
+
+    // Accetta la ricetta anche senza ingredienti se ha del procedimento
+    if(ingredients.length>0||proc_lines.length>2){
+      recipes.push({
+        n:nome,
+        c:'Altro',
+        s:typeof curSec!=='undefined'&&curSec&&curSec!=='tutti'?curSec:'colazioni',
+        piatto:'',
+        p:proc_lines.join('\n'),
+        i:ingredients
+      });
+    }
   });
+
   return recipes;
 }
 
@@ -2418,49 +2445,59 @@ function boot(){
   var importFile=qs('importFile');
   if(importFile)importFile.addEventListener('change',function(){
     var file=this.files[0];if(!file)return;
-    // Feedback visivo immediato
-    var lbl=this.closest('label')||this.parentNode;
-    if(lbl){lbl.style.borderColor='var(--gold2)';lbl.querySelector('p').textContent='File: '+file.name;}
-    var status=qs('importAiStatus');if(status)status.textContent='Lettura file in corso...';
-    var isDOCX=file.name.toLowerCase().endsWith('.docx')||file.type==='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    if(isDOCX){
-      // Use mammoth.js to extract text from .docx
-      var reader=new FileReader();
-      reader.onload=function(ev){
-        if(typeof mammoth==='undefined'){
-          alert('Libreria mammoth.js non caricata. Verifica la connessione internet e riprova.');return;
-        }
-        mammoth.extractRawText({arrayBuffer:ev.target.result})
-          .then(function(result){
-            var text=result.value||'';
-            if(!text.trim()){alert('Il file .docx sembra vuoto o non leggibile.');return;}
-            parseWithAI(text,
-              function(aiParsed){_importParsed=aiParsed;renderImportList();},
-              function(rawText){
-                _importParsed=parseRecipeText(rawText);
-                if(!_importParsed.length){alert('Nessuna ricetta trovata nel file.');return;}
-                renderImportList();
-              }
-            );
-          })
-          .catch(function(err){alert('Errore lettura .docx: '+err.message);});
-      };
-      reader.readAsArrayBuffer(file);
-    } else {
-      // Plain text
-      var reader2=new FileReader();
-      reader2.onload=function(ev){
-        var text=ev.target.result||'';
-        parseWithAI(text,
-          function(aiParsed){_importParsed=aiParsed;renderImportList();},
-          function(rawText){
-            _importParsed=parseRecipeText(rawText);
-            if(!_importParsed.length){alert('Nessuna ricetta trovata nel file.');return;}
-            renderImportList();
+    var status=qs('importAiStatus');
+    if(status)status.textContent='📂 '+file.name+' — analisi in corso...';
+    function onText(text){
+      if(!text||!text.trim()){
+        if(status)status.textContent='⚠ File vuoto o non leggibile.';return;
+      }
+      // Prima prova AI, poi fallback manuale
+      var key='';try{key=localStorage.getItem('groq_key')||'';}catch(ex){}
+      var aiInp=qs('aiKey');if(aiInp&&aiInp.value)key=aiInp.value;
+      function doManual(){
+        if(status)status.textContent='Parser manuale in corso...';
+        try{
+          _importParsed=parseRecipeText(text);
+          if(!_importParsed||!_importParsed.length){
+            if(status)status.textContent='⚠ Nessuna ricetta trovata. Controlla il formato del file.';
+            return;
           }
+          if(status)status.textContent='✓ Trovate '+_importParsed.length+' ricett'+ (_importParsed.length===1?'a':'e');
+          try{renderImportList();}catch(ex){if(status)status.textContent='Errore visualizzazione: '+ex.message;}
+        }catch(ex){if(status)status.textContent='Errore parser: '+ex.message;}
+      }
+      if(key){
+        if(status)status.textContent='✨ Analisi AI in corso...';
+        parseWithAI(text,
+          function(aiParsed){
+            _importParsed=aiParsed;
+            if(status)status.textContent='✓ AI: trovate '+aiParsed.length+' ricett'+(aiParsed.length===1?'a':'e');
+            try{renderImportList();}catch(ex){doManual();}
+          },
+          function(){doManual();}
         );
+      } else {
+        doManual();
+      }
+    }
+    var isDOCX=file.name.toLowerCase().endsWith('.docx')||file.type.indexOf('wordprocessingml')>-1;
+    if(isDOCX){
+      if(typeof mammoth==='undefined'){
+        if(status)status.textContent='⚠ mammoth.js non caricato. Controlla la connessione.';return;
+      }
+      var r=new FileReader();
+      r.onerror=function(){if(status)status.textContent='⚠ Errore lettura file.';};
+      r.onload=function(ev){
+        mammoth.extractRawText({arrayBuffer:ev.target.result})
+          .then(function(res){onText(res.value||'');})
+          .catch(function(err){if(status)status.textContent='⚠ Errore .docx: '+err.message;});
       };
-      reader2.readAsText(file,'UTF-8');
+      r.readAsArrayBuffer(file);
+    } else {
+      var r2=new FileReader();
+      r2.onerror=function(){if(status)status.textContent='⚠ Errore lettura file.';};
+      r2.onload=function(ev){onText(ev.target.result||'');};
+      r2.readAsText(file,'UTF-8');
     }
   });
   var importSaveBtn=qs('importSaveBtn');if(importSaveBtn)importSaveBtn.addEventListener('click',doImport);
