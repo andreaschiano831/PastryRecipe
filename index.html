@@ -846,7 +846,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
   <div class="ai-key-row"><span class="ai-key-lbl fsc">Chiave Groq</span><input class="ai-key-inp" id="aiKey" type="password" placeholder="gsk_&#8230; (gratuita su groq.com)"></div>
   <div class="ai-tabs"><button class="ai-tab ai-tab-on" data-tab="text" type="button">Testo</button><button class="ai-tab" data-tab="photo" type="button">Foto</button></div>
   <div id="aiTextPane"><textarea class="ai-textarea" id="aiText" placeholder="Incolla qui la ricetta&#8230;"></textarea></div>
-  <div id="aiPhotoPane" style="display:none"><div class="ai-photo-area" id="aiPhotoArea"><input type="file" id="aiFileInput" accept="image/*" capture="environment"><div id="aiPhotoEmpty"><div class="ai-photo-ico">&#128247;</div><p class="ai-photo-lbl fsc">Tocca per scattare o scegliere foto</p></div><img class="ai-photo-preview" id="aiPhotoPreview" alt="preview"></div></div>
+  <div id="aiPhotoPane" style="display:none"><div class="ai-photo-area" id="aiPhotoArea"><input type="file" id="aiFileInput" accept="image/*"><div id="aiPhotoEmpty"><div class="ai-photo-ico">&#128247;</div><p class="ai-photo-lbl fsc">Tocca per scattare o scegliere foto</p></div><img class="ai-photo-preview" id="aiPhotoPreview" alt="preview"></div></div>
   <button class="ai-analyse-btn fd" id="aiAnalyseBtn" type="button">&#10024; Analizza con AI</button>
   <div class="ai-spinner" id="aiSpinner"><span class="spin"></span>Analisi in corso&#8230;</div>
   <div class="ai-preview" id="aiPreview">
@@ -1710,8 +1710,8 @@ function saveQuickProc(){
 var _importParsed=[];
 function openImport(){
   _importParsed=[];
-  qs('importPreview').classList.remove('on');
-  qs('importList').innerHTML='';
+  var _ip=qs('importPreview');if(_ip)_ip.classList.remove('on');
+  var _il=qs('importList');if(_il)_il.innerHTML='';
   var fi=qs('importFile');if(fi)fi.value='';
   if(curSec&&curSec!=='tutti'){var is=qs('importSec');if(is)is.value=curSec;}
   // Check if Groq key available
@@ -1719,10 +1719,14 @@ function openImport(){
   var aiKey=qs('aiKey');if(aiKey&&aiKey.value)key=aiKey.value;
   var note=qs('importAiStatus');
   if(note){
-    if(key){note.textContent='✓ Chiave Groq attiva — parsing AI automatico';}
-    else{note.textContent='Nessuna chiave Groq — usa il parser manuale. Aggiungi la chiave in Admin.';}
+    if(key){note.textContent='✓ Groq attiva — parsing AI automatico';}
+    else{note.textContent='⚠ Inserisci la chiave Groq nel menu (≡) → AI per il parsing automatico. Senza chiave: parser manuale.';}
   }
-  qs('importBg').classList.add('on');
+  var _ibg=qs('importBg');
+  if(_ibg){
+    if(_ibg.parentNode!==document.body)document.body.appendChild(_ibg);
+    _ibg.classList.add('on');
+  }
 }
 function closeImport(){qs('importBg').classList.remove('on');}
 
@@ -2210,7 +2214,9 @@ function MDL_REFRESH(){
   var pw=document.getElementById('MDL_PIN_WRAP'),pp=document.getElementById('MDL_PWD_WRAP');
   if(pw)pw.style.display=adm?'none':'block';if(pp)pp.style.display=adm?'block':'none';
   var gi=document.getElementById('MDL_GROQ');
-  if(gi&&!gi.value){try{gi.value=localStorage.getItem('groq_key')||'';}catch(ex){}}
+  var gkStored='';try{gkStored=localStorage.getItem('groq_key')||'';}catch(ex){}
+  if(gi&&!gi.value)gi.value=gkStored;
+  var aiKeyInp=document.getElementById('aiKey');if(aiKeyInp&&!aiKeyInp.value&&gkStored)aiKeyInp.value=gkStored;
   var g=document.getElementById('MDL_THEMES');if(!g)return;g.innerHTML='';
   var cur='t-crema';try{cur=localStorage.getItem('mdl_th')||'t-crema';}catch(ex){}
   _TH.forEach(function(t){
