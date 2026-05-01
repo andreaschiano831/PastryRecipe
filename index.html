@@ -806,7 +806,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
     <label class="fsc">Nome ricetta</label><input type="text" id="mName" class="fs" placeholder="Es. Ganache al cioccolato" autocomplete="off" autocorrect="off" autocapitalize="words">
     <label class="fsc">Categoria</label><select id="mCat" class="fs"><option>Creme</option><option>Paste</option><option>Torte</option><option>Lievitati</option><option>Pasticcini</option><option>Marmellate</option><option>Ganache</option><option>Mousse</option><option>Gelatine</option><option>Gelati</option><option>Sorbetti</option><option>Semifreddi</option><option>Granite</option><option>Basi</option><option>Glasse</option><option>Biscotti</option><option>Altro</option></select>
     <label class="fsc">Procedimento (facoltativo)</label><textarea id="mProc" class="fs" placeholder="Descrivi il procedimento&#8230;"></textarea>
-    <label class="fsc">Ingredienti</label><div class="ing-list" id="ingList"></div>
+    <label class="fsc">Ingredienti</label><datalist id="ing-datalist"></datalist><div class="ing-list" id="ingList"></div>
     <button class="add-ing-btn fs" id="addIngBtn" type="button">+ Ingrediente</button>
     <div class="modal-btns"><button class="btn-cancel fs" id="mCancel" type="button">Annulla</button><button class="btn-save fd" id="mSave" type="button">Salva ricetta</button></div>
   </div>
@@ -865,7 +865,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 <div class="move-bg" id="moveBg"><div class="move-box">
   <h4 class="fd">Sposta ricetta</h4><p class="fsc" id="moveName">Modifica sezione e categoria</p>
   <label class="fsc">Ricettario</label><select id="moveSec" class="fs"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select>
-<script>
+<script>buildIngDatalist();
 var THEME_META=[
   {id:'t-crema',lbl:'Crema',color:'#C4933A'},
   {id:'t-ebano',lbl:'Ebano',color:'#1A1810'},
@@ -1492,10 +1492,35 @@ function updDose(){
   var dv=qs('dVal');if(dv)dv.value=dose;
 }
 
+function buildIngDatalist(){
+  var dl=document.getElementById('ing-datalist');if(!dl)return;
+  var names={};
+  if(typeof recs!=='undefined'&&recs){
+    recs.forEach(function(r){
+      if(r.i&&Array.isArray(r.i)){r.i.forEach(function(ing){if(ing[0])names[ing[0].trim()]=1;});}
+    });
+  }
+  dl.innerHTML='';
+  Object.keys(names).sort().forEach(function(n){var o=document.createElement('option');o.value=n;dl.appendChild(o);});
+}
 function addIng(n,q,u){
   var list=qs('ingList');var row=el('div','ing-row');
-  function inp(t,ph,v,cls,im){var e=document.createElement('input');e.type=t;e.placeholder=ph;e.value=v||'';if(cls)e.className=cls;if(im)e.inputMode=im;e.autocomplete='off';if(t==='number'){e.min='0';e.step='any';}return e;}
-  var ni=inp('text','Ingrediente',n,'fs');var qi=inp('number','Qt\u00e0',q,'fs','decimal');var ui=inp('text','g / n\u00b0',u,'fs');
+  var uid='ing-units-dl';
+  if(!document.getElementById(uid)){
+    var udl=document.createElement('datalist');udl.id=uid;
+    ['g','kg','ml','l','n\u00b0','q.b.','cucchiaio','cucchiaino','tazza','spicchi','fogli','bustine','cl'].forEach(function(v){var o=document.createElement('option');o.value=v;udl.appendChild(o);});
+    document.body.appendChild(udl);
+  }
+  function mkInp(t,ph,v,cls,im,dlid){
+    var inp=document.createElement('input');inp.type=t;inp.placeholder=ph;inp.value=v||'';
+    if(cls)inp.className=cls;if(im)inp.inputMode=im;inp.autocomplete='off';
+    if(t==='number'){inp.min='0';inp.step='any';}
+    if(dlid)inp.setAttribute('list',dlid);
+    return inp;
+  }
+  var ni=mkInp('text','Ingrediente',n,'fs',null,'ing-datalist');
+  var qi=mkInp('number','Qt\u00e0',q,'fs','decimal');
+  var ui=mkInp('text','g / n\u00b0',u,'fs',null,'ing-units-dl');
   var rm=el('button','rm-btn');rm.type='button';rm.textContent='\u00d7';
   rm.addEventListener('click',function(){if(list&&list.children.length>1)list.removeChild(row);});
   row.appendChild(ni);row.appendChild(qi);row.appendChild(ui);row.appendChild(rm);if(list)list.appendChild(row);
