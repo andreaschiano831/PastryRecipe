@@ -1,4 +1,4 @@
-ù<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="UTF-8">
@@ -2287,15 +2287,22 @@ function boot(){
   var _efab=qs('fab');if(_efab)_efab.addEventListener('click',function(){var m=qs('fabMenu');var open=m.style.display!=='none';m.style.display=open?'none':'flex';qs('fab').classList.toggle('open',!open);});
   var _efabAi=qs('fabAi');if(_efabAi)_efabAi.addEventListener('click',function(){qs('fabMenu').style.display='none';qs('fab').classList.remove('open');openAiModal();});
   var _efabManu=qs('fabManual');if(_efabManu)_efabManu.addEventListener('click',function(){qs('fabMenu').style.display='none';qs('fab').classList.remove('open');openModal();});
-  var _emCancel=qs('mCancel');if(_emCancel)_emCancel.addEventListener('click',closeModal);qs('mBg').addEventListener('click',function(e){if(e.target===qs('mBg'))closeModal();});
-  var _eaddIngB=qs('addIngBtn');if(_eaddIngB)_eaddIngB.addEventListener('click',function(){addIng();});qs('mSec').addEventListener('change',togglePiattoWrap);qs('mSave').addEventListener('click',doSave);
-  var _ecfmOk=qs('cfmOk');if(_ecfmOk)_ecfmOk.addEventListener('click',function(){if(_delRec)deleteRec(_delRec);closeCfm();});qs('cfmCancel').addEventListener('click',closeCfm);
+  var _emCancel=qs('mCancel');if(_emCancel)_emCancel.addEventListener('click',closeModal);
+  var _emBg=qs('mBg');if(_emBg)_emBg.addEventListener('click',function(e){if(e.target===qs('mBg'))closeModal();});
+  var _eaddIngB=qs('addIngBtn');if(_eaddIngB)_eaddIngB.addEventListener('click',function(){addIng();});
+  var _emSec=qs('mSec');if(_emSec)_emSec.addEventListener('change',togglePiattoWrap);
+  var _emSave=qs('mSave');if(_emSave)_emSave.addEventListener('click',doSave);
+  var _ecfmOk=qs('cfmOk');if(_ecfmOk)_ecfmOk.addEventListener('click',function(){if(_delRec)deleteRec(_delRec);closeCfm();});
+  var _ecfmCance=qs('cfmCancel');if(_ecfmCance)_ecfmCance.addEventListener('click',closeCfm);
   var _ecfmBg=qs('cfmBg');if(_ecfmBg)_ecfmBg.addEventListener('click',function(e){if(e.target===qs('cfmBg'))closeCfm();});
-  var _emoveSec=qs('moveSec');if(_emoveSec)_emoveSec.addEventListener('change',toggleMovePiatto);qs('moveSave').addEventListener('click',doMove);qs('moveCancel').addEventListener('click',closeMove);
+  var _emoveSec=qs('moveSec');if(_emoveSec)_emoveSec.addEventListener('change',toggleMovePiatto);
+  var _emoveSave=qs('moveSave');if(_emoveSave)_emoveSave.addEventListener('click',doMove);
+  var _emoveCanc=qs('moveCancel');if(_emoveCanc)_emoveCanc.addEventListener('click',closeMove);
   var _emoveBg=qs('moveBg');if(_emoveBg)_emoveBg.addEventListener('click',function(e){if(e.target===qs('moveBg'))closeMove();});
   var _eaiBg=qs('aiBg');if(_eaiBg)_eaiBg.addEventListener('click',function(e){if(e.target===qs('aiBg'))closeAiModal();});
   var aiTabs=document.querySelectorAll('.ai-tab');for(var ti=0;ti<aiTabs.length;ti++){(function(b){b.addEventListener('click',function(){switchAiTab(b.dataset.tab);});})(aiTabs[ti]);}
-  var _eaiAnaly=qs('aiAnalyseBtn');if(_eaiAnaly)_eaiAnaly.addEventListener('click',doAiAnalyse);qs('aiSec').addEventListener('change',toggleAiPiatto);
+  var _eaiAnaly=qs('aiAnalyseBtn');if(_eaiAnaly)_eaiAnaly.addEventListener('click',doAiAnalyse);
+  var _eaiSec=qs('aiSec');if(_eaiSec)_eaiSec.addEventListener('change',toggleAiPiatto);
   var _eaiAddIn=qs('aiAddIng');if(_eaiAddIn)_eaiAddIn.addEventListener('click',function(){addAiIng();});
   var _eaiBack=qs('aiBack');if(_eaiBack)_eaiBack.addEventListener('click',function(){qs('aiPreview').classList.remove('on');qs('aiAnalyseBtn').style.display='block';qs('aiAnalyseBtn').disabled=false;});
   var _eaiConfi=qs('aiConfirm');if(_eaiConfi)_eaiConfi.addEventListener('click',saveAiRecipe);
