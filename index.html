@@ -858,14 +858,14 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
     <div class="ai-field-row" style="align-items:flex-start"><span class="ai-field-lbl fsc" style="padding-top:.35rem">Procedimento</span><textarea class="ai-field-val fs" id="aiProc" placeholder="Procedimento&#8230;" style="min-height:60px;resize:vertical"></textarea></div>
     <p class="fsc" style="font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke);margin:.55rem 0 .22rem">Ingredienti</p>
     <div class="ai-ing-list" id="aiIngList"></div>
+    <button type="button" id="aiAddIngBtn" style="margin-top:.25rem;background:none;border:1px dashed var(--cb);border-radius:6px;padding:.28rem .6rem;font-size:.72rem;color:var(--smoke);cursor:pointer;width:100%;text-align:center;-webkit-tap-highlight-color:transparent">+ Ingrediente</button>
     <button class="ai-add-ing fs" id="aiAddIng" type="button">+ Ingrediente</button>
     <div class="ai-confirm-btns"><button class="ai-back fs" id="aiBack" type="button">&#8592; Indietro</button><button class="ai-save fd" id="aiConfirm" type="button">Salva ricetta</button></div>
   </div>
 </div></div>
 <div class="move-bg" id="moveBg"><div class="move-box">
-  <h4 class="fd">Sposta ricetta</h4><p class="fsc" id="moveName">Modifica sezione e categoria</p>
-  <label class="fsc">Ricettario</label><select id="moveSec" class="fs"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select>
-<script>buildIngDatalist();
+  <h4 class="fd">Sposta ricetta</h4><p class="fsc" id="moveName">Modifica sezione buildIngDatalist();
+<script>
 var THEME_META=[
   {id:'t-crema',lbl:'Crema',color:'#C4933A'},
   {id:'t-ebano',lbl:'Ebano',color:'#1A1810'},
@@ -1650,11 +1650,12 @@ function switchAiTab(tab){
 function toggleAiPiatto(){var r=qs('aiPiattoRow');if(r)r.style.display='flex';}
 function addAiIng(n,q,u){
   var list=qs('aiIngList');var row=el('div','ai-ing-row');
-  function inp2(t,ph,v){var e=document.createElement('input');e.type=t;e.placeholder=ph;e.value=v||'';e.className='fs';if(t==='number'){e.min='0';e.step='any';e.inputMode='decimal';}return e;}
-  var ni=inp2('text','Ingrediente',n);var qi=inp2('number','Qt',q);var ui=inp2('text','g',u);
-  var rm=el('button','ai-rm');rm.type='button';rm.textContent='\u00d7';
+  function inp2(t,ph,v,dl){var e=document.createElement('input');e.type=t;e.placeholder=ph;e.value=v||'';e.className='fs';if(t==='number'){e.min='0';e.step='any';e.inputMode='decimal';}if(dl)e.setAttribute('list',dl);return e;}
+  var ni=inp2('text','Ingrediente',n,'ing-datalist');var qi=inp2('number','Qtà',q);var ui=inp2('text','g',u,'ing-units-dl');
+  var rm=el('button','ai-rm');rm.type='button';rm.textContent='×';
   rm.addEventListener('click',function(){if(list&&list.children.length>1)list.removeChild(row);});
   row.appendChild(ni);row.appendChild(qi);row.appendChild(ui);row.appendChild(rm);if(list)list.appendChild(row);
+  if(!n)setTimeout(function(){ni.focus();},30);
 }
 function populateAiPreview(parsed){
   qs('aiName').value=parsed.n||'';var catSel=qs('aiCat');
@@ -1770,8 +1771,9 @@ function closeImport(){qs('importBg').classList.remove('on');}
 function parseWithAI(rawText, onSuccess, onFallback){
   var key='';
   try{key=localStorage.getItem('groq_key')||'';}catch(e){}
-  var aiKey=qs('aiKey');if(aiKey&&aiKey.value)key=aiKey.value;
-  if(!key){onFallback(rawText);return;}
+  var aiKey=qs('aiKey')||document.getElementById('MDL_GROQ');
+  if(aiKey&&aiKey.value&&aiKey.value.trim())key=aiKey.value.trim();
+  if(!key){var st=qs('importAiStatus');if(st)st.textContent='⚠ Inserisci chiave Groq nel menu ≡ → AI';onFallback(rawText);return;}
 
   // Show loading state
   var prevTitle=qs('importPreviewTitle');
@@ -1877,112 +1879,66 @@ function parseRecipeText(raw){
   var recipes=[];
   var text=raw.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim();
   if(!text)return recipes;
-
-  // Strategia 1: dividi per separatori forti
-  var blocks=[];
-  var sep1=text.split(/\n[-=*]{3,}\n/);
-  if(sep1.length>1){blocks=sep1;}
-  else{
-    // Strategia 2: dividi per riga con solo testo (titolo) seguita da ingredienti
-    var sep2=text.split(/\n(?=[A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖÙÚÛÜÝ][^\n]{2,60}\n)/);
-    if(sep2.length>1){blocks=sep2;}
-    else{
-      // Strategia 3: dividi per numeri o # all'inizio riga
-      var sep3=text.split(/\n(?=(?:\d{1,2}[\.\)\-\s]|#{1,3}\s)[A-Z])/);
-      if(sep3.length>1){blocks=sep3;}
-      else{
-        // Strategia 4: dividi per righe vuote doppie
-        blocks=text.split(/\n\s*\n\s*\n/);
-        if(blocks.length<=1){blocks=text.split(/\n\s*\n/);}
+  var UP='g|gr|kg|ml|l|lt|cl|dl|cc|n\u00b0?|nr|pz|q\\.b\\.?|qb|foglio|fogli|bustine?|cucchiai[no]?|tazze?|spicchi?';
+  var VRX=/\b(mescol[ai]|scald[ai]|port[ai]|versa(?:re|ndo)?|aggiungi|aggiungere|unisci|unire|lavor[ai]|cuoci|cuocere|fa[it]|metti|mettere|togli|togliere|lascia|lasciare|riempi|taglia|frull[ai]|mont[ai]|montare|sciogli|sciogliere|incorpor[ai]|prepar[ai]|disponi|stendi|raffredda|inserire|inserisci|riporre|riponi|pass[ai]|passare|filtr[ai]|mischiar[ei]|amalgam[ai]|abbatti|col[ai]|ferma|fermare|attendi|attendere|gir[ai]|impast[ai])\b/i;
+  var ARX=new RegExp('^(\\d+(?:[,.]\\d+)?)\\s*('+UP+')?\\s+(.{1,70})$','i');
+  var A2RX=new RegExp('^(\\d+(?:[,.]\\d+)?)('+UP+')\\s+(.{1,70})$','i');
+  var BRX=new RegExp('^(.{2,60})\\s+(\\d+(?:[,.]\\d+)?)\\s*('+UP+')\\.?$','i');
+  function normU(u){if(!u)return'g';u=u.toLowerCase().replace(/\.$/,'');return u==='gr'?'g':u==='lt'?'l':(u==='qb'||u==='q.b')?'q.b.':u;}
+  function tryIng(line){
+    var c=line.replace(/^[-\u2022*\u00b7\u25e6]\s*/,'').trim();
+    if(!c||c.length>100)return null;
+    // A: "650 g petra" o "650gr petra"
+    var mA=c.match(ARX)||c.match(A2RX);
+    if(mA){var nm=mA[3].trim();var vi=nm.search(VRX);if(vi===0)return null;if(vi>0)nm=nm.substring(0,vi).trim();if(nm.length)return[nm,parseFloat(mA[1].replace(',','.')),normU(mA[2])];}
+    // B: "petra 650 g"
+    var mB=c.match(BRX);
+    if(mB)return[mB[1].trim(),parseFloat(mB[2].replace(',','.')),normU(mB[3])];
+    // C: "650 petra" numero senza unità — tronca prima del verbo
+    var mC=c.match(/^(\d+(?:[,.]\d+)?)\s+(.{1,70})$/);
+    if(mC){var nm2=mC[2].trim();var vi2=nm2.search(VRX);if(vi2===0)return null;if(vi2>0)nm2=nm2.substring(0,vi2).trim();if(nm2.length)return[nm2,parseFloat(mC[1].replace(',','.')),'\u0067'];}
+    // D: "petra 650" nome+numero
+    var mD=c.match(/^(.{2,50})\s+(\d+(?:[,.]\d+)?)$/);
+    if(mD&&!VRX.test(mD[1]))return[mD[1].trim(),parseFloat(mD[2].replace(',','.')),'\u0067'];
+    return null;
+  }
+  var lines=text.split('\n'),recipes_raw=[],cur=null;
+  for(var li=0;li<lines.length;li++){
+    var line=lines[li].trim();if(!line)continue;
+    var ing=tryIng(line);
+    var isVerb=VRX.test(line);
+    var prevEmpty=li===0||!lines[li-1].trim();
+    var isTitle=!ing&&!isVerb&&!/^\d/.test(line)&&line.length>1&&line.length<80&&prevEmpty;
+    if(isTitle&&(!cur||cur.i.length>0||cur.p.length>0)){
+      cur={n:line,i:[],p:[]};recipes_raw.push(cur);
+    } else {
+      if(!cur){cur={n:'Ricetta',i:[],p:[]};recipes_raw.push(cur);}
+      if(ing){cur.i.push(ing);}
+      else if(isVerb||line.length>70){cur.p.push(line);}
+      else if(line.length>1){
+        if(cur.i.length>0&&line.length<40)cur.i.push([line,null,'q.b.']);
+        else cur.p.push(line);
       }
     }
   }
-
-  // Se ancora un solo blocco, trattalo come una ricetta sola
-  if(blocks.length<=1 && text.length>50){blocks=[text];}
-
-  var unitRx=/\b(\d+(?:[,\.]\d+)?)\s*(g|kg|ml|l|cl|dl|cc|n°|nr|pz|cucchiai[o]?|cucchiaini?|tazz[ae]|q\.?b\.?|qb|spicchi?|fogli[o]?|bustine?|lt?|minuti?|ore?|gradi?|°C)\b/gi;
-
-  blocks.forEach(function(block){
-    block=block.trim();
-    if(!block||block.length<10)return;
-    var lines=block.split('\n').map(function(l){return l.trim();}).filter(Boolean);
-    if(!lines.length)return;
-
-    // Nome: prima riga non vuota, ripulita
-    var nome=lines[0]
-      .replace(/^(\d{1,2}[\.\)\-\s]+|#{1,3}\s*)/,'')
-      .replace(/[:—–]+$/,'').trim();
-    if(!nome||nome.length<2||nome.length>100)return;
-
-    var ingredients=[];
-    var proc_lines=[];
-    var in_proc=false;
-    var proc_kw=/^(procedimento|preparazione|metodo|istruzioni|esecuzione|lavorazione|come\s+si\s+fa|preparaz)/i;
-    var ing_kw=/^(ingredienti|occorre|necessario|per\s+la\s+ricetta)/i;
-
-    for(var j=1;j<lines.length;j++){
-      var line=lines[j];
-      if(proc_kw.test(line)){in_proc=true;continue;}
-      if(ing_kw.test(line)){in_proc=false;continue;}
-
-      if(in_proc){proc_lines.push(line);continue;}
-
-      // Rimuovi prefissi lista
-      var clean=line.replace(/^[-•*·◦▪]\s*/,'').replace(/^\d+[\.\)]\s*/,'');
-
-      // Cerca pattern ingrediente con quantità
-      // Pattern A: "Nome 500 g" o "Nome: 500 g"
-      var mA=clean.match(/^(.+?)\s*:?\s+(\d+(?:[,\.]\d+)?)\s*(g|kg|ml|l|cl|dl|cc|n°|nr|pz|q\.?b\.?|qb|cucchiai[o]?|cucchiaini?|tazz[ae]|spicchi?|fogli[o]?|bustine?)\s*\.?$/i);
-      // Pattern B: "500 g Nome"
-      var mB=clean.match(/^(\d+(?:[,\.]\d+)?)\s*(g|kg|ml|l|cl|dl|cc|n°|nr|pz|q\.?b\.?|qb|cucchiai[o]?|cucchiaini?|tazz[ae]|spicchi?|fogli[o]?|bustine?)\s+(.+)$/i);
-      // Pattern C: "Nome q.b." o "Nome al gusto"
-      var mC=clean.match(/^(.+?)\s+(q\.?b\.?|qb|al\s+gusto|quanto\s+basta)\s*\.?$/i);
-
-      if(mA){
-        ingredients.push([mA[1].trim(),parseFloat(mA[2].replace(',','.')),mA[3].toLowerCase()]);
-      } else if(mB){
-        ingredients.push([mB[3].trim(),parseFloat(mB[1].replace(',','.')),mB[2].toLowerCase()]);
-      } else if(mC){
-        ingredients.push([mC[1].trim(),null,'q.b.']);
-      } else if(unitRx.test(clean)&&clean.length<80){
-        // Ha un numero+unità da qualche parte - prova a estrarre
-        unitRx.lastIndex=0;
-        var um=unitRx.exec(clean);
-        if(um){
-          var before=clean.substring(0,um.index).trim().replace(/[:·\-]+$/,'').trim();
-          var after=clean.substring(um.index+um[0].length).trim().replace(/^[:·\-]+/,'').trim();
-          var ingName=before||after;
-          if(ingName&&ingName.length>0&&ingName.length<60){
-            ingredients.push([ingName,parseFloat(um[1].replace(',','.')),um[2].toLowerCase()]);
-          }
-        }
-        unitRx.lastIndex=0;
-      } else if(ingredients.length>0&&clean.length>3&&clean.length<100&&!in_proc){
-        // Dopo aver trovato almeno un ingrediente, righe brevi senza quantità = q.b.
-        if(!/^\d{4}/.test(clean)&&!/^(nota|note|consigl|tip|variante|attenzione)/i.test(clean)){
-          ingredients.push([clean,null,'q.b.']);
-        } else {
-          proc_lines.push(clean);
-        }
-      } else if(clean.length>10){
-        proc_lines.push(clean);
-      }
-    }
-
-    // Accetta la ricetta anche senza ingredienti se ha del procedimento
-    if(ingredients.length>0||proc_lines.length>2){
-      recipes.push({
-        n:nome,
-        c:'Altro',
-        s:typeof curSec!=='undefined'&&curSec&&curSec!=='tutti'?curSec:'colazioni',
-        piatto:'',
-        p:proc_lines.join('\n'),
-        i:ingredients
-      });
+  // Unisci blocchi il cui "titolo" è un ingrediente
+  var merged=[];
+  recipes_raw.forEach(function(rc){
+    var ing=tryIng(rc.n);
+    if(ing&&merged.length>0){
+      var prev=merged[merged.length-1];
+      prev.i.push(ing);
+      rc.i.forEach(function(x){prev.i.push(x);});
+      rc.p.forEach(function(x){prev.p.push(x);});
+    } else if(rc.i.length>0||rc.p.length>1){
+      merged.push(rc);
     }
   });
-
+  merged.forEach(function(rc){
+    recipes.push({n:rc.n.replace(/^(\d+[\.\)\-\s]+|#{1,3}\s*)/,'').trim()||'Ricetta',
+      c:'Altro',s:typeof curSec!=='undefined'&&curSec&&curSec!=='tutti'?curSec:'colazioni',
+      piatto:'',p:rc.p.join('\n'),i:rc.i});
+  });
   return recipes;
 }
 
@@ -2457,6 +2413,7 @@ function boot(){
   var _eaiAddIn=qs('aiAddIng');if(_eaiAddIn)_eaiAddIn.addEventListener('click',function(){addAiIng();});
   var _eaiBack=qs('aiBack');if(_eaiBack)_eaiBack.addEventListener('click',function(){qs('aiPreview').classList.remove('on');qs('aiAnalyseBtn').style.display='block';qs('aiAnalyseBtn').disabled=false;});
   var _eaiConfi=qs('aiConfirm');if(_eaiConfi)_eaiConfi.addEventListener('click',saveAiRecipe);
+  var _eaiAddIng=qs('aiAddIngBtn');if(_eaiAddIng)_eaiAddIng.addEventListener('click',function(){addAiIng('','','g');});
   var _eaiFileI=qs('aiFileInput');if(_eaiFileI)_eaiFileI.addEventListener('change',function(){
     var file=this.files[0];if(!file)return;var reader=new FileReader();
     reader.onload=function(ev){var result=ev.target.result;_aiMime=file.type||'image/jpeg';_aiB64=result.split(',')[1];
@@ -2619,8 +2576,7 @@ function boot(){
     setTimeout(function(){qs('admGeminiMsg').textContent='';},2500);
   });
   var testDbBtn=qs('testDbBtn');if(testDbBtn)testDbBtn.addEventListener('click',testDb);
-}
-</script>
+}</script>
 
 <!-- FILE IMPORT MODAL -->
 <div class="file-import-bg" id="importBg">
