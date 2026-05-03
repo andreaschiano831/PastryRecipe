@@ -1669,46 +1669,81 @@ function populateAiPreview(parsed){
   qs('aiAnalyseBtn').style.display='none';qs('aiSpinner').classList.remove('on');qs('aiPreview').classList.add('on');
 }
 function doAiAnalyse(){
-  var key=(qs('aiKey').value||'').trim();if(!key){alert('Inserisci la chiave API Groq (gratuita su groq.com > API Keys)');return;}
+  var key=(qs('aiKey').value||'').trim();
+  if(!key)try{key=localStorage.getItem('groq_key')||'';}catch(ex){}
+  if(!key){var dg=document.getElementById('MDL_GROQ');if(dg)key=dg.value.trim();}
+  if(!key){alert('Inserisci la chiave Groq nel menu \u2261 \u2192 AI');return;}
   try{localStorage.setItem('groq_key',key);}catch(e){}
-  var btn=qs('aiAnalyseBtn');btn.disabled=true;qs('aiSpinner').classList.add('on');
-  var activeTab=document.querySelector('.ai-tab.ai-tab-on').dataset.tab;
-  var sys='Sei un assistente di cucina professionale. Analizza la ricetta e restituisci SOLO JSON valido senza altro testo: {"n":"nome ricetta","c":"Categoria","s":"sezione","piatto":"nome piatto fine dining o stringa vuota","p":"procedimento o stringa vuota","i":[["ingrediente",quantita_numerica_o_null,"unita"],...]}. Categorie disponibili: Creme,Paste,Torte,Lievitati,Pasticcini,Marmellate,Ganache,Mousse,Gelatine,Gelati,Sorbetti,Semifreddi,Granite,Basi,Glasse,Biscotti,Altro. Sezioni disponibili: colazioni,fine-dining,gelateria,torte. Per le quantita usa null quando e q.b.';
-  var contents;
-  if(activeTab==='photo'){
-    if(!_aiB64){btn.disabled=false;qs('aiSpinner').classList.remove('on');alert('Carica una foto prima');return;}
-    contents=[{role:'user',parts:[{inlineData:{mimeType:_aiMime,data:_aiB64}},{text:'Analizza questa ricetta e restituisci il JSON.'}]}];
-  }else{
-    var txt=(qs('aiText').value||'').trim();if(!txt){btn.disabled=false;qs('aiSpinner').classList.remove('on');alert('Inserisci testo');return;}
-    contents=[{role:'user',parts:[{text:'Analizza e restituisci JSON:\n\n'+txt}]}];
+
+  var btn=qs('aiAnalyseBtn');
+  var spin=qs('aiSpinner');
+  if(btn)btn.disabled=true;
+  if(spin)spin.classList.add('on');
+
+  var activeTab='text';
+  var tabEl=document.querySelector('.ai-tab.ai-tab-on');
+  if(tabEl)activeTab=tabEl.dataset.tab;
+
+  var SYS='Sei un assistente di pasticceria professionale. Guarda ATTENTAMENTE la foto e trascrivi ESATTAMENTE cio che vedi. Restituisci SOLO JSON valido senza markdown: {"n":"nome ricetta","c":"Categoria","s":"sezione","piatto":"","p":"procedimento o stringa vuota","i":[["ingrediente",quantita_numerica,"unita"],...]}. IMPORTANTE: leggi OGNI riga della foto, non inventare nulla. Se vedi 125gr acqua scrivi ["acqua",125,"g"]. Categorie: Creme,Paste,Torte,Lievitati,Pasticcini,Marmellate,Ganache,Mousse,Gelati,Basi,Glasse,Biscotti,Altro. Sezioni: colazioni,fine-dining,gelateria,torte.';
+
+  function onDone(data){
+    if(spin)spin.classList.remove('on');
+    if(btn)btn.disabled=false;
+    if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));
+    var text=(data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'';
+    text=text.replace(/```json/g,'').replace(/```/g,'').trim();
+    var m=text.match(/\{[\s\S]*\}/);if(m)text=m[0];
+    try{populateAiPreview(JSON.parse(text));}
+    catch(ex){alert('Errore parsing risposta. Riprova.');}
   }
-  // Build Groq OpenAI-compatible request
-  var messages=[{role:'system',content:sys}];
-  if(activeTab==='photo'&&_aiB64){
-    // Photo tab: describe what to look for
-    messages.push({role:'user',content:'Analizza questa ricetta e restituisci SOLO il JSON richiesto. Descrivi tutti gli ingredienti con quantita e unita di misura.'});
+
+  function onErr(err){
+    if(spin)spin.classList.remove('on');if(btn)btn.disabled=false;
+    var msg=err.message||'';
+    if(msg.indexOf('rate_limit')>-1||msg.indexOf('429')>-1)alert('Troppe richieste. Attendi 30 sec.');
+    else if(msg.indexOf('401')>-1||msg.indexOf('invalid_api_key')>-1)alert('Chiave Groq non valida.');
+    else if(msg.indexOf('model_not_active')>-1)alert('Modello vision non disponibile. Riprova tra poco.');
+    else alert('Errore AI: '+msg);
+  }
+
+  var GROQ='https://api.groq.com/openai/v1/chat/completions';
+  var H={'Content-Type':'application/json','Authorization':'Bearer '+key};
+
+  if(activeTab==='photo'){
+    if(!_aiB64){if(btn)btn.disabled=false;if(spin)spin.classList.remove('on');alert('Carica prima una foto');return;}
+    // Formato multimodal Groq: content è un array con image_url e text
+    var imgUrl='data:'+(_aiMime||'image/jpeg')+';base64,'+_aiB64;
+    fetch(GROQ,{method:'POST',headers:H,body:JSON.stringify({
+      model:'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages:[{
+        role:'user',
+        content:[
+          {type:'image_url',image_url:{url:imgUrl}},
+          {type:'text',text:SYS+'\n\nGuarda questa immagine. Leggi TUTTE le righe che vedi e trascrivile nel JSON. Non inventare nulla che non sia visibile nella foto.'}
+        ]
+      }],
+      temperature:0.05,
+      max_tokens:2048
+    })})
+    .then(function(r){return r.json();})
+    .then(onDone).catch(onErr);
+
   } else {
     var txt=(qs('aiText').value||'').trim();
-    messages.push({role:'user',content:'Analizza e restituisci JSON:\n\n'+txt});
-  }
-  var url='https://api.groq.com/openai/v1/chat/completions';
-  fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'llama-3.1-8b-instant',messages:messages,temperature:0.1,max_tokens:1024})})
+    if(!txt){if(btn)btn.disabled=false;if(spin)spin.classList.remove('on');alert('Inserisci il testo della ricetta');return;}
+    fetch(GROQ,{method:'POST',headers:H,body:JSON.stringify({
+      model:'llama-3.3-70b-versatile',
+      messages:[
+        {role:'system',content:SYS},
+        {role:'user',content:'Analizza questa ricetta e restituisci SOLO il JSON. Leggi attentamente ogni riga:\n\n'+txt}
+      ],
+      temperature:0.05,
+      max_tokens:2048,
+      response_format:{type:'json_object'}
+    })})
     .then(function(r){return r.json();})
-    .then(function(data){
-      if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));
-      var text=data.choices&&data.choices[0]&&data.choices[0].message?data.choices[0].message.content||'':'';
-      text=text.replace(/```json/g,'').replace(/```/g,'').trim();
-      var m=text.match(/\{[\s\S]*\}/);
-      if(m)text=m[0];
-      populateAiPreview(JSON.parse(text));
-    })
-    .catch(function(err){
-      qs('aiSpinner').classList.remove('on');btn.disabled=false;
-      var msg=err.message||'';
-      if(msg.indexOf('rate_limit')!==-1||msg.indexOf('429')!==-1){alert('Troppe richieste. Attendi un momento.');}
-      else if(msg.indexOf('401')!==-1||msg.indexOf('invalid_api_key')!==-1){alert('Chiave Groq non valida. Vai su groq.com -> API Keys');}
-      else{alert('Errore AI: '+msg);}
-    });
+    .then(onDone).catch(onErr);
+  }
 }
 function saveAiRecipe(){
   var name=(qs('aiName').value||'').trim();if(!name){alert('Nome mancante');return;}
