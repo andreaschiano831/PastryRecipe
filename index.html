@@ -354,6 +354,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
   pointer-events:none;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
 .db-banner-ok{background:#2E7D32;color:#fff}
 .db-banner-err{background:#c62828;color:#fff}
+.db-banner-warn{background:#8B6914;color:#fff}
 .db-banner-loading{background:var(--gold2,#A8772A);color:#fff}
 /* DB log in admin */
 .db-log-wrap{background:var(--ctrl);border:1px solid var(--cb);border-radius:6px;padding:.5rem .6rem;margin-top:.5rem;max-height:120px;overflow-y:auto}
@@ -1184,8 +1185,8 @@ function showDbBanner(msg,type){
   b.className='db-banner db-banner-'+type;
   b.style.display='flex';
   clearTimeout(_bannerTimer);
-  if(type==='ok'||type==='err'){
-    _bannerTimer=setTimeout(function(){b.style.display='none';},3500);
+  if(type==='ok'||type==='err'||type==='warn'){
+    _bannerTimer=setTimeout(function(){b.style.display='none';},5000);
   }
 }
 function loadRecipes(){
@@ -1815,7 +1816,7 @@ function parseWithAI(rawText, onSuccess, onFallback){
   if(prevTitle)prevTitle.textContent='Analisi AI in corso\u2026';
   qs('importPreview').classList.add('on');
 
-  var sys='Sei un assistente di cucina professionale. Analizza il testo di un ricettario e restituisci SOLO un array JSON valido. Ogni elemento deve avere: {"n":"nome ricetta","c":"categoria","s":"sezione","piatto":"gruppo opzionale","p":"procedimento o stringa vuota","i":[["ingrediente",quantita_numerica_o_null,"unita"],...]}. Categorie: Creme,Paste,Torte,Lievitati,Pasticcini,Marmellate,Ganache,Mousse,Gelati,Sorbetti,Semifreddi,Granite,Basi,Glasse,Altro. Sezioni: colazioni,fine-dining,gelateria,torte. Unita comuni: g,kg,ml,l,n\u00b0,q.b. Per dosi senza quantita usa null. Raggruppa ingredienti e procedimenti in modo intelligente. Rispondi SOLO con il JSON array, nessun testo aggiuntivo.';
+  var sys='Sei un assistente di pasticceria professionale. Analizza il testo e restituisci SOLO un array JSON valido senza markdown. REGOLA PIU IMPORTANTE: se il testo contiene piu ricette (indicate da titoli separati come sottotitoli, nomi di preparazioni es. Massa macaron, Cremoso pesca, Gelatina pesca), restituiscile TUTTE come elementi separati dell array. Non raggruppare ricette diverse in una sola. Ogni elemento: {"n":"nome ricetta","c":"Categoria","s":"sezione","piatto":"","p":"procedimento","i":[["ingrediente",quantita_o_null,"unita"],...]}. ESEMPIO: testo con Massa macaron + Cremoso pesca = 2 elementi separati nel JSON. Ingredienti: righe con numeri = ingredienti con quantita. Unita: g,kg,ml,l,n,q.b. Categorie: Creme,Paste,Torte,Lievitati,Pasticcini,Marmellate,Ganache,Mousse,Gelati,Basi,Glasse,Biscotti,Altro. Sezioni: colazioni,fine-dining,gelateria,torte.';
 
   var prompt='Analizza questo ricettario e restituisci il JSON array delle ricette:\n\n'+rawText.substring(0,8000);
 
@@ -1824,7 +1825,7 @@ function parseWithAI(rawText, onSuccess, onFallback){
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
     body:JSON.stringify({
       model:'llama-3.1-8b-instant',
-      messages:[{role:'system',content:sys},{role:'user',content:prompt}],
+      messages:[{role:'system',content:sys},{role:'user',content:'IMPORTANTE: se ci sono piu preparazioni con nomi diversi (es. Massa, Cremoso, Gelatina), trattale come ricette SEPARATE nell array. Ecco il testo:\n\n'+chunk}],
       temperature:0.1,
       max_tokens:4000
     })
@@ -1943,8 +1944,12 @@ function parseRecipeText(raw){
     var ing=tryIng(line);
     var isVerb=VRX.test(line);
     var prevEmpty=li===0||!lines[li-1].trim();
-    var isTitle=!ing&&!isVerb&&!/^\d/.test(line)&&line.length>1&&line.length<80&&prevEmpty;
-    if(isTitle&&(!cur||cur.i.length>0||cur.p.length>0)){
+    // E' un titolo se: non è ingrediente, non è verbo, non inizia con numero
+    // AGGIUNTA: anche se c'è già una ricetta con ingredienti e la riga
+    // precedente vuota → nuovo titolo (es. "Cremoso pesca" dopo ingredienti)
+    var isTitle=!ing&&!isVerb&&!/^\d/.test(line)&&line.length>1&&line.length<80&&
+      (prevEmpty||(cur&&cur.i.length>0&&line.length<50));
+    if(isTitle&&(!cur||cur.i.length>0||cur.p.length>1)){
       cur={n:line,i:[],p:[]};recipes_raw.push(cur);
     } else {
       if(!cur){cur={n:'Ricetta',i:[],p:[]};recipes_raw.push(cur);}
@@ -2137,27 +2142,49 @@ function doImport(){
   var sec=qs('importSec').value||'colazioni';
   var cat=qs('importCat')?qs('importCat').value||'Altro':'Altro';
   var chks=qs('importList').querySelectorAll('.import-item-chk');
-  var count=0;
+  var count=0, dupes=[], saved=0;
+
+  // Nomi di tutte le ricette esistenti (lowercase)
+  var existing={};
+  try{
+    var all=typeof allRecs==='function'?allRecs():[];
+    all.forEach(function(r){if(r.n)existing[r.n.toLowerCase().trim()]=true;});
+  }catch(ex){}
+
   chks.forEach(function(chk,i){
     if(chk.checked&&_importParsed[i]){
+      count++;
       var base=_importParsed[i];
-      // Build clean recipe
-      var r={
-        n:(base.n||'Ricetta senza nome').trim(),
-        c:base.c||cat,
-        s:base.s||sec,
-        i:base.i||[]
-      };
+      var nome=(base.n||'Ricetta senza nome').trim();
+      // Controlla duplicati
+      if(existing[nome.toLowerCase()]){
+        dupes.push(nome);
+        return; // salta senza salvare
+      }
+      var r={n:nome,c:base.c||cat,s:base.s||sec,i:base.i||[]};
       if(base.piatto&&base.piatto.trim())r.piatto=base.piatto.trim();
       if(base.p&&base.p.trim())r.p=base.p.trim();
       if(!r.i.length)r.i=[['(nessun ingrediente)',null,'']];
-      saveRec(r);count++;
+      saveRec(r);
+      saved++;
+      existing[nome.toLowerCase()]=true; // evita doppioni nell'import stesso
     }
   });
+
   closeImport();
+
   setTimeout(function(){
-    if(count>0)showDbBanner(count+' ricett'+(count===1?'a':'e')+' importat'+(count===1?'a':'e'),'ok');
-  },500);
+    if(saved>0&&dupes.length===0){
+      showDbBanner(saved+' ricett'+(saved===1?'a':'e')+' importat'+(saved===1?'a':'e'),'ok');
+    } else if(saved>0&&dupes.length>0){
+      showDbBanner(
+        saved+' importat'+(saved===1?'a':'e')+', '+dupes.length+' duplicat'+(dupes.length===1?'a':'e')+' skaltat'+(dupes.length===1?'a':'e')+': '+dupes.slice(0,3).join(', ')+(dupes.length>3?' +altri':''),
+        'warn'
+      );
+    } else if(dupes.length>0&&saved===0){
+      showDbBanner('Tutte le ricette selezionate esistono gi\u00e0: '+dupes.slice(0,3).join(', ')+(dupes.length>3?' +altre '+( dupes.length-3):''),'warn');
+    }
+  },400);
 }
 
 /* PIATTI MANAGER */
