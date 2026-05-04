@@ -2158,15 +2158,17 @@ function renderImportList(){
     panel.appendChild(ingWrap);
     panel.appendChild(addIngBtn);
 
-    // Procedimento
-    if(r.p){
-      var procLbl=el('div');procLbl.style.cssText='font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke2);font-family:"Cormorant SC",serif;margin:.5rem 0 .3rem';
-      procLbl.textContent='Procedimento';panel.appendChild(procLbl);
-      var procTA=document.createElement('textarea');procTA.value=r.p;
-      procTA.style.cssText='width:100%;background:var(--bg);border:1px solid var(--cb);border-radius:5px;padding:.35rem .5rem;font-size:.8rem;color:var(--ink);outline:none;resize:vertical;min-height:65px;font-family:"Cormorant Garamond",serif;-webkit-appearance:none;line-height:1.5;box-sizing:border-box';
-      procTA.addEventListener('input',function(){r.p=this.value;});
-      panel.appendChild(procTA);
-    }
+    // Procedimento - sempre visibile e modificabile
+    var procLbl=el('div');
+    procLbl.style.cssText='font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke2);font-family:"Cormorant SC",serif;margin:.5rem 0 .2rem';
+    procLbl.textContent='Procedimento';
+    panel.appendChild(procLbl);
+    var procTA=document.createElement('textarea');
+    procTA.value=r.p||'';
+    procTA.placeholder='Descrivi il procedimento…';
+    procTA.style.cssText='width:100%;background:var(--bg);border:1px solid var(--cb);border-radius:5px;padding:.35rem .5rem;font-size:.8rem;color:var(--ink);outline:none;resize:vertical;min-height:65px;font-family:"Cormorant Garamond",serif;box-sizing:border-box;-webkit-appearance:none';
+    procTA.addEventListener('input',function(){r.p=this.value;});
+    panel.appendChild(procTA);
 
     // Toggle expand
     var isOpen=false;
@@ -2404,6 +2406,7 @@ function MDL_REFRESH(){
   var gkStored='';try{gkStored=localStorage.getItem('groq_key')||'';}catch(ex){}
   if(gi&&!gi.value)gi.value=gkStored;
   var aiKeyInp=document.getElementById('aiKey');if(aiKeyInp&&!aiKeyInp.value&&gkStored)aiKeyInp.value=gkStored;
+  MDL_LOAD_RECENT();
   var g=document.getElementById('MDL_THEMES');if(!g)return;g.innerHTML='';
   var cur='t-crema';try{cur=localStorage.getItem('mdl_th')||'t-crema';}catch(ex){}
   _TH.forEach(function(t){
@@ -2433,6 +2436,119 @@ function MDL_GROQ_SAVE(){var k=(document.getElementById('MDL_GROQ').value||'').t
   if(msg){msg.textContent='Salvata!';msg.style.color='#8B7A3A';}setTimeout(function(){if(msg)msg.textContent='';},2000);}
 function drwOpen(){MDL_OPEN();}function drwClose(){MDL_CLOSE();}
 function openDrawer(){MDL_OPEN();}function closeDrawer(){MDL_CLOSE();}function updateDrawerState(){MDL_REFRESH();}
+
+function MDL_LOAD_RECENT(){
+  var cnt=document.getElementById('MDL_RECENT');if(!cnt)return;
+  var recs=[];
+  try{
+    if(typeof CU!=='undefined'&&CU.length){
+      // Prendi le ultime 8 per _id (più alto = più recente)
+      recs=CU.slice().sort(function(a,b){return (b._id||0)-(a._id||0);}).slice(0,8);
+    }
+  }catch(ex){}
+  if(!recs.length){cnt.innerHTML='<div style="font-size:.7rem;color:#aaa;padding:.3rem .5rem;font-style:italic">Nessuna ricetta ancora aggiunta</div>';return;}
+  cnt.innerHTML='';
+  recs.forEach(function(r){
+    var wrap=document.createElement('div');
+    wrap.style.cssText='border:1px solid #e8e0d0;border-radius:8px;margin-bottom:.35rem;overflow:hidden;background:#FAF8F2';
+    // Header
+    var hdr=document.createElement('div');
+    hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:.42rem .6rem;cursor:pointer;-webkit-tap-highlight-color:transparent';
+    var nameDiv=document.createElement('div');
+    // Controlla se è un duplicato rispetto ad altre ricette con stesso nome
+    var dupeCount=0;
+    try{if(typeof allRecs==='function'){var all=allRecs();dupeCount=all.filter(function(x){return x.n&&x.n.toLowerCase().trim()===r.n.toLowerCase().trim();}).length-1;}}catch(ex){}
+    var _ns=document.createElement('span');_ns.style.cssText='font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.82rem;color:#333';_ns.textContent=r.n;nameDiv.appendChild(_ns);
+    if(dupeCount>0){var _db=document.createElement('span');_db.textContent='⚠ duplicato';_db.style.cssText='margin-left:.3rem;font-size:.5rem;background:#C4933A22;color:#8B6914;border:1px solid #C4933A66;border-radius:20px;padding:.08rem .35rem';nameDiv.appendChild(_db);}
+    var meta=document.createElement('div');
+    meta.style.cssText='font-size:.58rem;color:#aaa;margin-top:.05rem';
+    meta.textContent=(r.i?r.i.length:0)+' ing · '+(r.c||'Altro');
+    nameDiv.appendChild(meta);
+    var chevron=document.createElement('span');chevron.textContent='›';
+    chevron.style.cssText='color:#aaa;font-size:1rem;transition:transform .2s;flex-shrink:0';
+    hdr.appendChild(nameDiv);hdr.appendChild(chevron);
+    // Panel espandibile
+    var panel=document.createElement('div');
+    panel.style.cssText='display:none;padding:.4rem .6rem .6rem;border-top:1px solid #e8e0d0';
+    hdr.onclick=function(){
+      var open=panel.style.display==='block';
+      panel.style.display=open?'none':'block';
+      chevron.style.transform=open?'':'rotate(90deg)';
+      if(!open&&!panel.dataset.built){
+        panel.dataset.built='1';
+        buildRecentPanel(panel,r);
+      }
+    };
+    wrap.appendChild(hdr);wrap.appendChild(panel);
+    cnt.appendChild(wrap);
+  });
+}
+
+function buildRecentPanel(panel,r){
+  // Sezione
+  var secRow=document.createElement('div');secRow.style.cssText='display:flex;align-items:center;gap:.3rem;margin-bottom:.3rem';
+  var secLbl=document.createElement('span');secLbl.style.cssText='font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#aaa;white-space:nowrap';secLbl.textContent='Sezione';
+  var secSel=document.createElement('select');secSel.style.cssText='flex:1;border:1px solid #ddd;border-radius:5px;padding:.25rem .4rem;font-size:.75rem;background:#fff;color:#333;outline:none';
+  ['colazioni','fine-dining','gelateria','torte'].forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent={colazioni:'Colazioni','fine-dining':'Fine Dining',gelateria:'Gelateria',torte:'Torte'}[v];if(v===r.s)o.selected=true;secSel.appendChild(o);});
+  secSel.onchange=function(){r.s=this.value;};
+  secRow.appendChild(secLbl);secRow.appendChild(secSel);panel.appendChild(secRow);
+
+  // Nome
+  var nInp=document.createElement('input');nInp.type='text';nInp.value=r.n||'';
+  nInp.style.cssText='width:100%;border:1px solid #ddd;border-radius:5px;padding:.28rem .5rem;font-size:.82rem;font-style:italic;font-family:"Cormorant Garamond",serif;color:#333;outline:none;box-sizing:border-box;margin-bottom:.3rem;background:#fff';
+  nInp.oninput=function(){r.n=this.value;};
+  panel.appendChild(nInp);
+
+  // Ingredienti
+  var ingLbl=document.createElement('div');ingLbl.style.cssText='font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-bottom:.2rem';
+  ingLbl.textContent='Ingredienti ('+(r.i?r.i.length:0)+')';panel.appendChild(ingLbl);
+  var ingWrap=document.createElement('div');ingWrap.style.cssText='display:flex;flex-direction:column;gap:.15rem;margin-bottom:.3rem';
+
+  function mkIngRow(ing,j){
+    var row=document.createElement('div');row.style.cssText='display:grid;grid-template-columns:1fr .42fr .3fr auto;gap:.15rem;align-items:center';
+    function mkI(val,ph,dlid){var inp=document.createElement('input');inp.type='text';inp.value=val||'';inp.placeholder=ph;inp.style.cssText='border:1px solid #ddd;border-radius:5px;padding:.24rem .38rem;font-size:.76rem;color:#333;outline:none;width:100%;box-sizing:border-box;background:#fff';if(dlid)inp.setAttribute('list',dlid);return inp;}
+    var ni=mkI(ing[0],'Ingrediente','ing-datalist');ni.oninput=function(){r.i[j][0]=this.value;};
+    var qi=document.createElement('input');qi.type='number';qi.min='0';qi.step='any';qi.value=ing[1]!=null?String(ing[1]):'';qi.placeholder='Qtà';qi.style.cssText='border:1px solid #ddd;border-radius:5px;padding:.24rem .38rem;font-size:.76rem;color:#333;outline:none;width:100%;box-sizing:border-box;background:#fff';qi.oninput=function(){r.i[j][1]=this.value?parseFloat(this.value):null;};
+    var ui=mkI(ing[2]||'g','u.m.','ing-units-dl');ui.oninput=function(){r.i[j][2]=this.value;};
+    var rm=document.createElement('button');rm.type='button';rm.textContent='×';rm.style.cssText='background:none;border:1px solid #ddd;border-radius:4px;width:22px;height:22px;cursor:pointer;font-size:.85rem;color:#aaa;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0';
+    rm.onclick=function(){r.i.splice(j,1);ingWrap.innerHTML='';r.i.forEach(function(x,k){ingWrap.appendChild(mkIngRow(x,k));});ingLbl.textContent='Ingredienti ('+r.i.length+')';};
+    row.appendChild(ni);row.appendChild(qi);row.appendChild(ui);row.appendChild(rm);return row;
+  }
+  if(r.i&&r.i.length)r.i.forEach(function(ing,j){ingWrap.appendChild(mkIngRow(ing,j));});
+  panel.appendChild(ingWrap);
+
+  // + Ingrediente
+  var addBtn=document.createElement('button');addBtn.type='button';addBtn.textContent='+ Ingrediente';
+  addBtn.style.cssText='background:none;border:1px dashed #ccc;border-radius:6px;padding:.22rem .5rem;font-size:.68rem;color:#aaa;cursor:pointer;width:100%;text-align:center;margin-bottom:.3rem';
+  addBtn.onclick=function(){if(!r.i)r.i=[];r.i.push(['',null,'g']);ingWrap.appendChild(mkIngRow(r.i[r.i.length-1],r.i.length-1));ingLbl.textContent='Ingredienti ('+r.i.length+')';};
+  panel.appendChild(addBtn);
+
+  // Bottoni azione
+  // Procedimento
+  var _prLbl=document.createElement('div');_prLbl.style.cssText='font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin:.3rem 0 .2rem';_prLbl.textContent='Procedimento';panel.appendChild(_prLbl);
+  var _prTA=document.createElement('textarea');_prTA.value=r.p||'';_prTA.placeholder='Descrivi il procedimento…';
+  _prTA.style.cssText='width:100%;border:1px solid #ddd;border-radius:5px;padding:.28rem .5rem;font-size:.76rem;color:#333;outline:none;resize:vertical;min-height:55px;font-family:"Cormorant Garamond",serif;box-sizing:border-box;background:#fff;-webkit-appearance:none';
+  _prTA.oninput=function(){r.p=this.value;};
+  panel.appendChild(_prTA);
+    var btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:.3rem;margin-top:.1rem';
+  var saveBtn=document.createElement('button');saveBtn.type='button';saveBtn.textContent='Salva modifiche';
+  saveBtn.style.cssText='flex:1;background:#8B7A3A;border:none;border-radius:6px;padding:.35rem .5rem;color:#fff;font-size:.72rem;cursor:pointer;font-style:italic;font-family:"Cormorant Garamond",serif';
+  saveBtn.onclick=function(){
+    if(typeof updateRec==='function'&&r._id){
+      updateRec(r._id,r);
+      saveBtn.textContent='✓ Salvato';setTimeout(function(){saveBtn.textContent='Salva modifiche';},2000);
+    }
+  };
+  var delBtn=document.createElement('button');delBtn.type='button';delBtn.textContent='Elimina';
+  delBtn.style.cssText='background:none;border:1px solid #ddd;border-radius:6px;padding:.35rem .5rem;color:#c04030;font-size:.72rem;cursor:pointer';
+  delBtn.onclick=function(){
+    if(confirm('Eliminare "'+r.n+'"?')&&typeof deleteRec==='function'){
+      deleteRec(r._id,r.n);
+      panel.closest('div[style*="border-radius:8px"]').remove();
+    }
+  };
+  btnRow.appendChild(saveBtn);btnRow.appendChild(delBtn);panel.appendChild(btnRow);
+}
 function boot(){
   var th;try{th=localStorage.getItem('mdl_th');}catch(e){}setTheme((th&&THEMES.indexOf(th)!==-1)?th:'t-crema');
   var dots=document.querySelectorAll('.t-dot');for(var di=0;di<dots.length;di++){(function(d){d.addEventListener('click',function(){setTheme(d.dataset.t);});})(dots[di]);}
@@ -2887,6 +3003,10 @@ function boot(){
     <div id="MDL_THEMES" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem;padding:.3rem 1rem .6rem"></div>
     <div style="height:1px;background:#e8e0d0;margin:.3rem 1rem"></div>
     <button onclick="testDb&&testDb()" style="display:flex;align-items:center;gap:.7rem;padding:.7rem 1rem;border:none;background:none;width:100%;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent"><span>&#128197;</span><span style="font-style:italic;font-family:Cormorant Garamond,serif;font-size:.88rem;color:#333">Testa DB</span></button>
+    <div style="height:1px;background:#e8e0d0;margin:.3rem 1rem"></div>
+    <div style="padding:.5rem 1rem .2rem;font-size:.5rem;letter-spacing:.2em;text-transform:uppercase;color:#aaa">Ultime aggiunte</div>
+    <div id="MDL_RECENT" style="padding:.2rem .5rem .5rem"></div>
+    <button onclick="MDL_LOAD_RECENT()" style="display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border:none;background:none;width:100%;text-align:left;cursor:pointer;font-size:.72rem;color:#8B7A3A;font-style:italic;font-family:'Cormorant Garamond',serif">&#8635; Aggiorna lista</button>
   </div>
 </div>
 </body>
