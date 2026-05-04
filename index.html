@@ -1700,17 +1700,36 @@ function doAiAnalyse(){
   function handleParsed(parsed){
     if(!Array.isArray(parsed))parsed=[parsed];
     parsed=parsed.filter(function(r){return r&&r.n;});
-    if(!parsed.length){alert('Nessuna ricetta trovata. Riprova.');if(btn)btn.disabled=false;if(spin)spin.classList.remove('on');return;}
+    if(!parsed.length){
+      alert('Nessuna ricetta trovata. Riprova con una foto più nitida.');
+      if(btn)btn.disabled=false;if(spin)spin.classList.remove('on');return;
+    }
     if(parsed.length===1){
+      // Singola ricetta: mostra nel modal AI come prima
       populateAiPreview(parsed[0]);
     } else {
-      populateAiPreview(parsed[0]);
-      var extra=parsed.slice(1);
-      if(typeof _importParsed!=='undefined')extra.forEach(function(r){_importParsed.push(r);});
-      var note=document.createElement('div');
-      note.style.cssText='margin-top:.5rem;padding:.4rem .7rem;background:var(--glow);border:1px solid var(--rim);border-radius:8px;font-size:.72rem;font-style:italic;color:var(--ink);font-family:"Cormorant Garamond",serif';
-      note.textContent='\u2728 '+parsed.length+' ricette trovate. Questa \u00e8 la prima \u2014 le altre '+extra.length+' sono disponibili in "Importa da file".';
-      var pv=qs('aiPreview');if(pv)pv.appendChild(note);
+      // Più ricette: chiudi modal AI e apri import con tutte
+      if(spin)spin.classList.remove('on');if(btn)btn.disabled=false;
+      // Chiudi modal AI
+      var aibg=qs('aiBg');if(aibg)aibg.classList.remove('on');
+      // Prepara import
+      _importParsed=parsed;
+      // Apri modal import (se non è già aperto)
+      var ibg=qs('importBg');
+      if(ibg){
+        if(ibg.parentNode!==document.body)document.body.appendChild(ibg);
+        ibg.classList.add('on');
+      }
+      // Aggiorna status
+      var st=qs('importAiStatus');
+      if(st)st.textContent='✨ AI: trovate '+parsed.length+' ricette da foto';
+      // Aggiorna titolo
+      var pt=qs('importPreviewTitle');
+      if(pt)pt.textContent='Trovate '+parsed.length+' ricette — espandi per modificare';
+      // Mostra la lista
+      var pv=qs('importPreview');
+      if(pv){pv.style.display='block';pv.classList.add('on');}
+      try{renderImportList();}catch(ex){console.error('renderImportList error:',ex);}
     }
   }
 
