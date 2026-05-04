@@ -2482,6 +2482,103 @@ function MDL_LOAD_RECENT(){
     wrap.appendChild(hdr);wrap.appendChild(panel);
     cnt.appendChild(wrap);
   });
+
+  // ── Sezione DUPLICATI ──
+  var allR=[];try{if(typeof allRecs==='function')allR=allRecs();}catch(ex){}
+  // Trova nomi duplicati (stesso nome, case-insensitive, più di una occorrenza)
+  var nameCount={};
+  allR.forEach(function(r){
+    var k=r.n.toLowerCase().trim();
+    nameCount[k]=(nameCount[k]||0)+1;
+  });
+  var dupes=allR.filter(function(r){
+    return nameCount[r.n.toLowerCase().trim()]>1;
+  });
+
+  if(dupes.length>0){
+    var dupSep=document.createElement('div');
+    dupSep.style.cssText='height:1px;background:#e8e0d0;margin:.5rem 0 .4rem';
+    cnt.appendChild(dupSep);
+
+    var dupTitle=document.createElement('div');
+    dupTitle.style.cssText='font-size:.5rem;letter-spacing:.2em;text-transform:uppercase;color:#c04030;font-family:"Cormorant SC",serif;padding:.1rem .3rem .3rem;display:flex;align-items:center;gap:.3rem';
+    dupTitle.innerHTML='⚠️ <span>Duplicati rilevati ('+dupes.length+')</span>';
+    cnt.appendChild(dupTitle);
+
+    // Raggruppa per nome
+    var groups={};
+    dupes.forEach(function(r){
+      var k=r.n.toLowerCase().trim();
+      if(!groups[k])groups[k]=[];
+      groups[k].push(r);
+    });
+
+    Object.keys(groups).forEach(function(k){
+      var group=groups[k];
+      var groupWrap=document.createElement('div');
+      groupWrap.style.cssText='border:1px solid #c0403033;border-radius:8px;margin-bottom:.3rem;overflow:hidden;background:#fff5f5';
+
+      var groupHdr=document.createElement('div');
+      groupHdr.style.cssText='padding:.38rem .6rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;-webkit-tap-highlight-color:transparent';
+
+      var gname=document.createElement('div');
+      var gnSpan=document.createElement('span');gnSpan.style.cssText='font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.82rem;color:#c04030';gnSpan.textContent=group[0].n;
+      var gcnt=document.createElement('span');gcnt.style.cssText='font-size:.6rem;color:#c04030;margin-left:.3rem;background:#c0403022;border-radius:20px;padding:.05rem .35rem';gcnt.textContent=group.length+' copie';
+      gname.appendChild(gnSpan);gname.appendChild(gcnt);
+
+      var gChev=document.createElement('span');gChev.textContent='›';gChev.style.cssText='color:#c04030;font-size:1rem;transition:transform .2s';
+
+      groupHdr.appendChild(gname);groupHdr.appendChild(gChev);
+
+      var groupBody=document.createElement('div');
+      groupBody.style.cssText='display:none;border-top:1px solid #c0403022;padding:.3rem .5rem .4rem';
+
+      groupHdr.onclick=function(){
+        var open=groupBody.style.display==='block';
+        groupBody.style.display=open?'none':'block';
+        gChev.style.transform=open?'':'rotate(90deg)';
+      };
+
+      group.forEach(function(r,gi){
+        var row=document.createElement('div');
+        row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:.25rem .2rem;border-bottom:'+(gi<group.length-1?'1px solid #c0403011':'none');
+
+        var rowInfo=document.createElement('span');rowInfo.style.cssText='font-size:.72rem;color:#555';
+        rowInfo.textContent='ID '+r._id+' · '+(r.i?r.i.length:0)+' ing · '+(r.c||'Altro');
+        
+        var rowBtns=document.createElement('div');rowBtns.style.cssText='display:flex;gap:.25rem';
+
+        var keepBtn=document.createElement('button');keepBtn.type='button';keepBtn.textContent='Mantieni';
+        keepBtn.style.cssText='font-size:.62rem;background:none;border:1px solid #c04030;border-radius:20px;padding:.12rem .45rem;color:#c04030;cursor:pointer';
+        keepBtn.onclick=function(){
+          if(confirm('Tieni solo questa copia di "'+r.n+'" ed elimina le altre?')){
+            var others=group.filter(function(x){return x._id!==r._id;});
+            others.forEach(function(x){if(typeof deleteRec==='function')deleteRec(x._id,x.n);});
+            setTimeout(function(){MDL_LOAD_RECENT();},1500);
+          }
+        };
+
+        var delBtn2=document.createElement('button');delBtn2.type='button';delBtn2.textContent='Elimina';
+        delBtn2.style.cssText='font-size:.62rem;background:#c04030;border:none;border-radius:20px;padding:.12rem .45rem;color:#fff;cursor:pointer';
+        delBtn2.onclick=function(){
+          if(confirm('Eliminare questa copia di "'+r.n+'"?')){
+            if(typeof deleteRec==='function')deleteRec(r._id,r.n);
+            row.remove();
+            group.splice(group.indexOf(r),1);
+            gcnt.textContent=group.length+' copie';
+            if(group.length<=1)groupWrap.remove();
+          }
+        };
+
+        rowBtns.appendChild(keepBtn);rowBtns.appendChild(delBtn2);
+        row.appendChild(rowInfo);row.appendChild(rowBtns);
+        groupBody.appendChild(row);
+      });
+
+      groupWrap.appendChild(groupHdr);groupWrap.appendChild(groupBody);
+      cnt.appendChild(groupWrap);
+    });
+  }
 }
 
 function buildRecentPanel(panel,r){
