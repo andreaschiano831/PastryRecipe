@@ -2484,15 +2484,15 @@ function MDL_LOAD_RECENT(){
   });
 
   // ── Sezione DUPLICATI ──
-  var allR=[];try{if(typeof allRecs==='function')allR=allRecs();}catch(ex){}
-  // Trova nomi duplicati (stesso nome, case-insensitive, più di una occorrenza)
+  // Usa solo CU (ricette Supabase) per trovare duplicati reali
+  var cuR=[];try{if(typeof CU!=='undefined')cuR=CU;}catch(ex){}
   var nameCount={};
-  allR.forEach(function(r){
-    var k=r.n.toLowerCase().trim();
-    nameCount[k]=(nameCount[k]||0)+1;
+  cuR.forEach(function(r){
+    var k=(r.n||'').toLowerCase().trim();
+    if(k)nameCount[k]=(nameCount[k]||0)+1;
   });
-  var dupes=allR.filter(function(r){
-    return nameCount[r.n.toLowerCase().trim()]>1;
+  var dupes=cuR.filter(function(r){
+    return nameCount[(r.n||'').toLowerCase().trim()]>1;
   });
 
   if(dupes.length>0){
