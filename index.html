@@ -3301,8 +3301,13 @@ function MDL_LOAD_RECENT(){
         keepBtn.onclick=function(){
           if(confirm('Tieni solo questa copia di "'+r.n+'" ed elimina le altre?')){
             var others=group.filter(function(x){return x._id!==r._id;});
-            others.forEach(function(x){if(typeof deleteRec==='function')deleteRec(x._id,x.n);});
-            setTimeout(function(){MDL_LOAD_RECENT();},1500);
+            var pending=others.length;
+            if(!pending){MDL_LOAD_RECENT();return;}
+            others.forEach(function(x){
+              // deleteRec vuole l'oggetto intero con ._id
+              deleteRec(x);
+            });
+            setTimeout(function(){MDL_LOAD_RECENT();},2000);
           }
         };
 
@@ -3310,11 +3315,13 @@ function MDL_LOAD_RECENT(){
         delBtn2.style.cssText='font-size:.62rem;background:#c04030;border:none;border-radius:20px;padding:.12rem .45rem;color:#fff;cursor:pointer';
         delBtn2.onclick=function(){
           if(confirm('Eliminare questa copia di "'+r.n+'"?')){
-            if(typeof deleteRec==='function')deleteRec(r._id,r.n);
+            deleteRec(r);
             row.remove();
             group.splice(group.indexOf(r),1);
-            gcnt.textContent=group.length+' copie';
-            if(group.length<=1)groupWrap.remove();
+            gcnt.textContent=group.length+' cop'+(group.length===1?'ia':'ie');
+            if(group.length<=1){
+              setTimeout(function(){MDL_LOAD_RECENT();},1500);
+            }
           }
         };
 
@@ -3380,16 +3387,18 @@ function buildRecentPanel(panel,r){
   saveBtn.style.cssText='flex:1;background:#8B7A3A;border:none;border-radius:6px;padding:.35rem .5rem;color:#fff;font-size:.72rem;cursor:pointer;font-style:italic;font-family:"Cormorant Garamond",serif';
   saveBtn.onclick=function(){
     if(typeof updateRec==='function'&&r._id){
-      updateRec(r._id,r);
-      saveBtn.textContent='✓ Salvato';setTimeout(function(){saveBtn.textContent='Salva modifiche';},2000);
+      updateRec(r,r);
+      saveBtn.textContent='✓ Salvato';
+      setTimeout(function(){saveBtn.textContent='Salva modifiche';},2000);
     }
   };
   var delBtn=document.createElement('button');delBtn.type='button';delBtn.textContent='Elimina';
   delBtn.style.cssText='background:none;border:1px solid #ddd;border-radius:6px;padding:.35rem .5rem;color:#c04030;font-size:.72rem;cursor:pointer';
   delBtn.onclick=function(){
-    if(confirm('Eliminare "'+r.n+'"?')&&typeof deleteRec==='function'){
-      deleteRec(r._id,r.n);
-      panel.closest('div[style*="border-radius:8px"]').remove();
+    if(confirm('Eliminare "'+r.n+'"?')){
+      deleteRec(r);
+      var parentCard=panel.closest('div[style*="border:1px solid #e8e0d0"]')||panel.parentNode.parentNode;
+      if(parentCard)parentCard.remove();
     }
   };
   btnRow.appendChild(saveBtn);btnRow.appendChild(delBtn);panel.appendChild(btnRow);
