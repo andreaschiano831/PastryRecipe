@@ -654,6 +654,748 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 /* Hide old in-app menuBtn */
 #menuBtn { display: none !important; }
 
+/* ═══ MDL PREMIUM — safe overrides only ═══ */
+
+/* Token */
+:root {
+  --radius-card: 14px;
+  --radius-pill: 50px;
+  --radius-inp: 10px;
+  --ease: cubic-bezier(.23,1,.32,1);
+  --glow-gold: 0 0 0 3px rgba(196,147,58,.14);
+  --sh2: 0 1px 3px rgba(0,0,0,.06), 0 6px 24px rgba(0,0,0,.09);
+  --sh2h: 0 8px 32px rgba(0,0,0,.15), 0 0 0 1.5px var(--gold2);
+}
+
+/* Card */
+.card {
+  border-radius: var(--radius-card);
+  box-shadow: var(--sh2);
+  transition: box-shadow .26s var(--ease), transform .26s var(--ease), border-color .26s var(--ease);
+}
+@media(hover:hover){
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--sh2h);
+    border-color: rgba(196,147,58,.4);
+  }
+}
+.card-stripe {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold2) 35%, var(--gold3) 65%, transparent);
+}
+.card-name {
+  font-size: 1.1rem;
+  font-weight: 400;
+  letter-spacing: .01em;
+  line-height: 1.28;
+}
+
+/* Input focus */
+.fs:focus, .fd:focus {
+  border-color: var(--gold2) !important;
+  box-shadow: var(--glow-gold) !important;
+  outline: none !important;
+}
+
+/* Cat pills */
+.cat-pill {
+  border-radius: var(--radius-pill);
+  padding: .28rem .85rem;
+  font-family: 'Cormorant SC', serif;
+  transition: all .16s;
+}
+.cat-pill.on {
+  box-shadow: 0 3px 12px rgba(196,147,58,.3);
+}
+
+/* Bottoni */
+.btn-save {
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(196,147,58,.28);
+  transition: all .16s;
+  letter-spacing: .03em;
+}
+.btn-save:active { transform: scale(.97); }
+.btn-cancel { border-radius: 12px; transition: all .16s; }
+.rm-btn {
+  border-radius: 8px;
+  transition: all .14s;
+}
+.rm-btn:hover { border-color: #E85D5D; color: #E85D5D; }
+
+/* FAB */
+#addFab {
+  box-shadow: 0 6px 22px rgba(196,147,58,.38), 0 2px 6px rgba(0,0,0,.12) !important;
+}
+
+/* Logo landing — anelli doppi */
+.land-logo {
+  box-shadow:
+    0 0 0 5px var(--bg),
+    0 0 0 7px var(--gold2),
+    0 0 0 10px var(--bg),
+    0 0 0 11px rgba(196,147,58,.22),
+    0 10px 36px rgba(0,0,0,.14) !important;
+}
+.land-logo img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  border-radius: 50%; display: block;
+}
+
+/* Header glass */
+header, .hdr {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Banner DB */
+.db-banner {
+  border-radius: var(--radius-pill);
+  box-shadow: 0 8px 28px rgba(0,0,0,.18);
+}
+
+/* Add ing btn */
+.add-ing-btn {
+  border-radius: 10px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  transition: all .15s;
+}
+.add-ing-btn:hover { border-color: var(--gold2); color: var(--gold2); }
+
+/* View btns */
+.view-btn { border-radius: 9px; }
+.view-btn.on { box-shadow: 0 2px 8px rgba(196,147,58,.25); }
+
+/* Piatto header */
+.piatto-hd {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 1.02rem;
+  color: var(--gold2);
+}
+
+/* Search */
+.srch {
+  border-radius: var(--radius-pill);
+  transition: border-color .16s, box-shadow .16s;
+}
+.srch:focus {
+  border-color: var(--gold2);
+  box-shadow: var(--glow-gold);
+}
+
+/* Cucina btn */
+.cucina-btn {
+  border-radius: var(--radius-pill);
+  transition: all .14s;
+}
+
+/* DB status */
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.db-loading { animation: pulse .9s ease-in-out infinite; }
+
+/* Modal handle */
+.modal-h {
+  width: 36px; height: 3px;
+  background: var(--cb);
+  border-radius: 2px;
+  margin: 0 auto .9rem;
+}
+
+/* Dose btn */
+.dose-btn { transition: background .13s; }
+.dose-btn:hover { background: var(--glow); }
+
+/* Proc toggle */
+.card-proc-toggle { border-radius: var(--radius-pill); }
+.card-proc-toggle:hover { border-color: var(--gold2); color: var(--gold2); }
+
+/* Proc block */
+.card-proc {
+  border-radius: 0 8px 8px 0;
+  line-height: 1.6;
+}
+
+/* T-dots */
+.t-dot { transition: transform .15s, border-color .15s; }
+.t-dot.on { transform: scale(1.22); }
+.t-dot:hover:not(.on) { transform: scale(1.1); }
+
+/* Ing row hover */
+.ing-row-t { transition: background .12s; }
+.ing-row-t:hover { background: var(--glow); }
+
+/* Card acts */
+.card-acts { transition: opacity .15s; }
+@media(hover:hover){
+  .card:not(:hover):not(:focus-within) .card-acts:not(.always-on) { opacity: 0; }
+}
+
+/* Animazione ricette */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px) scale(.975); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ATELIER MICHELIN — REVOLUTION (cosmetic-only override)
+   Solo CSS additivo. Nessun impatto su JS, HTML o temi.
+   Tutti gli stili usano CSS variables → compatibili 6 temi.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Token estesi */
+:root {
+  --mdl-ease: cubic-bezier(.23,1,.32,1);
+  --mdl-paper: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* Body: texture carta impercettibile + scrollbar dorata */
+body {
+  background-color: var(--bg);
+  background-image: var(--mdl-paper);
+  background-size: 180px 180px;
+  background-attachment: fixed;
+}
+body.t-ebano, body.t-bordeaux, body.t-ottanio {
+  background-blend-mode: soft-light;
+}
+* { scrollbar-width: thin; scrollbar-color: var(--gold2) transparent; }
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--gold2), var(--gold3));
+  border-radius: 4px;
+}
+
+/* ─────────── PASSWORD SCREEN — atelier ─────────── */
+#pwd {
+  background:
+    radial-gradient(ellipse 75% 55% at 50% 38%, var(--glow), transparent 70%),
+    var(--bg);
+}
+#pwd::before, #pwd::after {
+  content: "✦   ✦   ✦";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Cormorant SC', serif;
+  font-size: .55rem;
+  letter-spacing: .9em;
+  color: var(--gold2);
+  opacity: .35;
+  pointer-events: none;
+}
+#pwd::before { top: 14%; }
+#pwd::after  { bottom: 14%; }
+.pwd-logo {
+  box-shadow:
+    0 0 0 1px var(--rim),
+    0 0 0 6px var(--bg),
+    0 0 0 7px var(--gold2),
+    0 0 0 12px var(--bg),
+    0 0 0 13px rgba(196,147,58,.22),
+    0 14px 44px rgba(0,0,0,.18);
+  animation: mdlBreath 7s ease-in-out infinite;
+}
+@keyframes mdlBreath {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.025); }
+}
+.pwd-h { position: relative; letter-spacing: .025em; }
+.pwd-h::after {
+  content: "";
+  display: block;
+  width: 28px;
+  height: 1px;
+  margin: .55rem auto 0;
+  background: linear-gradient(90deg, transparent, var(--gold2), transparent);
+}
+.pwd-btn {
+  position: relative;
+  overflow: hidden;
+  letter-spacing: .04em;
+}
+.pwd-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.22) 50%, transparent 65%);
+  transform: translateX(-100%);
+  transition: transform .8s var(--mdl-ease);
+}
+.pwd-btn:hover::before { transform: translateX(100%); }
+
+/* ─────────── LANDING — la rivoluzione ─────────── */
+#landing {
+  position: relative;
+  background:
+    radial-gradient(ellipse 90% 50% at 50% 0%, var(--glow), transparent 60%),
+    var(--bg);
+  overflow: hidden;
+}
+#landing::before {
+  content: "MDL";
+  position: absolute;
+  top: 6vh;
+  right: -2vw;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(8rem, 22vw, 18rem);
+  color: var(--gold2);
+  opacity: .045;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  letter-spacing: -.06em;
+  line-height: 1;
+}
+.land-top { position: relative; z-index: 2; }
+.land-top::before {
+  content: "ATELIER · GASTRONOMIE · MMXXVI";
+  display: block;
+  font-family: 'Cormorant SC', serif;
+  font-size: .42rem;
+  letter-spacing: .55em;
+  color: var(--gold2);
+  text-align: center;
+  margin-bottom: 1rem;
+  opacity: .7;
+}
+.land-logo { position: relative; }
+.land-logo::after {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  border: 1px solid var(--gold2);
+  border-radius: 50%;
+  opacity: .14;
+  pointer-events: none;
+  animation: mdlRing 5s ease-in-out infinite;
+}
+@keyframes mdlRing {
+  0%, 100% { transform: scale(1);    opacity: .14; }
+  50%      { transform: scale(1.06); opacity: .28; }
+}
+.land-h em::first-letter {
+  font-size: 1.18em;
+  display: inline-block;
+  text-shadow: 0 1px 0 rgba(255,255,255,.04), 0 2px 12px rgba(196,147,58,.18);
+}
+.land-rule { max-width: 220px; }
+.land-rule span {
+  position: relative;
+  padding: 0 .35rem;
+}
+.land-rule span::before, .land-rule span::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  background: var(--gold2);
+  border-radius: 50%;
+  opacity: .4;
+  transform: translateY(-50%);
+}
+.land-rule span::before { left: -.7rem; }
+.land-rule span::after  { right: -.7rem; }
+
+/* ─────────── PANNELLI SEZIONE ─────────── */
+.land-panels { position: relative; z-index: 1; }
+.panel-body  { position: relative; }
+
+/* Corner bracket alto-sx */
+.panel-body::before {
+  content: "";
+  position: absolute;
+  top: clamp(.7rem, 1.5vw, 1.1rem);
+  left: clamp(.7rem, 1.5vw, 1.1rem);
+  width: 18px;
+  height: 18px;
+  border-top: 1px solid rgba(255, 215, 130, .35);
+  border-left: 1px solid rgba(255, 215, 130, .35);
+  pointer-events: none;
+  transition: width .4s var(--mdl-ease), height .4s var(--mdl-ease), border-color .4s var(--mdl-ease);
+  z-index: 3;
+}
+.panel:hover .panel-body::before, .panel:active .panel-body::before {
+  width: 28px;
+  height: 28px;
+  border-color: rgba(255, 215, 130, .85);
+}
+
+/* Etichetta vintage "★ ★ ★" */
+.panel-body::after {
+  content: "★ ★ ★";
+  position: absolute;
+  top: clamp(1.3rem, 2.5vw, 2rem);
+  right: clamp(1rem, 2vw, 1.7rem);
+  font-family: 'Cormorant SC', serif;
+  font-size: .42rem;
+  letter-spacing: .35em;
+  color: rgba(255, 215, 130, .55);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Light sweep on hover */
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 25%, rgba(255,255,255,.07) 50%, transparent 75%);
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-100%);
+}
+.panel:hover::before, .panel:active::before {
+  animation: panelSweep 1.4s var(--mdl-ease);
+}
+@keyframes panelSweep {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translateX(100%);  opacity: 0; }
+}
+
+/* Numero pannello con linea decorativa */
+.panel-num {
+  position: relative;
+  display: inline-block;
+  padding-left: 22px;
+  font-family: 'Cormorant SC', serif;
+}
+.panel-num::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 14px;
+  height: 1px;
+  background: rgba(255,255,255,.35);
+  transform: translateY(-50%);
+}
+
+/* Sub-title con underline corto */
+.panel-sub {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 5px;
+}
+.panel-sub::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 18px;
+  height: 1px;
+  background: rgba(255, 215, 130, .45);
+}
+
+/* Arrow editoriale */
+.panel-arr {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 215, 130, .3);
+  background: transparent;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 1rem;
+}
+.panel:hover .panel-arr, .panel:active .panel-arr {
+  border-color: rgba(255, 215, 130, .75);
+  background: rgba(255, 215, 130, .1);
+}
+
+/* ─────────── APP HEADER ─────────── */
+.app-hd { position: relative; }
+.app-hd::after {
+  content: "";
+  position: absolute;
+  left: 1.1rem;
+  right: 1.1rem;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold2) 50%, transparent);
+  opacity: .35;
+  pointer-events: none;
+}
+.hd-title h1::after {
+  content: " ❦";
+  font-size: .55em;
+  color: var(--gold2);
+  opacity: .55;
+  letter-spacing: .25em;
+  margin-left: .1em;
+}
+
+/* ─────────── CARDS — schede ricetta ─────────── */
+.card { position: relative; }
+
+/* Corner brackets dorati (4 angoli) */
+.card .card-hd::before,
+.card .card-hd::after {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+  transition: opacity .26s var(--mdl-ease), width .26s var(--mdl-ease), height .26s var(--mdl-ease);
+  opacity: .3;
+}
+.card .card-hd::before {
+  top: 6px;
+  left: 6px;
+  border-top: 1px solid var(--gold2);
+  border-left: 1px solid var(--gold2);
+}
+.card .card-hd::after {
+  top: 6px;
+  right: 6px;
+  border-top: 1px solid var(--gold2);
+  border-right: 1px solid var(--gold2);
+}
+@media(hover:hover){
+  .card:hover .card-hd::before,
+  .card:hover .card-hd::after {
+    opacity: .85;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Drop cap raffinato sul nome ricetta */
+.card-name::first-letter {
+  font-size: 1.4em;
+  font-weight: 400;
+  color: var(--gold2);
+  font-style: italic;
+  margin-right: .04em;
+  line-height: 1;
+}
+
+/* Stripe: triplice hairline dorata */
+.card-stripe {
+  height: 0;
+  background: transparent !important;
+  position: relative;
+  padding: 4px 0 3px;
+}
+.card-stripe::before, .card-stripe::after {
+  content: "";
+  display: block;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold2), transparent);
+}
+.card-stripe::before { opacity: .35; margin-bottom: 2px; }
+.card-stripe::after  { opacity: .75; }
+
+/* "№" prefix sui numeri */
+.card-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: .62rem;
+  letter-spacing: .1em;
+  color: var(--gold2);
+  opacity: .6;
+}
+.card-num::before { content: "№ "; letter-spacing: 0; opacity: .8; }
+
+/* Cachet categoria */
+.card-cat {
+  font-family: 'Cormorant SC', serif;
+  border-radius: 2px;
+  font-size: .48rem;
+  letter-spacing: .22em;
+  padding: .14rem .55rem;
+}
+
+/* ─────────── MODAL — handle = fleuron ─────────── */
+.modal-h, .ai-h, .piatti-h, .import-h {
+  background: transparent !important;
+  width: auto !important;
+  height: auto !important;
+  text-align: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: .9rem;
+  color: var(--gold2);
+  opacity: .55;
+  letter-spacing: .35em;
+  margin-bottom: .85rem !important;
+  line-height: 1;
+}
+.modal-h::before, .ai-h::before, .piatti-h::before, .import-h::before {
+  content: "✦";
+}
+
+/* Underline tipografico sui titoli modal */
+.modal-title, .ai-title, .piatti-title, .import-title {
+  position: relative;
+  padding-bottom: .4rem;
+}
+.modal-title::after, .ai-title::after, .piatti-title::after, .import-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 36px;
+  height: 1px;
+  background: var(--gold2);
+  opacity: .55;
+}
+
+/* ─────────── FAB elegantissimo ─────────── */
+.fab {
+  position: relative;
+  background: radial-gradient(circle at 30% 28%, var(--gold3), var(--gold2) 75%) !important;
+  box-shadow:
+    0 0 0 1px rgba(196,147,58,.22),
+    0 0 0 6px rgba(196,147,58,.07),
+    0 6px 24px rgba(196,147,58,.4),
+    0 2px 6px rgba(0,0,0,.16) !important;
+}
+.fab::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 1px solid var(--gold2);
+  border-radius: 50%;
+  opacity: .22;
+  pointer-events: none;
+}
+
+/* ─────────── SEARCH WRAP — pillola raffinata ─────────── */
+.srch-wrap {
+  border-radius: 50px;
+  padding: .42rem .9rem;
+}
+
+/* ─────────── DOSE BOX — pillola ─────────── */
+.dose-box {
+  background: var(--ctrl);
+  border: 1px solid var(--cb);
+  border-radius: 50px;
+  padding: .22rem .45rem;
+  gap: .15rem;
+}
+.dose-box .dose-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+}
+.dose-box .dose-val {
+  border: none;
+  background: transparent;
+  width: 32px;
+}
+
+/* ─────────── CAT PILLS più editoriali ─────────── */
+.cpill {
+  border-radius: 50px;
+  font-family: 'Cormorant SC', serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-size: .56rem;
+  padding: .35rem 1rem;
+}
+
+/* ─────────── DRAWER — sotto-titolo decorativo ─────────── */
+.drawer-hd { position: relative; }
+.drawer-hd::after {
+  content: "ATELIER · ED. UNICA";
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Cormorant SC', serif;
+  font-size: .42rem;
+  letter-spacing: .35em;
+  color: var(--gold2);
+  opacity: .65;
+  background: var(--bg2);
+  padding: 1px .55rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ─────────── EMPTY STATE poetico ─────────── */
+.empty p {
+  font-size: 1.05rem;
+  letter-spacing: .03em;
+}
+.empty p::before, .empty p::after {
+  content: " ❦ ";
+  color: var(--gold2);
+  opacity: .55;
+  font-size: .85em;
+  font-style: normal;
+}
+
+/* ─────────── BACK BUTTON più editoriale ─────────── */
+.back-btn {
+  font-family: 'Cormorant SC', serif;
+  letter-spacing: .14em;
+  font-size: .58rem;
+}
+
+/* ─────────── HEADING heading mood ─────────── */
+.land-h {
+  font-weight: 200;
+  letter-spacing: .03em;
+}
+
+/* ─────────── PIATTO group header più drammatico ─────────── */
+.piatto-group-label {
+  letter-spacing: .05em;
+}
+.piatto-group-label::before {
+  content: "✦ ";
+  font-size: .65em;
+  opacity: .5;
+  letter-spacing: 0;
+}
+.piatto-group-label::after {
+  content: " ✦";
+  font-size: .65em;
+  opacity: .5;
+  letter-spacing: 0;
+}
+
+/* ─────────── CUCINA MODE — più cinematico ─────────── */
+.cucina-recipe-name {
+  position: relative;
+  display: inline-block;
+}
+.cucina-recipe-name::after {
+  content: " ❦";
+  font-size: .5em;
+  color: var(--gold2);
+  opacity: .55;
+  letter-spacing: .25em;
+}
+
+/* ─────────── DB BANNER più premium ─────────── */
+.db-banner {
+  font-family: 'Cormorant SC', serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-size: .62rem;
+}
+
+/* ─────────── MOBILE TWEAK ─────────── */
+@media(max-width:560px){
+  #landing::before { font-size: clamp(7rem, 30vw, 14rem); top: 8vh; right: -4vw; }
+  .land-top::before { font-size: .38rem; letter-spacing: .45em; }
+  .panel-body::after { font-size: .38rem; letter-spacing: .3em; }
+  .card .card-hd::before, .card .card-hd::after { width: 10px; height: 10px; }
+}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
@@ -1215,7 +1957,7 @@ function loadRecipes(){
       // Clean up hidden list: if a recipe was promoted+saved in DB, keep it hidden
       // (the DB version IS the active one). Nothing to do — allRecs() handles this.
       updatePiattiDatalist();renderCats();renderGrid();
-      try{var _drw=document.getElementById('MDL_DRW');if(_drw&&_drw.style.display==='block')MDL_LOAD_RECENT();}catch(ex){}
+      try{var _d=document.getElementById('MDL_DRW');if(_d&&_d.style.display==='block')MDL_LOAD_RECENT();}catch(ex){}
       var info=qs('admDbInfo');if(info)info.textContent='Connesso - '+CU.length+' ricette nel DB condiviso';
     })
     .catch(function(e){
@@ -2447,20 +3189,11 @@ function openDrawer(){MDL_OPEN();}function closeDrawer(){MDL_CLOSE();}function u
 function MDL_LOAD_RECENT(){
   var cnt=document.getElementById('MDL_RECENT');if(!cnt)return;
   cnt.innerHTML='';
-  
-  // CU = array globale ricette Supabase
   var cuR=Array.isArray(CU)?CU.filter(function(r){return r&&r.n&&String(r.n).trim();}):[]; 
-  
   if(!cuR.length){
-    cnt.innerHTML='<div style="font-size:.7rem;color:#aaa;padding:.4rem .5rem;font-style:italic;text-align:center">'
-      +(typeof CU!=='undefined'&&Array.isArray(CU)&&CU.length===0
-        ?'Nessuna ricetta salvata su Supabase'
-        :'In attesa del DB... riapri il menu tra qualche secondo')
-      +'</div>';
+    cnt.innerHTML='<div style="font-size:.7rem;color:#aaa;padding:.4rem .5rem;font-style:italic;text-align:center">'+(typeof CU!=='undefined'&&Array.isArray(CU)&&CU.length===0?'Nessuna ricetta salvata':'In attesa del DB... riapri tra qualche secondo')+'</div>';
     return;
   }
-
-  // ── ULTIME AGGIUNTE ──
   var recent=cuR.slice().sort(function(a,b){return (b._id||0)-(a._id||0);}).slice(0,8);
   recent.forEach(function(r){
     var wrap=document.createElement('div');
@@ -2474,98 +3207,68 @@ function MDL_LOAD_RECENT(){
     nameDiv.appendChild(ns);nameDiv.appendChild(meta);
     var chev=document.createElement('span');chev.textContent='\u203a';chev.style.cssText='color:#aaa;font-size:1rem;transition:transform .2s;flex-shrink:0';
     hdr.appendChild(nameDiv);hdr.appendChild(chev);
-    var panel=document.createElement('div');
-    panel.style.cssText='display:none;padding:.4rem .6rem .6rem;border-top:1px solid #e8e0d0';
+    var panel=document.createElement('div');panel.style.cssText='display:none;padding:.4rem .6rem .6rem;border-top:1px solid #e8e0d0';
     hdr.onclick=function(){
-      var open=panel.style.display==='block';
-      panel.style.display=open?'none':'block';
+      var open=panel.style.display==='block';panel.style.display=open?'none':'block';
       chev.style.transform=open?'':'rotate(90deg)';
       if(!open&&!panel.dataset.built){panel.dataset.built='1';buildRecentPanel(panel,r);}
     };
     wrap.appendChild(hdr);wrap.appendChild(panel);cnt.appendChild(wrap);
   });
-
   // ── DUPLICATI ──
   var nameCount={};
   cuR.forEach(function(r){var k=r.n.toLowerCase().trim();nameCount[k]=(nameCount[k]||0)+1;});
   var dupeKeys=Object.keys(nameCount).filter(function(k){return nameCount[k]>1;});
   if(!dupeKeys.length)return;
-
   var sep=document.createElement('div');sep.style.cssText='height:1px;background:#e8e0d0;margin:.6rem 0 .4rem';cnt.appendChild(sep);
   var dupHdr=document.createElement('div');
-  dupHdr.style.cssText='font-size:.48rem;letter-spacing:.18em;text-transform:uppercase;color:#c04030;font-family:"Cormorant SC",serif;padding:.1rem .2rem .3rem;display:flex;align-items:center;gap:.3rem';
-  var dupeTotal=cuR.filter(function(r){return nameCount[r.n.toLowerCase().trim()]>1;}).length;
-  dupHdr.innerHTML='\u26a0 Duplicati &mdash; '+dupeKeys.length+' nomi, '+dupeTotal+' ricette';
+  dupHdr.style.cssText='font-size:.48rem;letter-spacing:.18em;text-transform:uppercase;color:#c04030;font-family:"Cormorant SC",serif;padding:.1rem .2rem .3rem';
+  dupHdr.textContent='\u26a0 Duplicati \u2014 '+dupeKeys.length+' nomi';
   cnt.appendChild(dupHdr);
-
   dupeKeys.sort().forEach(function(k){
     var group=cuR.filter(function(r){return r.n.toLowerCase().trim()===k;});
     var gWrap=document.createElement('div');
     gWrap.style.cssText='border:1px solid rgba(192,64,48,.25);border-radius:8px;margin-bottom:.3rem;overflow:hidden;background:#fff8f8';
-    
     var gHdr=document.createElement('div');
     gHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:.38rem .6rem;cursor:pointer;-webkit-tap-highlight-color:transparent';
-    
-    var gLeft=document.createElement('div');gLeft.style.cssText='display:flex;align-items:center;gap:.35rem;min-width:0';
+    var gLeft=document.createElement('div');gLeft.style.cssText='display:flex;align-items:center;gap:.35rem;min-width:0;flex:1';
     var gNm=document.createElement('span');gNm.style.cssText='font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.82rem;color:#c04030;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';gNm.textContent=group[0].n;
     var gBadge=document.createElement('span');
     gBadge.style.cssText='flex-shrink:0;font-size:.55rem;background:#c0403022;color:#c04030;border-radius:20px;padding:.06rem .4rem;font-family:"DM Sans",sans-serif';
     gBadge.textContent=group.length+' copie';
     gLeft.appendChild(gNm);gLeft.appendChild(gBadge);
-    
     var gChev=document.createElement('span');gChev.textContent='\u203a';gChev.style.cssText='color:#c04030;font-size:1rem;transition:transform .2s;flex-shrink:0;margin-left:.3rem';
     gHdr.appendChild(gLeft);gHdr.appendChild(gChev);
-    
     var gBody=document.createElement('div');gBody.style.cssText='display:none;border-top:1px solid rgba(192,64,48,.12)';
-    gHdr.onclick=function(){
-      var open=gBody.style.display==='block';
-      gBody.style.display=open?'none':'block';
-      gChev.style.transform=open?'':'rotate(90deg)';
-    };
-    
+    gHdr.onclick=function(){var open=gBody.style.display==='block';gBody.style.display=open?'none':'block';gChev.style.transform=open?'':'rotate(90deg)';};
     group.forEach(function(r,gi){
       var row=document.createElement('div');
-      row.style.cssText='padding:.38rem .55rem;'+(gi<group.length-1?'border-bottom:1px solid rgba(192,64,48,.1)':'');
-      row.style.display='flex';row.style.alignItems='flex-start';row.style.justifyContent='space-between';row.style.gap='.4rem';
-      
+      row.style.cssText='display:flex;align-items:flex-start;justify-content:space-between;gap:.4rem;padding:.38rem .55rem;'+(gi<group.length-1?'border-bottom:1px solid rgba(192,64,48,.1)':'');
       var info=document.createElement('div');info.style.cssText='flex:1;min-width:0';
       var infoTop=document.createElement('div');infoTop.style.cssText='font-size:.7rem;color:#666;margin-bottom:.1rem';
-      infoTop.textContent='ID '+r._id+' \u00b7 '+(r.i?r.i.length:0)+' ing \u00b7 '+(r.c||'Altro')+' \u00b7 '+({colazioni:'Colazioni','fine-dining':'Fine Dining',gelateria:'Gelateria',torte:'Torte'}[r.s]||r.s||'');
+      infoTop.textContent='ID '+r._id+' \u00b7 '+(r.i?r.i.length:0)+' ing \u00b7 '+(r.c||'Altro');
       var ingPrev=document.createElement('div');ingPrev.style.cssText='font-size:.65rem;color:#999;font-style:italic;font-family:"Cormorant Garamond",serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-      if(r.i&&r.i.length){
-        ingPrev.textContent=r.i.slice(0,4).map(function(x){return (x[1]?x[1]+'g ':'')+x[0];}).join(', ')+(r.i.length>4?' +altri':'');
-      }
+      if(r.i&&r.i.length)ingPrev.textContent=r.i.slice(0,4).map(function(x){return (x[1]?x[1]+'g ':'')+x[0];}).join(', ')+(r.i.length>4?' +altri':'');
       info.appendChild(infoTop);info.appendChild(ingPrev);
-      
       var btns=document.createElement('div');btns.style.cssText='display:flex;flex-direction:column;gap:.18rem;flex-shrink:0';
-      
       var keepBtn=document.createElement('button');keepBtn.type='button';keepBtn.textContent='Mantieni';
       keepBtn.style.cssText='font-size:.6rem;background:none;border:1.5px solid #c04030;border-radius:20px;padding:.1rem .45rem;color:#c04030;cursor:pointer;-webkit-tap-highlight-color:transparent';
-      keepBtn.onclick=(function(rr,grp,badgeEl){return function(){
-        if(!confirm('Tenere solo questa copia di "'+rr.n+'"?\nSaranno eliminate le altre '+(grp.length-1)+' copie.'))return;
+      keepBtn.onclick=(function(rr,grp){return function(){
+        if(!confirm('Tenere solo questa copia?\nSaranno eliminate le altre '+(grp.length-1)+'.'))return;
         grp.filter(function(x){return x._id!==rr._id;}).forEach(function(x){deleteRec(x);});
         setTimeout(function(){MDL_LOAD_RECENT();},2000);
-      };})(r,group,gBadge);
-      
+      };})(r,group);
       var delBtn=document.createElement('button');delBtn.type='button';delBtn.textContent='Elimina';
       delBtn.style.cssText='font-size:.6rem;background:#c04030;border:none;border-radius:20px;padding:.1rem .45rem;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent';
       delBtn.onclick=(function(rr,grp,rowEl,bdg){return function(){
         if(!confirm('Eliminare questa copia di "'+rr.n+'"?'))return;
-        deleteRec(rr);
-        rowEl.style.opacity='.4';rowEl.style.pointerEvents='none';
-        grp.splice(grp.indexOf(rr),1);
-        bdg.textContent=grp.length+(grp.length===1?' copia':' copie');
-        setTimeout(function(){
-          rowEl.remove();
-          if(grp.length<=1)setTimeout(function(){MDL_LOAD_RECENT();},1500);
-        },600);
+        deleteRec(rr);rowEl.style.opacity='.4';rowEl.style.pointerEvents='none';
+        grp.splice(grp.indexOf(rr),1);bdg.textContent=grp.length+(grp.length===1?' copia':' copie');
+        setTimeout(function(){rowEl.remove();if(grp.length<=1)setTimeout(function(){MDL_LOAD_RECENT();},1500);},600);
       };})(r,group,row,gBadge);
-      
       btns.appendChild(keepBtn);btns.appendChild(delBtn);
-      row.appendChild(info);row.appendChild(btns);
-      gBody.appendChild(row);
+      row.appendChild(info);row.appendChild(btns);gBody.appendChild(row);
     });
-    
     gWrap.appendChild(gHdr);gWrap.appendChild(gBody);cnt.appendChild(gWrap);
   });
 }
@@ -2621,7 +3324,7 @@ function buildRecentPanel(panel,r){
   saveBtn.style.cssText='flex:1;background:#8B7A3A;border:none;border-radius:6px;padding:.35rem .5rem;color:#fff;font-size:.72rem;cursor:pointer;font-style:italic;font-family:"Cormorant Garamond",serif';
   saveBtn.onclick=function(){
     if(typeof updateRec==='function'&&r._id){
-      updateRec(r,r);
+      updateRec(r._id,r);
       saveBtn.textContent='✓ Salvato';setTimeout(function(){saveBtn.textContent='Salva modifiche';},2000);
     }
   };
@@ -2629,7 +3332,7 @@ function buildRecentPanel(panel,r){
   delBtn.style.cssText='background:none;border:1px solid #ddd;border-radius:6px;padding:.35rem .5rem;color:#c04030;font-size:.72rem;cursor:pointer';
   delBtn.onclick=function(){
     if(confirm('Eliminare "'+r.n+'"?')&&typeof deleteRec==='function'){
-      deleteRec(r);
+      deleteRec(r._id,r.n);
       panel.closest('div[style*="border-radius:8px"]').remove();
     }
   };
@@ -2643,20 +3346,20 @@ function clearAiPhotos(){
   var abtn=qs('aiAnalyseBtn');if(abtn){abtn.style.display='block';abtn.disabled=false;}
 }
 
-/* ════ RECIPE FULLSCREEN PANEL ════ */
+/* ════ RECIPE PANEL ════ */
 var _rpRec=null,_rpDose=1;
 function openRecipePanel(r){
   _rpRec=r;_rpDose=1;
-  var el=function(id){return document.getElementById(id);};
-  el('rpName').textContent=r.n||'';
-  el('rpCat').textContent=r.c||'';
-  el('rpPiatto').textContent=r.piatto?r.piatto.toUpperCase():'';
-  var meta=el('rpMeta');if(meta)meta.textContent=(r.i?r.i.length:0)+' ingredienti · '+({colazioni:'Colazioni','fine-dining':'Fine Dining',gelateria:'Gelateria',torte:'Torte'}[r.s]||r.s||'');
-  el('rpDose').textContent='1';el('rpXlbl').textContent='1';
+  var g=function(id){return document.getElementById(id);};
+  g('rpName').textContent=r.n||'';
+  g('rpCat').textContent=r.c||'';
+  g('rpPiatto').textContent=r.piatto?r.piatto.toUpperCase():'';
+  var meta=g('rpMeta');if(meta)meta.textContent=(r.i?r.i.length:0)+' ingredienti · '+({colazioni:'Colazioni','fine-dining':'Fine Dining',gelateria:'Gelateria',torte:'Torte'}[r.s]||r.s||'');
+  g('rpDose').textContent='1';g('rpXlbl').textContent='1';
   rpRenderIng();
-  var pw=el('rpProcWrap'),pe=el('rpProc');
-  if(r.p&&r.p.trim()){pe.textContent=r.p;pw.style.display='block';}else{pw.style.display='none';}
-  var panel=el('recipePanelBg');panel.style.display='block';panel.scrollTop=0;
+  var pw=g('rpProcWrap'),pe=g('rpProc');
+  if(r.p&&r.p.trim()){pe.textContent=r.p;pw.style.display='block';}else pw.style.display='none';
+  var p=g('recipePanelBg');p.style.display='block';p.scrollTop=0;
   document.body.style.overflow='hidden';
 }
 function closeRecipePanel(){
@@ -2675,7 +3378,7 @@ function rpRenderIng(){
     var u=document.createElement('span');u.style.cssText='font-size:.7rem;color:var(--smoke3);padding-left:.22rem;align-self:end;padding-bottom:.06rem';u.textContent=ing[2]&&ing[2]!='q.b.'?ing[2]:'';
     var qM=document.createElement('span');qM.style.cssText='font-size:.88rem;color:var(--gold2);text-align:right;font-variant-numeric:tabular-nums;font-weight:500';
     if(qBase!==''&&!isNaN(parseFloat(qBase))){var val=Math.round(parseFloat(qBase)*_rpDose*100)/100;qM.textContent=val+(ing[2]?' '+ing[2]:'');}
-    else{qM.textContent=ing[2]==='q.b.'?'q.b.':(qBase!==''?qBase+' '+(ing[2]||''):'—');}
+    else qM.textContent=ing[2]==='q.b.'?'q.b.':(qBase!==''?qBase+' '+(ing[2]||''):'—');
     row.appendChild(n);row.appendChild(q);row.appendChild(u);row.appendChild(qM);list.appendChild(row);
   });
 }
@@ -2683,8 +3386,9 @@ function rpChangeDose(delta){
   _rpDose=Math.max(0.25,_rpDose+delta);
   if(delta>0&&_rpDose>1)_rpDose=Math.round(_rpDose);
   if(delta<0&&_rpDose>=1)_rpDose=Math.max(0.5,Math.round(_rpDose));
-  document.getElementById('rpDose').textContent=_rpDose%1===0?_rpDose:_rpDose.toFixed(2);
-  document.getElementById('rpXlbl').textContent=_rpDose%1===0?_rpDose:_rpDose.toFixed(2);
+  var d=_rpDose%1===0?_rpDose:_rpDose.toFixed(2);
+  document.getElementById('rpDose').textContent=d;
+  document.getElementById('rpXlbl').textContent=d;
   rpRenderIng();
 }
 function openCucinaFromPanel(){if(_rpRec){closeRecipePanel();setTimeout(function(){openCucina(_rpRec);},50);}}
