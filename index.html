@@ -1942,31 +1942,69 @@ function showDbBanner(msg,type){
     _bannerTimer=setTimeout(function(){b.style.display='none';},3500);
   }
 }
-function loadRecipes(){
+/* ── DB CONNECTION MANAGER ── */
+var _dbRetryCount=0;
+var _dbRetryTimer=null;
+var _dbPollTimer=null;
+var _dbConnected=false;
+
+function loadRecipes(isRetry){
+  if(!isRetry){_dbRetryCount=0;clearTimeout(_dbRetryTimer);}
   setDbStatus('loading');
   var ctrl=new AbortController();
-  var tid=setTimeout(function(){ctrl.abort();},8000);
+  var tid=setTimeout(function(){ctrl.abort();},20000); // 20s timeout
   fetch(SB_URL+'/rest/v1/ricette?select=id,data&order=id.asc',{headers:sbH(),signal:ctrl.signal})
-    .then(function(r){clearTimeout(tid);
+    .then(function(r){
+      clearTimeout(tid);
       if(!r.ok)throw new Error('HTTP '+r.status);
       return r.json();
     })
     .then(function(rows){
+      _dbConnected=true;_dbRetryCount=0;
       setDbStatus('ok');
       CU=Array.isArray(rows)?rows.map(function(row){var r=row.data;r._c=true;r._id=row.id;return r;}):[];
-      // Clean up hidden list: if a recipe was promoted+saved in DB, keep it hidden
-      // (the DB version IS the active one). Nothing to do — allRecs() handles this.
       updatePiattiDatalist();renderCats();renderGrid();
       try{var _d=document.getElementById('MDL_DRW');if(_d&&_d.style.display==='block')MDL_LOAD_RECENT();}catch(ex){}
-      var info=qs('admDbInfo');if(info)info.textContent='Connesso - '+CU.length+' ricette nel DB condiviso';
+      var info=qs('admDbInfo');if(info)info.textContent='Connesso \u2022 '+CU.length+' ricette';
+      startDbPoll();
     })
-    .catch(function(e){
+    .catch(function(err){
+      clearTimeout(tid);
+      _dbConnected=false;
       setDbStatus('err');
+      // Carica da cache localStorage
       try{CU=JSON.parse(localStorage.getItem('rc')||'[]');}catch(e2){CU=[];}
-      CU.forEach(function(r){r._c=true;});renderCats();renderGrid();
-      var info=qs('admDbInfo');if(info)info.textContent='Errore: '+e.message+'. Dati in locale.';
+      CU.forEach(function(r){r._c=true;});
+      renderCats();renderGrid();
+      var info=qs('admDbInfo');
+      // Retry automatico con backoff
+      _dbRetryCount++;
+      var delays=[3000,8000,20000,30000];
+      var delay=delays[Math.min(_dbRetryCount-1,delays.length-1)];
+      if(info)info.textContent='Errore DB \u2022 Retry '+ _dbRetryCount+' tra '+(delay/1000)+'s...';
+      _dbRetryTimer=setTimeout(function(){loadRecipes(true);},delay);
     });
 }
+
+function startDbPoll(){
+  clearInterval(_dbPollTimer);
+  // Polling silenzioso ogni 45s per mantenere viva la connessione
+  _dbPollTimer=setInterval(function(){
+    if(!_dbConnected)return;
+    fetch(SB_URL+'/rest/v1/ricette?select=id&limit=1',{headers:sbH()})
+      .then(function(r){
+        if(!r.ok)throw new Error('poll fail');
+        _dbConnected=true;setDbStatus('ok');
+      })
+      .catch(function(){
+        _dbConnected=false;setDbStatus('err');
+        clearInterval(_dbPollTimer);
+        // Ricarica dopo 5s
+        setTimeout(function(){loadRecipes(false);},5000);
+      });
+  },45000);
+}
+
 function testDb(){
   var btn=qs('testDbBtn');var msg=qs('admDbMsg');
   if(btn)btn.textContent='Testing...';if(msg)msg.textContent='';
@@ -3166,6 +3204,8 @@ function MDL_REFRESH(){
     var nm=document.createElement('span');nm.style.cssText='font-size:.7rem;font-style:italic;font-family:Cormorant Garamond,serif;color:#333';nm.textContent=t.l;
     b.appendChild(dot);b.appendChild(nm);g.appendChild(b);
   });
+
+  try{MDL_LOAD_RECENT();}catch(ex){}
 }
 function MDL_ADM_TOGGLE(){var adm=false;try{adm=sessionStorage.getItem('adm')==='1';}catch(ex){}
   if(adm){try{sessionStorage.removeItem('adm');localStorage.removeItem('mdl_adm');}catch(ex){}if(typeof isAdmin!=='undefined'){isAdmin=false;if(typeof checkAdmin==='function')checkAdmin();}}
@@ -3216,10 +3256,30 @@ function MDL_LOAD_RECENT(){
     wrap.appendChild(hdr);wrap.appendChild(panel);cnt.appendChild(wrap);
   });
   // ── DUPLICATI ──
+  // Cerca duplicati in CU (ricette salvate su Supabase)
+  // Consideriamo anche duplicati tra ricette CU che hanno lo stesso nome
   var nameCount={};
-  cuR.forEach(function(r){var k=r.n.toLowerCase().trim();nameCount[k]=(nameCount[k]||0)+1;});
+  cuR.forEach(function(r){
+    var k=r.n.toLowerCase().trim().replace(/\s+/g,' ');
+    nameCount[k]=(nameCount[k]||0)+1;
+  });
   var dupeKeys=Object.keys(nameCount).filter(function(k){return nameCount[k]>1;});
-  if(!dupeKeys.length)return;
+  
+  // Separatore sempre visibile
+  var sep=document.createElement('div');sep.style.cssText='height:1px;background:#e8e0d0;margin:.6rem 0 .4rem';cnt.appendChild(sep);
+  var dupHdrWrap=document.createElement('div');
+  dupHdrWrap.style.cssText='font-size:.48rem;letter-spacing:.18em;text-transform:uppercase;font-family:"Cormorant SC",serif;padding:.1rem .2rem .3rem;display:flex;align-items:center;gap:.3rem';
+  
+  if(!dupeKeys.length){
+    dupHdrWrap.style.color='#aaa';
+    dupHdrWrap.textContent='✓ Nessun duplicato trovato';
+    cnt.appendChild(dupHdrWrap);
+    return;
+  }
+  
+  dupHdrWrap.style.color='#c04030';
+  dupHdrWrap.textContent='⚠ Duplicati — '+dupeKeys.length+' nomi, '+cuR.filter(function(r){return nameCount[r.n.toLowerCase().trim().replace(/\s+/g,' ')]>1;}).length+' ricette totali';
+  cnt.appendChild(dupHdrWrap);
   var sep=document.createElement('div');sep.style.cssText='height:1px;background:#e8e0d0;margin:.6rem 0 .4rem';cnt.appendChild(sep);
   var dupHdr=document.createElement('div');
   dupHdr.style.cssText='font-size:.48rem;letter-spacing:.18em;text-transform:uppercase;color:#c04030;font-family:"Cormorant SC",serif;padding:.1rem .2rem .3rem';
@@ -3611,7 +3671,17 @@ function boot(){
     qs('admGeminiMsg').textContent='Chiave salvata!';qs('admGeminiMsg').style.color='var(--gold2)';
     setTimeout(function(){qs('admGeminiMsg').textContent='';},2500);
   });
-  var testDbBtn=qs('testDbBtn');if(testDbBtn)testDbBtn.addEventListener('click',testDb);
+  var testDbBtn=qs('testDbBtn');if(testDbBtn)testDbBtn.addEventListener('click',testDb)
+  // Riconnetti quando si torna all'app o torna la rete
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden&&!_dbConnected){
+      clearTimeout(_dbRetryTimer);
+      setTimeout(function(){loadRecipes(false);},1000);
+    }
+  });
+  window.addEventListener('online',function(){
+    if(!_dbConnected){clearTimeout(_dbRetryTimer);setTimeout(function(){loadRecipes(false);},1000);}
+  });
 }
 </script>
 
