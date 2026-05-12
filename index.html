@@ -1957,13 +1957,14 @@ function loadRecipes(){
       updatePiattiDatalist();renderCats();renderGrid();
       try{localStorage.setItem('rc',JSON.stringify(CU));}catch(ex){}
       var info=qs('admDbInfo');if(info)info.textContent='Connesso \u2022 '+CU.length+' ricette';
-      try{var _d=document.getElementById('MDL_DRW');if(_d&&_d.style.display==='block')MDL_LOAD_RECENT();}catch(ex){}
+      try{MDL_LOAD_RECENT();}catch(ex){} // aggiorna drawer sempre dopo load
     })
     .catch(function(err){clearTimeout(tid);
       setDbStatus('err');
       try{CU=JSON.parse(localStorage.getItem('rc')||'[]');}catch(e2){CU=[];}
       CU.forEach(function(r){r._c=true;});renderCats();renderGrid();
-      var info=qs('admDbInfo');if(info)info.textContent='Errore DB \u2022 retry tra 8s...';
+      var info=qs('admDbInfo');if(info)info.textContent='Errore DB • retry tra 8s...';
+      try{MDL_LOAD_RECENT();}catch(ex){}
       setTimeout(function(){loadRecipes();},8000);
     });
 }
