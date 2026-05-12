@@ -3195,140 +3195,105 @@ function MDL_LOAD_RECENT(){
   if(!cnt)return;
   cnt.innerHTML='';
 
-  // Ricette Supabase (solo CU, non built-in)
   var cuR=Array.isArray(CU)?CU.filter(function(r){return r&&r.n&&r.n.trim();}):[];
 
-  // ── CALCOLA DUPLICATI ──
+  // Calcola duplicati
   var nc={};
-  cuR.forEach(function(r){
-    var k=r.n.toLowerCase().trim();
-    nc[k]=(nc[k]||0)+1;
-  });
+  cuR.forEach(function(r){var k=r.n.toLowerCase().trim();nc[k]=(nc[k]||0)+1;});
   var dk=Object.keys(nc).filter(function(k){return nc[k]>1;});
+  var dTotal=cuR.filter(function(r){return nc[r.n.toLowerCase().trim()]>1;}).length;
 
-  // Aggiorna badge nel titolo (sempre, anche se CU vuoto)
+  // Badge nel titolo
   if(badge){
     if(dk.length>0){
-      badge.textContent='\u00b7 \u26a0\ufe0f '+dk.length+' duplicati';
-      badge.style.cssText='font-size:.54rem;color:#c04030;margin-left:.3rem;font-family:"DM Sans",sans-serif;font-style:normal;vertical-align:middle';
+      badge.textContent=' \u00b7 \u26a0\ufe0f '+dk.length+' duplicati';
+      badge.style.cssText='font-size:.54rem;color:#c04030;margin-left:.2rem;font-family:"DM Sans",sans-serif;font-style:normal;vertical-align:middle';
     } else if(cuR.length>0){
-      badge.textContent='\u00b7 \u2713 ok';
-      badge.style.cssText='font-size:.52rem;color:#4CAF7D;margin-left:.3rem;font-family:"DM Sans",sans-serif;font-style:normal;vertical-align:middle';
+      badge.textContent=' \u00b7 \u2713 nessun duplicato';
+      badge.style.cssText='font-size:.52rem;color:#4CAF7D;margin-left:.2rem;font-family:"DM Sans",sans-serif;font-style:normal;vertical-align:middle';
     } else {
       badge.textContent='';badge.style.cssText='';
     }
   }
 
-  if(!cuR.length){
-    cnt.innerHTML='<div style="font-size:.7rem;color:#aaa;padding:.4rem .5rem;font-style:italic;text-align:center">In attesa del DB... riapri tra pochi secondi</div>';
-    return;
-  }
-
-  // ── SEZIONE DUPLICATI (sopra le ultime aggiunte) ──
+  // === SEZIONE DUPLICATI — sempre visibile ===
+  var dupBox=document.createElement('div');
   if(dk.length>0){
-    var dTotal=cuR.filter(function(r){return nc[r.n.toLowerCase().trim()]>1;}).length;
-    var dupBox=document.createElement('div');
     dupBox.style.cssText='border:1.5px solid #c04030;border-radius:10px;margin-bottom:.5rem;overflow:hidden;background:#fff9f9';
-
-    // Header sezione
+    // Header rosso
     var dupH=document.createElement('div');
-    dupH.style.cssText='padding:.42rem .65rem;background:rgba(192,64,48,.08);font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.78rem;color:#c04030;letter-spacing:.01em';
-    dupH.textContent='\u26a0 '+dk.length+(dk.length===1?' nome duplicato':' nomi duplicati')+' \u00b7 '+dTotal+' ricette totali';
+    dupH.style.cssText='padding:.4rem .65rem;background:rgba(192,64,48,.1);font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.8rem;color:#c04030';
+    dupH.innerHTML='<span style="font-size:.85rem">\u26a0\ufe0f</span> '+dk.length+' nom'+(dk.length===1?'e':'i')+' duplicat'+(dk.length===1?'o':'i')+' &middot; '+dTotal+' ricette totali';
     dupBox.appendChild(dupH);
-
-    // Gruppo per ogni nome duplicato
+    // Un gruppo per ogni nome duplicato
     dk.sort().forEach(function(k){
       var group=cuR.filter(function(r){return r.n.toLowerCase().trim()===k;});
-      var gWrap=document.createElement('div');
-      gWrap.style.cssText='border-top:1px solid rgba(192,64,48,.18)';
-
-      // Header gruppo (cliccabile)
+      var gWrap=document.createElement('div');gWrap.style.cssText='border-top:1px solid rgba(192,64,48,.18)';
       var gHdr=document.createElement('div');
-      gHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:.36rem .65rem;cursor:pointer;-webkit-tap-highlight-color:transparent';
-      var gL=document.createElement('div');gL.style.cssText='display:flex;align-items:center;gap:.3rem;flex:1;min-width:0';
-      var gNm=document.createElement('span');gNm.style.cssText='font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.8rem;color:#c04030;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';gNm.textContent=group[0].n;
+      gHdr.style.cssText='display:flex;align-items:center;gap:.3rem;padding:.36rem .65rem;cursor:pointer;-webkit-tap-highlight-color:transparent';
+      var gNm=document.createElement('span');gNm.style.cssText='font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.8rem;color:#c04030;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';gNm.textContent=group[0].n;
       var gBdg=document.createElement('span');gBdg.style.cssText='flex-shrink:0;font-size:.54rem;background:#c0403020;color:#c04030;border-radius:20px;padding:.04rem .38rem';gBdg.textContent=group.length+' copie';
-      var gChv=document.createElement('span');gChv.textContent='\u203a';gChv.style.cssText='color:#c04030;font-size:.95rem;transition:transform .2s;flex-shrink:0;margin-left:.25rem';
-      gL.appendChild(gNm);gL.appendChild(gBdg);
-      gHdr.appendChild(gL);gHdr.appendChild(gChv);
-
-      // Body gruppo
-      var gBody=document.createElement('div');
-      gBody.style.cssText='display:none;background:rgba(255,243,243,.6)';
-      gHdr.onclick=function(){
-        var op=gBody.style.display==='block';
-        gBody.style.display=op?'none':'block';
-        gChv.style.transform=op?'':'rotate(90deg)';
-      };
-
-      // Righe per ogni copia
+      var gChv=document.createElement('span');gChv.textContent='\u203a';gChv.style.cssText='color:#c04030;font-size:.95rem;transition:transform .2s;flex-shrink:0';
+      gHdr.appendChild(gNm);gHdr.appendChild(gBdg);gHdr.appendChild(gChv);
+      var gBody=document.createElement('div');gBody.style.cssText='display:none;background:rgba(255,248,248,.8)';
+      gHdr.onclick=function(){var op=gBody.style.display==='block';gBody.style.display=op?'none':'block';gChv.style.transform=op?'':'rotate(90deg)';};
       group.forEach(function(r,gi){
         var row=document.createElement('div');
-        row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:.35rem;padding:.32rem .65rem .32rem .9rem;'+(gi?'border-top:1px solid rgba(192,64,48,.1)':'');
-
+        row.style.cssText='display:flex;align-items:center;gap:.35rem;padding:.3rem .65rem .3rem .9rem;'+(gi?'border-top:1px solid rgba(192,64,48,.1)':'');
         var info=document.createElement('div');info.style.cssText='flex:1;min-width:0';
         var top=document.createElement('div');top.style.cssText='font-size:.67rem;color:#555';
-        top.textContent='ID '+r._id+' \u00b7 '+(r.i?r.i.length:0)+' ing \u00b7 '+(r.c||'')+' \u00b7 '+({colazioni:'Colazioni','fine-dining':'Fine Dining',gelateria:'Gelateria',torte:'Torte'}[r.s]||r.s||'');
+        top.textContent='ID '+r._id+' \u00b7 '+(r.i?r.i.length:0)+' ing \u00b7 '+(r.c||'')+' \u00b7 '+({colazioni:'Colazioni','fine-dining':'Fine Dining',gelateria:'Gelateria',torte:'Torte'}[r.s]||'');
         var prev=document.createElement('div');prev.style.cssText='font-size:.61rem;color:#aaa;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:"Cormorant Garamond",serif';
         if(r.i&&r.i.length)prev.textContent=r.i.slice(0,3).map(function(x){return(x[1]!=null?x[1]+' ':'')+x[0];}).join(', ')+(r.i.length>3?' +altri':'');
         info.appendChild(top);info.appendChild(prev);
-
-        var btns=document.createElement('div');btns.style.cssText='display:flex;gap:.2rem;flex-shrink:0';
-
+        var btns=document.createElement('div');btns.style.cssText='display:flex;flex-direction:column;gap:.15rem;flex-shrink:0';
         var kb=document.createElement('button');kb.type='button';kb.textContent='Mantieni';
-        kb.style.cssText='font-size:.57rem;background:none;border:1.5px solid #c04030;border-radius:20px;padding:.1rem .4rem;color:#c04030;cursor:pointer;-webkit-tap-highlight-color:transparent';
+        kb.style.cssText='font-size:.57rem;background:none;border:1.5px solid #c04030;border-radius:20px;padding:.1rem .4rem;color:#c04030;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap';
         kb.onclick=(function(rr,grp){return function(){
           if(!confirm('Tenere solo questa copia di "'+rr.n+'"?\nLe altre '+(grp.length-1)+' saranno eliminate.'))return;
           grp.filter(function(x){return x._id!==rr._id;}).forEach(function(x){deleteRec(x);});
-          setTimeout(function(){MDL_LOAD_RECENT();},2000);
+          setTimeout(MDL_LOAD_RECENT,2000);
         };})(r,group);
-
         var db2=document.createElement('button');db2.type='button';db2.textContent='Elimina';
-        db2.style.cssText='font-size:.57rem;background:#c04030;border:none;border-radius:20px;padding:.1rem .4rem;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent';
+        db2.style.cssText='font-size:.57rem;background:#c04030;border:none;border-radius:20px;padding:.1rem .4rem;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap';
         db2.onclick=(function(rr,grp,rowEl,bdg){return function(){
           if(!confirm('Eliminare questa copia di "'+rr.n+'"?'))return;
-          deleteRec(rr);
-          rowEl.style.opacity='.4';rowEl.style.pointerEvents='none';
-          grp.splice(grp.indexOf(rr),1);
-          bdg.textContent=grp.length+(grp.length===1?' copia':' copie');
+          deleteRec(rr);rowEl.style.opacity='.4';rowEl.style.pointerEvents='none';
+          grp.splice(grp.indexOf(rr),1);bdg.textContent=grp.length+(grp.length===1?' copia':' copie');
           setTimeout(function(){rowEl.remove();if(grp.length<=1)setTimeout(MDL_LOAD_RECENT,1500);},600);
         };})(r,group,row,gBdg);
-
         btns.appendChild(kb);btns.appendChild(db2);
-        row.appendChild(info);row.appendChild(btns);
-        gBody.appendChild(row);
+        row.appendChild(info);row.appendChild(btns);gBody.appendChild(row);
       });
-
-      gWrap.appendChild(gHdr);gWrap.appendChild(gBody);
-      dupBox.appendChild(gWrap);
+      gWrap.appendChild(gHdr);gWrap.appendChild(gBody);dupBox.appendChild(gWrap);
     });
-    cnt.appendChild(dupBox);
-    // Separatore
-    var sep=document.createElement('div');sep.style.cssText='height:1px;background:#e8e0d0;margin:.3rem 0 .45rem';cnt.appendChild(sep);
+  } else {
+    // Nessun duplicato — box verde
+    dupBox.style.cssText='border:1px solid rgba(76,175,125,.3);border-radius:10px;margin-bottom:.5rem;background:rgba(76,175,125,.05);padding:.42rem .65rem;display:flex;align-items:center;gap:.4rem';
+    dupBox.innerHTML='<span style="font-size:.85rem">\u2705</span><span style="font-family:\'Cormorant Garamond\',serif;font-style:italic;font-size:.75rem;color:#3a8a5a">'+(cuR.length>0?'Nessun duplicato &middot; '+cuR.length+' ricette su Supabase':'In attesa del DB...')+'</span>';
   }
+  cnt.appendChild(dupBox);
 
-  // ── ULTIME AGGIUNTE ──
+  if(!cuR.length)return;
+
+  // Separatore
+  var sep=document.createElement('div');sep.style.cssText='height:1px;background:#e8e0d0;margin:.2rem 0 .4rem';cnt.appendChild(sep);
+
+  // === ULTIME AGGIUNTE ===
   var recent=cuR.slice().sort(function(a,b){return (b._id||0)-(a._id||0);}).slice(0,8);
   recent.forEach(function(r){
     var isDupe=nc[r.n.toLowerCase().trim()]>1;
     var wrap=document.createElement('div');
     wrap.style.cssText='border:1px solid '+(isDupe?'rgba(192,64,48,.3)':'#e8e0d0')+';border-radius:8px;margin-bottom:.3rem;overflow:hidden;background:'+(isDupe?'#fff9f9':'#FAF8F2');
-    var hdr=document.createElement('div');
-    hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:.42rem .6rem;cursor:pointer;-webkit-tap-highlight-color:transparent';
+    var hdr=document.createElement('div');hdr.style.cssText='display:flex;align-items:center;gap:.4rem;padding:.42rem .6rem;cursor:pointer;-webkit-tap-highlight-color:transparent';
     var nd=document.createElement('div');nd.style.cssText='flex:1;min-width:0';
-    var nm=document.createElement('div');nm.style.cssText='display:flex;align-items:center;gap:.3rem';
-    var ns=document.createElement('span');ns.style.cssText='font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.82rem;color:'+(isDupe?'#c04030':'#333');ns.textContent=r.n;
-    nm.appendChild(ns);
-    if(isDupe){var ib=document.createElement('span');ib.textContent='\u26a0';ib.style.cssText='font-size:.65rem;color:#c04030;flex-shrink:0';nm.appendChild(ib);}
-    var mt=document.createElement('div');mt.style.cssText='font-size:.58rem;color:#aaa;margin-top:.04rem';mt.textContent=(r.i?r.i.length:0)+' ing \u00b7 '+(r.c||'Altro');
+    var nm=document.createElement('span');nm.style.cssText='font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.82rem;color:'+(isDupe?'#c04030':'#333');nm.textContent=r.n;
+    var mt=document.createElement('div');mt.style.cssText='font-size:.57rem;color:#aaa;margin-top:.04rem';mt.textContent=(r.i?r.i.length:0)+' ing \u00b7 '+(r.c||'Altro');
     nd.appendChild(nm);nd.appendChild(mt);
-    var ch=document.createElement('span');ch.textContent='\u203a';ch.style.cssText='color:#aaa;font-size:1rem;transition:transform .2s;flex-shrink:0';
-    hdr.appendChild(nd);hdr.appendChild(ch);
+    if(isDupe){var ib=document.createElement('span');ib.textContent='\u26a0';ib.style.cssText='font-size:.65rem;color:#c04030;flex-shrink:0';hdr.appendChild(nd);hdr.appendChild(ib);}else{hdr.appendChild(nd);}
+    var ch=document.createElement('span');ch.textContent='\u203a';ch.style.cssText='color:#aaa;font-size:1rem;transition:transform .2s;flex-shrink:0';hdr.appendChild(ch);
     var panel=document.createElement('div');panel.style.cssText='display:none;padding:.4rem .6rem .6rem;border-top:1px solid '+(isDupe?'rgba(192,64,48,.15)':'#e8e0d0');
-    hdr.onclick=function(){
-      var op=panel.style.display==='block';panel.style.display=op?'none':'block';ch.style.transform=op?'':'rotate(90deg)';
-      if(!op&&!panel.dataset.built){panel.dataset.built='1';buildRecentPanel(panel,r);}
-    };
+    hdr.onclick=function(){var op=panel.style.display==='block';panel.style.display=op?'none':'block';ch.style.transform=op?'':'rotate(90deg)';if(!op&&!panel.dataset.built){panel.dataset.built='1';buildRecentPanel(panel,r);}};
     wrap.appendChild(hdr);wrap.appendChild(panel);cnt.appendChild(wrap);
   });
 }
