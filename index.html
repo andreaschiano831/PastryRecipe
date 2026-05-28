@@ -1887,7 +1887,7 @@ var SSUBS={colazioni:'Impasti \u00b7 Creme \u00b7 Lievitati','fine-dining':'Alta
 
 function el(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;return e;}
 function qs(id){return document.getElementById(id);}
-function fmtN(v){if(v===null||v===undefined)return '';return(v===Math.floor(v))?String(v):v.toFixed(1);}
+function fmtN(v){if(v===null||v===undefined||v==='')return '';var n=parseFloat(v);if(isNaN(n))return String(v);return(n===Math.floor(n))?String(n):n.toFixed(1);}
 function fmtD(v,d){if(v===null||v===undefined)return 'q.b.';var r=v*d;return(r===Math.floor(r))?String(r):r.toFixed(1);}
 function getHidden(){try{return JSON.parse(localStorage.getItem('mdl_hidden')||'[]');}catch(e){return[];}}
 function hideBuiltin(name){var h=getHidden();if(h.indexOf(name)===-1){h.push(name);try{localStorage.setItem('mdl_hidden',JSON.stringify(h));}catch(e){}}}
