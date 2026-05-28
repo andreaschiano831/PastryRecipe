@@ -1949,7 +1949,8 @@ function loadRecipes(){
   if(_lrInFlight){return;}
   _lrInFlight=true;
   clearTimeout(_lrRetryTimer);
-  setDbStatus('loading');
+  // Mostra loading solo se non abbiamo già dati
+  if(!CU.length)setDbStatus('loading');
 
   var ctrl=new AbortController();
   var tid=setTimeout(function(){ctrl.abort();},20000); // 20s timeout
@@ -1981,8 +1982,9 @@ function loadRecipes(){
     clearTimeout(tid);
     _lrInFlight=false;
     _dbConnected=false;
-    setDbStatus('err');
-    // Mostra cache locale se disponibile
+    // Mostra err solo se non abbiamo dati locali
+    if(!CU.length)setDbStatus('err');
+    else setDbStatus('loading'); // abbiamo dati, stiamo riprovando
     if(!CU.length){
       try{
         var cached=JSON.parse(localStorage.getItem('rc')||'[]');
@@ -3659,10 +3661,16 @@ function boot(){
   });
   var testDbBtn=qs('testDbBtn');if(testDbBtn)testDbBtn.addEventListener('click',testDb);
 
+  var _lastVisible=0;
   document.addEventListener('visibilitychange',function(){
-    if(!document.hidden&&!_dbConnected&&!_lrInFlight){
-      clearTimeout(_lrRetryTimer);
-      loadRecipes();
+    if(!document.hidden){
+      var now=Date.now();
+      // Riconnetti solo se: non connesso, non in volo, e non riconnesso negli ultimi 2 min
+      if(!_dbConnected&&!_lrInFlight&&(now-_lastVisible>120000)){
+        _lastVisible=now;
+        clearTimeout(_lrRetryTimer);
+        loadRecipes();
+      }
     }
   });
   window.addEventListener('online',function(){
