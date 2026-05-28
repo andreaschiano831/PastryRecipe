@@ -1984,11 +1984,14 @@ function loadRecipes(){
     _lrInFlight=false;
     _dbConnected=false;
     if(CU.length){
-      // Abbiamo dati in cache MA la connessione è persa
-      // Arancione fisso = "attenzione, i salvataggi potrebbero non andare a buon fine"
-      setDbStatus('warn');
-      var info=qs('admDbInfo');
-      if(info)info.textContent='Offline · dati in cache · i salvataggi potrebbero fallire';
+      // Abbiamo dati ma la connessione è caduta
+      // Arancione solo dopo 2+ tentativi falliti (evita falsi allarmi su timeout momentanei)
+      if(_lrRetry>=2){
+        setDbStatus('warn');
+        var wInfo=qs('admDbInfo');
+        if(wInfo)wInfo.textContent='Offline · dati in cache · salvataggi a rischio';
+      }
+      // Altrimenti lascia il dot com'è (verde) e riprova silenziosamente
     } else {
       setDbStatus('err');
     }
@@ -2022,10 +2025,11 @@ function testDb(){
       return r.json();
     })
     .then(function(rows){
-      setDbStatus('ok');
-      if(msg){msg.textContent='Connessione OK';msg.style.color='#4CAF50';}
+      if(msg){msg.textContent='Connessione OK • '+rows.length+' ricette raggiunte';msg.style.color='#4CAF50';}
       if(btn)btn.textContent='Testa connessione';
-      loadRecipes();
+      // Aggiorna dot e dati solo se necessario
+      if(!_dbConnected)loadRecipes();
+      else setDbStatus('ok');
     })
     .catch(function(e){
       setDbStatus('err');
