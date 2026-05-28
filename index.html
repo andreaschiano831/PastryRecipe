@@ -344,6 +344,7 @@ body.t-avorio .panel[data-sec="tutti"] .panel-bg{background:linear-gradient(155d
 .db-status{width:8px;height:8px;border-radius:50%;background:#888;display:inline-block;flex-shrink:0;transition:background .3s;cursor:help}
 .db-status.ok{background:#4CAF50}
 .db-status.err{background:#f44336}
+.db-status.warn{background:#FFA726}
 .db-status.loading{background:#FFA726;animation:pulse .8s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 /* DB Operation Banner */
@@ -1949,7 +1950,7 @@ function loadRecipes(){
   if(_lrInFlight){return;}
   _lrInFlight=true;
   clearTimeout(_lrRetryTimer);
-  // Mostra loading solo se non abbiamo già dati
+  // Dot: loading solo se nessun dato, altrimenti lascia com'è
   if(!CU.length)setDbStatus('loading');
 
   var ctrl=new AbortController();
@@ -1982,9 +1983,15 @@ function loadRecipes(){
     clearTimeout(tid);
     _lrInFlight=false;
     _dbConnected=false;
-    // Mostra err solo se non abbiamo dati locali
-    if(!CU.length)setDbStatus('err');
-    else setDbStatus('loading'); // abbiamo dati, stiamo riprovando
+    if(CU.length){
+      // Abbiamo dati in cache MA la connessione è persa
+      // Arancione fisso = "attenzione, i salvataggi potrebbero non andare a buon fine"
+      setDbStatus('warn');
+      var info=qs('admDbInfo');
+      if(info)info.textContent='Offline · dati in cache · i salvataggi potrebbero fallire';
+    } else {
+      setDbStatus('err');
+    }
     if(!CU.length){
       try{
         var cached=JSON.parse(localStorage.getItem('rc')||'[]');
@@ -2028,6 +2035,9 @@ function testDb(){
     });
 }
 function saveRec(rec){
+  if(!_dbConnected){
+    if(!confirm('Attenzione: connessione al DB non attiva.\nIl salvataggio potrebbe fallire.\nProcedere comunque?'))return;
+  }
   rec._c=true;
   dbLog('INSERT '+rec.n);
   showDbBanner('Salvataggio...','loading');
@@ -2090,6 +2100,9 @@ function updateRec(rec,nd){
   });
 }
 function deleteRec(rec){
+  if(!_dbConnected){
+    if(!confirm('Attenzione: connessione DB non attiva.\nL\u2019eliminazione potrebbe fallire.\nProcedere?'))return;
+  }
   dbLog('DELETE '+rec._id+' '+rec.n);
   showDbBanner('Eliminazione...','loading');
   fetch(SB_URL+'/rest/v1/ricette?id=eq.'+rec._id,{
