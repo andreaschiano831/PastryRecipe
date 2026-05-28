@@ -1619,7 +1619,9 @@ body.t-ebano, body.t-bordeaux, body.t-ottanio {
 <div class="move-bg" id="moveBg"><div class="move-box">
   <h4 class="fd">Sposta ricetta</h4><p class="fsc" id="moveName">Modifica sezione e categoria</p>
   <label class="fsc">Ricettario</label><select id="moveSec" class="fs"><option value="colazioni">Colazioni</option><option value="fine-dining">Fine Dining</option><option value="gelateria">Gelateria</option><option value="torte">Torte &amp; Pasticceria</option></select>
-<script>buildIngDatalist();
+<script>var _dbConnected=false,_lrRetry=0,_lrInFlight=false,_lrRetryTimer=null;
+var _dbConnected=false,_lrRetry=0,_lrInFlight=false,_lrRetryTimer=null;
+buildIngDatalist();
 var THEME_META=[
   {id:'t-crema',lbl:'Crema',color:'#C4933A'},
   {id:'t-ebano',lbl:'Ebano',color:'#1A1810'},
@@ -1943,30 +1945,63 @@ function showDbBanner(msg,type){
   }
 }
 function loadRecipes(){
+  // Evita chiamate concorrenti
+  if(_lrInFlight){return;}
+  _lrInFlight=true;
+  clearTimeout(_lrRetryTimer);
   setDbStatus('loading');
+
   var ctrl=new AbortController();
-  var tid=setTimeout(function(){ctrl.abort();},15000);
-  fetch(SB_URL+'/rest/v1/ricette?select=id,data&order=id.asc',{headers:sbH(),signal:ctrl.signal})
-    .then(function(r){clearTimeout(tid);
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      return r.json();
-    })
-    .then(function(rows){
-      setDbStatus('ok');
-      CU=Array.isArray(rows)?rows.map(function(row){var r=row.data;r._c=true;r._id=row.id;return r;}):[];
-      updatePiattiDatalist();renderCats();renderGrid();
-      try{localStorage.setItem('rc',JSON.stringify(CU));}catch(ex){}
-      var info=qs('admDbInfo');if(info)info.textContent='Connesso \u2022 '+CU.length+' ricette';
-      try{MDL_LOAD_RECENT();}catch(ex){} // aggiorna drawer sempre dopo load
-    })
-    .catch(function(err){clearTimeout(tid);
-      setDbStatus('err');
-      try{CU=JSON.parse(localStorage.getItem('rc')||'[]');}catch(e2){CU=[];}
-      CU.forEach(function(r){r._c=true;});renderCats();renderGrid();
-      var info=qs('admDbInfo');if(info)info.textContent='Errore DB • retry tra 8s...';
-      try{MDL_LOAD_RECENT();}catch(ex){}
-      setTimeout(function(){loadRecipes();},8000);
-    });
+  var tid=setTimeout(function(){ctrl.abort();},20000); // 20s timeout
+
+  fetch(SB_URL+'/rest/v1/ricette?select=id,data&order=id.asc',{
+    headers:sbH(),signal:ctrl.signal
+  })
+  .then(function(res){
+    clearTimeout(tid);
+    _lrInFlight=false;
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    return res.json();
+  })
+  .then(function(rows){
+    // Successo
+    _dbConnected=true;
+    _lrRetry=0;
+    setDbStatus('ok');
+    CU=Array.isArray(rows)?rows.map(function(row){
+      var r=row.data;r._c=true;r._id=row.id;return r;
+    }):[];
+    updatePiattiDatalist();renderCats();renderGrid();
+    try{localStorage.setItem('rc',JSON.stringify(CU));}catch(ex){}
+    var info=qs('admDbInfo');
+    if(info)info.textContent='Connesso \u2022 '+CU.length+' ricette';
+    try{MDL_LOAD_RECENT();}catch(ex){}
+  })
+  .catch(function(err){
+    clearTimeout(tid);
+    _lrInFlight=false;
+    _dbConnected=false;
+    setDbStatus('err');
+    // Mostra cache locale se disponibile
+    if(!CU.length){
+      try{
+        var cached=JSON.parse(localStorage.getItem('rc')||'[]');
+        if(cached.length){
+          CU=cached;
+          CU.forEach(function(r){r._c=true;});
+          renderCats();renderGrid();
+        }
+      }catch(e2){}
+    }
+    _lrRetry++;
+    // Backoff: 5s, 10s, 20s, 30s, poi sempre 60s
+    var delays=[5000,10000,20000,30000,60000];
+    var delay=delays[Math.min(_lrRetry-1,delays.length-1)];
+    var info=qs('admDbInfo');
+    if(info)info.textContent='Offline \u2022 riconnessione tra '+(delay/1000)+'s';
+    try{MDL_LOAD_RECENT();}catch(ex){}
+    _lrRetryTimer=setTimeout(function(){loadRecipes();},delay);
+  });
 }
 function testDb(){
   var btn=qs('testDbBtn');var msg=qs('admDbMsg');
@@ -3203,6 +3238,32 @@ function MDL_LOAD_RECENT(){
   var dk=Object.keys(nc).filter(function(k){return nc[k]>1;});
   var dTotal=cuR.filter(function(r){return nc[r.n.toLowerCase().trim()]>1;}).length;
 
+  // Near-duplicates: nomi molto simili (es. "Ghanace" vs "Ganache", typo)
+  // Usa distanza di Levenshtein semplificata
+  function simScore(a,b){
+    a=a.toLowerCase().trim();b=b.toLowerCase().trim();
+    if(a===b)return 1;
+    if(Math.abs(a.length-b.length)>4)return 0;
+    var matches=0,shorter=Math.min(a.length,b.length);
+    for(var ii=0;ii<shorter;ii++){if(a[ii]===b[ii])matches++;}
+    return matches/Math.max(a.length,b.length);
+  }
+  var nearDupes=[];
+  if(dk.length===0&&cuR.length>1){ // solo se non ci sono già duplicati esatti
+    var names=cuR.map(function(r){return r.n.toLowerCase().trim();});
+    var checked={};
+    for(var ni=0;ni<names.length-1;ni++){
+      for(var nj=ni+1;nj<names.length;nj++){
+        var pair=names[ni]+'|'+names[nj];
+        if(checked[pair])continue;checked[pair]=true;
+        if(simScore(names[ni],names[nj])>=0.85&&names[ni]!==names[nj]){
+          nearDupes.push([cuR[ni],cuR[nj]]);
+        }
+      }
+    }
+    if(nearDupes.length>10)nearDupes=nearDupes.slice(0,10); // max 10
+  }
+
   // Badge nel titolo
   if(badge){
     if(dk.length>0){
@@ -3598,8 +3659,15 @@ function boot(){
   });
   var testDbBtn=qs('testDbBtn');if(testDbBtn)testDbBtn.addEventListener('click',testDb);
 
-  document.addEventListener('visibilitychange',function(){if(!document.hidden)loadRecipes();});
-  window.addEventListener('online',function(){loadRecipes();});
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden&&!_dbConnected&&!_lrInFlight){
+      clearTimeout(_lrRetryTimer);
+      loadRecipes();
+    }
+  });
+  window.addEventListener('online',function(){
+    if(!_dbConnected&&!_lrInFlight){clearTimeout(_lrRetryTimer);loadRecipes();}
+  });
 }
 </script>
 
