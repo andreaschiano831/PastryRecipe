@@ -1970,6 +1970,8 @@ function loadRecipes(){
     _dbConnected=true;
     _lrRetry=0;
     setDbStatus('ok');
+    // Keep-alive: salva timestamp ultima connessione riuscita
+    try{localStorage.setItem('sb_last_ok', Date.now().toString());}catch(ex){}
     CU=Array.isArray(rows)?rows.map(function(row){
       var r=row.data;r._c=true;r._id=row.id;return r;
     }):[];
@@ -3245,6 +3247,20 @@ function openDrawer(){MDL_OPEN();}function closeDrawer(){MDL_CLOSE();}function u
 
 function MDL_LOAD_RECENT(){
   var cnt=document.getElementById('MDL_RECENT');
+  // Avviso keep-alive Supabase free tier
+  var kaBanner=document.getElementById('MDL_KA_BANNER');
+  if(kaBanner){
+    try{
+      var lastOk=parseInt(localStorage.getItem('sb_last_ok')||'0');
+      var daysSince=lastOk?(Date.now()-lastOk)/(1000*60*60*24):0;
+      if(daysSince>5&&!_dbConnected){
+        kaBanner.style.display='block';
+        kaBanner.textContent='⚠️ Supabase inattivo da '+Math.floor(daysSince)+' giorni — potrebbe essere in pausa. Vai su supabase.com/dashboard per riattivarlo.';
+      } else {
+        kaBanner.style.display='none';
+      }
+    }catch(ex){}
+  }
   var badge=document.getElementById('MDL_DUPE_COUNT');
   if(!cnt)return;
   cnt.innerHTML='';
@@ -3934,6 +3950,7 @@ function boot(){
     <button onclick="testDb&&testDb()" style="display:flex;align-items:center;gap:.7rem;padding:.7rem 1rem;border:none;background:none;width:100%;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent"><span>&#128197;</span><span style="font-style:italic;font-family:Cormorant Garamond,serif;font-size:.88rem;color:#333">Testa DB</span></button>
     <div style="height:1px;background:#e8e0d0;margin:.3rem 1rem"></div>
     <div style="padding:.5rem 1rem .2rem;font-size:.5rem;letter-spacing:.2em;text-transform:uppercase;color:#aaa">Ultime aggiunte <span id="MDL_DUPE_COUNT"></span></div>
+    <div id="MDL_KA_BANNER" style="display:none;margin:.2rem .5rem .4rem;padding:.4rem .6rem;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;font-size:.65rem;color:#856404;font-family:'DM Sans',sans-serif;line-height:1.4"></div>
     <div id="MDL_RECENT" style="padding:.2rem .5rem .5rem"></div>
     <button onclick="MDL_LOAD_RECENT()" style="display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border:none;background:none;width:100%;text-align:left;cursor:pointer;font-size:.72rem;color:#8B7A3A;font-style:italic;font-family:'Cormorant Garamond',serif">&#8635; Aggiorna lista</button>
   </div>
