@@ -1455,6 +1455,15 @@ body.t-ebano, body.t-bordeaux, body.t-ottanio {
 .sort-sel{-webkit-appearance:none;appearance:none;background:var(--ctrl) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23C4933A' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right .55rem center;border:1.5px solid var(--cb);border-radius:50px;padding:.28rem 1.6rem .28rem .75rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.82rem;letter-spacing:.01em;text-transform:none;color:var(--ink);cursor:pointer;outline:none}
 .sort-sel:focus{border-color:var(--gold2)}
 @media(min-width:600px){.sort-row{padding-right:1.5rem}}
+
+/* ═══ PERCENTUALI ═══ */
+.tbl thead th.pc{padding-left:.2rem;padding-right:.2rem}
+.td-pc{text-align:right;white-space:nowrap;color:var(--smoke2);font-size:.66rem;padding-left:.2rem!important;padding-right:.2rem!important;font-variant-numeric:tabular-nums}
+.pct-toggle{flex-shrink:0;width:30px;height:28px;border-radius:50px;border:1.5px solid var(--cb);background:var(--ctrl);color:var(--smoke2);font-family:'Cormorant Garamond',serif;font-size:.85rem;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:0}
+.pct-toggle.on{background:var(--gold2);border-color:var(--gold2);color:#fff}
+.pct-switch{display:flex;background:var(--ctrl);border:1.5px solid var(--cb);border-radius:50px;overflow:hidden}
+.pct-switch button{border:none;background:none;padding:.22rem .65rem;font-family:'Cormorant SC',serif;font-size:.6rem;letter-spacing:.06em;color:var(--smoke2);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pct-switch button.on{background:var(--gold2);color:#fff}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
@@ -1573,7 +1582,7 @@ body.t-ebano, body.t-bordeaux, body.t-ottanio {
     </div>
     <div class="cat-bar" id="catBar"></div>
   </div>
-  <div class="sort-row"><div class="cnt-row fsc" id="cnt"></div><label class="sort-wrap fsc" for="sortSel"><span>Ordina</span><select id="sortSel" class="sort-sel" onchange="setSortMode(this.value)"><option value="ins">Inserimento</option><option value="new">Pi&ugrave; recenti</option><option value="az">A &rarr; Z</option><option value="za">Z &rarr; A</option></select></label></div>
+  <div class="sort-row"><div class="cnt-row fsc" id="cnt"></div><button type="button" id="pctToggle" class="pct-toggle on" onclick="togglePct()" title="Mostra o nascondi le percentuali">%</button><label class="sort-wrap fsc" for="sortSel"><span>Ordina</span><select id="sortSel" class="sort-sel" onchange="setSortMode(this.value)"><option value="ins">Inserimento</option><option value="new">Pi&ugrave; recenti</option><option value="az">A &rarr; Z</option><option value="za">Z &rarr; A</option></select></label></div>
   <div class="grid" id="grid"></div>
   <div class="fab-wrap" id="fabWrap" style="display:none">
     <div class="fab-menu" id="fabMenu" style="display:none">
@@ -2372,6 +2381,9 @@ function buildCard(r,idx){
     card.addEventListener('touchmove',function(){clearTimeout(_lpt);},{passive:true});
     card.addEventListener('click',function(e){if(_multiMode){e.stopPropagation();toggleSelCard(r,card);}});
   }
+  // Clic sulla card: apre la ricetta a schermo intero (non su bottoni o in selezione multipla)
+  card.style.cursor='pointer';
+  card.addEventListener('click',function(e){if(_multiMode)return;if(e.target.closest('button,a,input,select,textarea,.card-proc'))return;openRecipePanel(r);});
   card.appendChild(hd);
   if(r.p){
     var pt=el('button','card-proc-toggle fsc');pt.type='button';pt.textContent='Procedimento \u25be';
@@ -2385,7 +2397,11 @@ function buildCard(r,idx){
   }
   var tbl=el('table','tbl');var thead=el('thead');var tr0=el('tr');
   var dL=(dose===Math.floor(dose))?String(dose):dose.toFixed(1);
-  [{t:'Ingrediente',c:''},{t:'Base',c:'r'},{t:'',c:''},{t:'\u00d7 '+dL,c:'sc'}].forEach(function(h){
+  var PC=_showPct?ingPct(r.i,_pctBase):{ok:false};
+  var hcols=[{t:'Ingrediente',c:''},{t:'Base',c:'r'},{t:'',c:''}];
+  if(PC.ok)hcols.push({t:PC.base==='farina'?'% far.':'%',c:'r pc'});
+  hcols.push({t:'\u00d7 '+dL,c:'sc'});
+  hcols.forEach(function(h){
     var th=el('th');if(h.c)th.className=h.c;th.textContent=h.t;tr0.appendChild(th);
   });
   thead.appendChild(tr0);tbl.appendChild(thead);
@@ -2399,7 +2415,9 @@ function buildCard(r,idx){
     tdS.setAttribute('data-b',ing[1]===null?'':String(ing[1]));
     tdS.setAttribute('data-u',ing[2]);
     tdS.textContent=fmtD(ing[1],dose)+(ing[1]!==null?' '+ing[2]:'');
-    tr.appendChild(tdN);tr.appendChild(tdB);tr.appendChild(tdU);tr.appendChild(tdS);tb.appendChild(tr);
+    tr.appendChild(tdN);tr.appendChild(tdB);tr.appendChild(tdU);
+    if(PC.ok){var tdP=el('td','td-pc');tdP.textContent=fmtPct(PC.pct[i]);tr.appendChild(tdP);}
+    tr.appendChild(tdS);tb.appendChild(tr);
   }
   tbl.appendChild(tb);card.appendChild(tbl);return card;
 }
@@ -2446,6 +2464,7 @@ function renderGrid(){
   });
   out=sortRecs(out);
   var ss=qs('sortSel');if(ss&&ss.value!==_sortMode)ss.value=_sortMode;
+  var ptg=qs('pctToggle');if(ptg)ptg.classList.toggle('on',_showPct);
   var cnt=qs('cnt');if(cnt)cnt.textContent=out.length+' / '+allRecs().length+' ricette';
   if(!out.length){var em=el('div','empty');em.style.gridColumn='1/-1';var ico=el('div','empty-ico');ico.textContent='\u25cb';var p=el('p','fd');p.textContent='Nessuna ricetta trovata';em.appendChild(ico);em.appendChild(p);grid.appendChild(em);return;}
   var hasPiatti=out.some(function(r){return r.piatto&&r.piatto.trim();});
@@ -3636,9 +3655,89 @@ function clearAiPhotos(){
   var abtn=qs('aiAnalyseBtn');if(abtn){abtn.style.display='block';abtn.disabled=false;}
 }
 var _rpRec=null,_rpDose=1;
-function openRecipePanel(r){_rpRec=r;_rpDose=1;var g=function(id){return document.getElementById(id);};g('rpName').textContent=r.n||'';g('rpCat').textContent=r.c||'';g('rpPiatto').textContent=r.piatto?r.piatto.toUpperCase():'';var meta=g('rpMeta');if(meta)meta.textContent=(r.i?r.i.length:0)+' ingredienti · '+({colazioni:'Colazioni','fine-dining':'Fine Dining',gelateria:'Gelateria',torte:'Torte'}[r.s]||r.s||'');g('rpDose').textContent='1';g('rpXlbl').textContent='1';rpRenderIng();var pw=g('rpProcWrap'),pe=g('rpProc');if(r.p&&r.p.trim()){pe.textContent=r.p;pw.style.display='block';}else pw.style.display='none';var p=g('recipePanelBg');p.style.display='block';p.scrollTop=0;document.body.style.overflow='hidden';}
+function openRecipePanel(r){_rpRec=r;_rpDose=1;var g=function(id){return document.getElementById(id);};g('rpName').textContent=r.n||'';g('rpCat').textContent=r.c||'';g('rpPiatto').textContent=r.piatto?r.piatto.toUpperCase():'';var meta=g('rpMeta');if(meta)meta.textContent=(r.i?r.i.length:0)+' ingredienti · '+({colazioni:'Colazioni','fine-dining':'Fine Dining',gelateria:'Gelateria',torte:'Torte'}[r.s]||r.s||'');g('rpDose').textContent='1';g('rpXlbl').textContent='1';rpRenderIng();var pw=g('rpProcWrap'),pe=g('rpProc');if(r.p&&r.p.trim()){pe.textContent=r.p;pw.style.display='block';}else pw.style.display='none';var p=g('recipePanelBg');if(p.parentNode!==document.body)document.body.appendChild(p);p.style.display='block';p.scrollTop=0;document.body.style.overflow='hidden';}
 function closeRecipePanel(){document.getElementById('recipePanelBg').style.display='none';document.body.style.overflow='';_rpRec=null;}
-function rpRenderIng(){var list=document.getElementById('rpIngList');if(!list||!_rpRec||!_rpRec.i)return;list.innerHTML='';_rpRec.i.forEach(function(ing){var row=document.createElement('div');row.style.cssText='display:grid;grid-template-columns:1fr 4rem 2.2rem 5.5rem;padding:.44rem 1.2rem;border-bottom:1px solid rgba(0,0,0,.035)';var n=document.createElement('span');n.style.cssText='font-size:.85rem;color:var(--ink)';n.textContent=ing[0]||'';var qBase=ing[1]!=null?ing[1]:'';var q=document.createElement('span');q.style.cssText='font-size:.85rem;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums';q.textContent=qBase!==''?String(qBase):'';var u=document.createElement('span');u.style.cssText='font-size:.7rem;color:var(--smoke3);padding-left:.22rem;align-self:end;padding-bottom:.06rem';u.textContent=ing[2]&&ing[2]!='q.b.'?ing[2]:'';var qM=document.createElement('span');qM.style.cssText='font-size:.88rem;color:var(--gold2);text-align:right;font-variant-numeric:tabular-nums;font-weight:500';if(qBase!==''&&!isNaN(parseFloat(qBase))){var val=Math.round(parseFloat(qBase)*_rpDose*100)/100;qM.textContent=val+(ing[2]?' '+ing[2]:'');}else qM.textContent=ing[2]==='q.b.'?'q.b.':(qBase!==''?qBase+' '+(ing[2]||''):'—');row.appendChild(n);row.appendChild(q);row.appendChild(u);row.appendChild(qM);list.appendChild(row);});}
+/* ════ PERCENTUALI INGREDIENTI ════
+   % sul peso totale (solo ingredienti a peso/volume) oppure % sulla farina (farina = 100). */
+var _showPct=true,_pctBase='tot';
+try{_showPct=localStorage.getItem('mdl_pct')!=='0';_pctBase=localStorage.getItem('mdl_pct_base')==='farina'?'farina':'tot';}catch(ex){}
+var PCT_UNITS={'g':1,'gr':1,'grammi':1,'grammo':1,'kg':1000,'mg':0.001,'ml':1,'cl':10,'dl':100,'l':1000,'lt':1000,'litri':1000,'litro':1000};
+function ingGrams(q,u){
+  if(q===null||q===undefined||q==='')return null;
+  var k=String(u||'').toLowerCase().replace(/\./g,'').trim();
+  if(!(k in PCT_UNITS))return null;
+  var n=parseFloat(String(q).replace(',','.'));
+  return isNaN(n)?null:n*PCT_UNITS[k];
+}
+function isFlour(name){var s=String(name||'');if(/zucchero|amido|fecola|cacao|mandorl|nocciol|pistacch|cocco/i.test(s))return false;return /farin|semola|semolino|flour|manitoba|petra|buonpane|tipo\s*0{1,2}\b|tipo\s*[12]\b|^\s*0{1,2}\s*$/i.test(s);}
+function ingPct(list,base){
+  var g=(list||[]).map(function(x){return ingGrams(x[1],x[2]);});
+  var total=0,flour=0,nW=0;
+  g.forEach(function(v,i){if(v!==null){total+=v;nW++;if(isFlour(list[i][0]))flour+=v;}});
+  var useFlour=base==='farina'&&flour>0&&flour/total>=0.2; // solo impasti: farina almeno 20% del peso
+  var den=useFlour?flour:total;
+  if(nW<2||den<=0)return{pct:g.map(function(){return null;}),total:total,flour:flour,base:'tot',ok:false};
+  return{pct:g.map(function(v){return v===null?null:v/den*100;}),total:total,flour:flour,base:useFlour?'farina':'tot',ok:true};
+}
+function fmtPct(p){
+  if(p===null||p===undefined)return '';
+  var d=p>=100?0:1;
+  return p.toFixed(d).replace('.',',').replace(/,0$/,'')+'%';
+}
+function fmtWeight(g){
+  if(g>=1000)return(Math.round(g/10)/100).toString().replace('.',',')+' kg';
+  return Math.round(g).toString()+' g';
+}
+function togglePct(){
+  _showPct=!_showPct;
+  try{localStorage.setItem('mdl_pct',_showPct?'1':'0');}catch(ex){}
+  var b=document.getElementById('pctToggle');if(b)b.classList.toggle('on',_showPct);
+  renderGrid();
+}
+function setPctBase(b){
+  _pctBase=b==='farina'?'farina':'tot';
+  try{localStorage.setItem('mdl_pct_base',_pctBase);}catch(ex){}
+  if(typeof rpRenderIng==='function')rpRenderIng();
+  renderGrid();
+}
+function rpRenderIng(){
+  var list=document.getElementById('rpIngList');if(!list||!_rpRec||!_rpRec.i)return;
+  list.innerHTML='';
+  var P=ingPct(_rpRec.i,_pctBase);
+  var hd=document.getElementById('rpPctHd');if(hd)hd.textContent=P.ok?(P.base==='farina'?'% far.':'%'):'';
+  var cols='1fr 3.6rem 1.9rem 3.3rem 5rem';
+  _rpRec.i.forEach(function(ing,ix){
+    var row=document.createElement('div');
+    row.style.cssText='display:grid;grid-template-columns:'+cols+';padding:.44rem 1.2rem;border-bottom:1px solid rgba(0,0,0,.035);align-items:baseline';
+    var n=document.createElement('span');n.style.cssText='font-size:.85rem;color:var(--ink)';n.textContent=ing[0]||'';
+    var qBase=ing[1]!=null?ing[1]:'';
+    var q=document.createElement('span');q.style.cssText='font-size:.85rem;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums';q.textContent=qBase!==''?String(qBase):'';
+    var u=document.createElement('span');u.style.cssText='font-size:.7rem;color:var(--smoke3);padding-left:.22rem';u.textContent=ing[2]&&ing[2]!='q.b.'?ing[2]:'';
+    var pc=document.createElement('span');pc.style.cssText='font-size:.74rem;color:var(--smoke2);text-align:right;font-variant-numeric:tabular-nums';pc.textContent=fmtPct(P.pct[ix]);
+    var qM=document.createElement('span');qM.style.cssText='font-size:.88rem;color:var(--gold2);text-align:right;font-variant-numeric:tabular-nums;font-weight:500';
+    if(qBase!==''&&!isNaN(parseFloat(qBase))){var val=Math.round(parseFloat(qBase)*_rpDose*100)/100;qM.textContent=val+(ing[2]?' '+ing[2]:'');}
+    else qM.textContent=ing[2]==='q.b.'?'q.b.':(qBase!==''?qBase+' '+(ing[2]||''):'—');
+    row.appendChild(n);row.appendChild(q);row.appendChild(u);row.appendChild(pc);row.appendChild(qM);list.appendChild(row);
+  });
+  if(P.total>0){
+    var ft=document.createElement('div');
+    ft.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap;padding:.6rem 1.2rem .2rem';
+    var tot=document.createElement('span');tot.style.cssText="font-family:'Cormorant SC',serif;font-size:.62rem;letter-spacing:.12em;color:var(--smoke2)";
+    tot.textContent='Peso totale '+fmtWeight(P.total)+(_rpDose!==1?' · ×'+String(_rpDose).replace('.',',')+' = '+fmtWeight(P.total*_rpDose):'');
+    ft.appendChild(tot);
+    if(P.flour>0&&P.flour/P.total>=0.2){
+      var sw=document.createElement('div');sw.className='pct-switch';
+      [['tot','% totale'],['farina','% farina']].forEach(function(o){
+        var b=document.createElement('button');b.type='button';b.textContent=o[1];
+        if(P.base===o[0])b.className='on';
+        b.onclick=function(){setPctBase(o[0]);};sw.appendChild(b);
+      });
+      ft.appendChild(sw);
+    }
+    list.appendChild(ft);
+  }
+}
+
 function rpChangeDose(delta){_rpDose=Math.max(0.25,_rpDose+delta);if(delta>0&&_rpDose>1)_rpDose=Math.round(_rpDose);if(delta<0&&_rpDose>=1)_rpDose=Math.max(0.5,Math.round(_rpDose));var d=_rpDose%1===0?_rpDose:_rpDose.toFixed(2);document.getElementById('rpDose').textContent=d;document.getElementById('rpXlbl').textContent=d;rpRenderIng();}
 function openCucinaFromPanel(){if(_rpRec){closeRecipePanel();setTimeout(function(){openCucina(_rpRec);},50);}}
 
@@ -3804,17 +3903,18 @@ function pdDelete(id){
 
 /* Impaginazione */
 function pdRecipeHTML(it,breakAfter){
-  var rows=(it.i||[]).map(function(g){
+  var PP=_showPct?ingPct(it.i,_pctBase):{ok:false};
+  var rows=(it.i||[]).map(function(g,gi){
     var q=pdQty(g[1],it.dose),u=g[2]||'';
     if(u==='q.b.'&&!q){q='q.b.';u='';}
-    return '<tr><td class="ing">'+pdEsc(g[0])+'</td><td class="qty">'+pdEsc(q)+'</td><td class="unit">'+pdEsc(u)+'</td></tr>';
+    return '<tr><td class="ing">'+pdEsc(g[0])+'</td><td class="qty">'+pdEsc(q)+'</td><td class="unit">'+pdEsc(u)+'</td>'+(PP.ok?'<td class="pct">'+fmtPct(PP.pct[gi])+'</td>':'')+'</tr>';
   }).join('');
   var meta=[it.c,pdSecName(it.s),it.piatto].filter(Boolean).map(pdEsc).join(' · ');
   var doseTxt=(it.dose&&it.dose!==1)?'dose ×'+pdNum(it.dose):'';
   var metaLine=meta+(meta&&doseTxt?' · ':'')+doseTxt;
   return '<section class="rec'+(breakAfter?' pb':'')+'"><h2>'+pdEsc(it.n)+'</h2>'
     +(metaLine?'<p class="meta">'+metaLine+'</p>':'')
-    +'<table><thead><tr><th>Ingrediente</th><th class="qty">Quantità</th><th class="unit"></th></tr></thead><tbody>'+rows+'</tbody></table>'
+    +'<table><thead><tr><th>Ingrediente</th><th class="qty">Quantità</th><th class="unit"></th>'+(PP.ok?'<th class="pct">'+(PP.base==='farina'?'% farina':'%')+'</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table>'
     +(it.p&&String(it.p).trim()?'<div class="proc"><h3>Procedimento</h3><p>'+pdEsc(it.p).replace(/\n/g,'<br>')+'</p></div>':'')
     +'</section>';
 }
@@ -3838,6 +3938,7 @@ function pdCss(p){
   +p+'td{padding:3.5pt 4pt;border-bottom:.5pt solid #eee;color:#222}'
   +p+'.qty{text-align:right;width:22%}'
   +p+'.unit{width:12%;color:#777;padding-left:6pt}'
+  +p+'.pct{width:12%;text-align:right;color:#8B6914;font-size:9pt}'
   +p+'.proc{margin-top:9pt;padding:6pt 10pt;border-left:2pt solid #C4933A;background:#faf6ec}'
   +p+'h3{font-family:"Cormorant SC",Georgia,serif;font-size:8.5pt;letter-spacing:.16em;color:#8B6914;margin:0 0 3pt;font-weight:600}'
   +p+'.proc p{font-family:"Cormorant Garamond",Georgia,serif;font-size:11.5pt;line-height:1.5;margin:0;color:#333}';
@@ -4374,8 +4475,8 @@ function boot(){
       </div>
     </div>
     <div style="padding:.9rem 0 0">
-      <div style="display:grid;grid-template-columns:1fr 4rem 2.2rem 5.5rem;padding:.28rem 1.2rem;font-size:.46rem;letter-spacing:.18em;text-transform:uppercase;color:var(--smoke3);font-family:'Cormorant SC',serif;border-bottom:1px solid var(--rim)">
-        <span>Ingrediente</span><span style="text-align:right">Base</span><span></span><span style="text-align:right">&times;<span id="rpXlbl">1</span></span>
+      <div style="display:grid;grid-template-columns:1fr 3.6rem 1.9rem 3.3rem 5rem;padding:.28rem 1.2rem;font-size:.46rem;letter-spacing:.18em;text-transform:uppercase;color:var(--smoke3);font-family:'Cormorant SC',serif;border-bottom:1px solid var(--rim)">
+        <span>Ingrediente</span><span style="text-align:right">Base</span><span></span><span id="rpPctHd" style="text-align:right"></span><span style="text-align:right">&times;<span id="rpXlbl">1</span></span>
       </div>
       <div id="rpIngList"></div>
     </div>
