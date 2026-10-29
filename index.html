@@ -1447,6 +1447,14 @@ body.t-ebano, body.t-bordeaux, body.t-ottanio {
   body.pd-printing #printArea{display:block!important;background:#fff;color:#111}
   @page{margin:14mm 14mm 16mm}
 }
+
+/* ═══ ORDINAMENTO ═══ */
+.sort-row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding-right:.85rem}
+.sort-row .cnt-row{flex:1;min-width:0}
+.sort-wrap{display:flex;align-items:center;gap:.35rem;font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke2);flex-shrink:0;cursor:pointer}
+.sort-sel{-webkit-appearance:none;appearance:none;background:var(--ctrl) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23C4933A' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right .55rem center;border:1.5px solid var(--cb);border-radius:50px;padding:.28rem 1.6rem .28rem .75rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.82rem;letter-spacing:.01em;text-transform:none;color:var(--ink);cursor:pointer;outline:none}
+.sort-sel:focus{border-color:var(--gold2)}
+@media(min-width:600px){.sort-row{padding-right:1.5rem}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
@@ -1565,7 +1573,7 @@ body.t-ebano, body.t-bordeaux, body.t-ottanio {
     </div>
     <div class="cat-bar" id="catBar"></div>
   </div>
-  <div class="cnt-row fsc" id="cnt"></div>
+  <div class="sort-row"><div class="cnt-row fsc" id="cnt"></div><label class="sort-wrap fsc" for="sortSel"><span>Ordina</span><select id="sortSel" class="sort-sel" onchange="setSortMode(this.value)"><option value="ins">Inserimento</option><option value="new">Pi&ugrave; recenti</option><option value="az">A &rarr; Z</option><option value="za">Z &rarr; A</option></select></label></div>
   <div class="grid" id="grid"></div>
   <div class="fab-wrap" id="fabWrap" style="display:none">
     <div class="fab-menu" id="fabMenu" style="display:none">
@@ -2415,6 +2423,19 @@ function renderCats(){
   });
 }
 
+/* ════ ORDINAMENTO RICETTE ════ */
+var _sortMode='ins';
+try{_sortMode=localStorage.getItem('mdl_sort')||'ins';}catch(ex){}
+function setSortMode(m){_sortMode=m||'ins';try{localStorage.setItem('mdl_sort',_sortMode);}catch(ex){}renderGrid();}
+function sortCmpName(a,b){return String(a||'').localeCompare(String(b||''),'it',{sensitivity:'base',numeric:true});}
+function sortRecs(list){
+  if(_sortMode==='ins')return list;
+  var a=list.map(function(r,i){return{r:r,i:i};});
+  if(_sortMode==='az')a.sort(function(x,y){return sortCmpName(x.r.n,y.r.n)||x.i-y.i;});
+  else if(_sortMode==='za')a.sort(function(x,y){return sortCmpName(y.r.n,x.r.n)||x.i-y.i;});
+  else if(_sortMode==='new')a.reverse();
+  return a.map(function(o){return o.r;});
+}
 function renderGrid(){
   var grid=qs('grid');if(!grid)return;grid.innerHTML='';
   var q=(qs('srch')||{value:''}).value.toLowerCase().trim();
@@ -2423,12 +2444,15 @@ function renderGrid(){
     var mC=curCat==='Tutte'||r.c===curCat||(curCat.indexOf('P:')===0&&r.piatto&&r.piatto.trim()===curCat.slice(2));
     return mQ&&mC;
   });
+  out=sortRecs(out);
+  var ss=qs('sortSel');if(ss&&ss.value!==_sortMode)ss.value=_sortMode;
   var cnt=qs('cnt');if(cnt)cnt.textContent=out.length+' / '+allRecs().length+' ricette';
   if(!out.length){var em=el('div','empty');em.style.gridColumn='1/-1';var ico=el('div','empty-ico');ico.textContent='\u25cb';var p=el('p','fd');p.textContent='Nessuna ricetta trovata';em.appendChild(ico);em.appendChild(p);grid.appendChild(em);return;}
   var hasPiatti=out.some(function(r){return r.piatto&&r.piatto.trim();});
   if(hasPiatti&&!q&&curCat==='Tutte'){
     var grouped={},order=[];
     out.forEach(function(r){var key=r.piatto||'__none__';if(!grouped[key]){grouped[key]=[];order.push(key);}grouped[key].push(r);});
+    if(_sortMode==='az'||_sortMode==='za'){order.sort(function(a,b){if(a==='__none__')return 1;if(b==='__none__')return -1;return _sortMode==='az'?sortCmpName(a,b):sortCmpName(b,a);});}
     var gi=0;
     order.forEach(function(key){
       if(order.length>1||key!=='__none__'){
