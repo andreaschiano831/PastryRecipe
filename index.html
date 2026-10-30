@@ -1477,6 +1477,118 @@ body.t-ebano, body.t-bordeaux, body.t-ottanio {
 .mg-base{font-family:'DM Sans',sans-serif;font-style:normal;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:var(--smoke2);border:1px solid var(--cb);border-radius:20px;padding:.02rem .3rem;vertical-align:middle}
 .mg-rmbox{margin-top:.7rem;padding:.7rem;border:1px solid rgba(192,64,48,.3);border-radius:10px;background:rgba(192,64,48,.05)}
 .mg-ok{flex:0 0 auto!important;padding:.5rem .8rem!important;border-radius:10px;font-size:.85rem!important}
+
+/* ═══════════════════════════════════════════════════════════════
+   ATELIER UI — interfaccia ispirata alla gestione ricette di
+   "Andre's Recipe": card pulite con barra laterale, categorie con
+   conteggio, controlli sobri, vista elenco compatta. Solo aspetto.
+   ═══════════════════════════════════════════════════════════════ */
+#app{--ui-font:'DM Sans',system-ui,sans-serif;--ui-r:12px;--ui-lift:0 2px 0 rgba(0,0,0,.04),0 22px 40px -22px rgba(0,0,0,.45);--ui-sh:0 1px 0 rgba(0,0,0,.03),0 10px 30px -18px rgba(0,0,0,.35)}
+
+/* ── controlli ── */
+#app .srch-wrap{background:var(--card);border:1px solid var(--cb);border-radius:var(--ui-r);height:42px;padding:0 .8rem;box-sizing:border-box;transition:border-color .15s,box-shadow .15s}
+#app .srch-wrap:focus-within{border-color:var(--gold2);box-shadow:0 0 0 4px var(--glow)}
+#app .srch-inp{font-family:var(--ui-font);font-size:.92rem}
+#app .dose-box{background:var(--ctrl);border:1px solid var(--rim);border-radius:10px;height:42px;box-sizing:border-box;padding:0 .2rem}
+#app .dose-box .dose-btn{width:32px;height:32px;border-radius:8px;font-size:1.05rem}
+#app .dose-box .dose-val{font-family:var(--ui-font);font-weight:600;color:var(--gold2);font-size:.95rem}
+#app .dose-lbl{display:none}
+#app .vbtns{background:var(--ctrl);border:1px solid var(--rim);border-radius:11px;padding:3px;gap:2px;height:42px;box-sizing:border-box;align-items:center}
+#app .vbtn{width:34px;height:34px;border:none;background:transparent;border-radius:8px;color:var(--smoke)}
+#app .vbtn-on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+
+/* ── categorie ── */
+#app .cat-bar{gap:6px;padding-top:.35rem;padding-bottom:.55rem;-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent);mask-image:linear-gradient(90deg,#000 90%,transparent)}
+#app .cpill{font-family:var(--ui-font);text-transform:none;letter-spacing:0;font-size:.82rem;font-weight:400;padding:6px 13px;border-radius:999px;border:1px solid var(--rim);background:var(--card);color:var(--ink2);transition:all .15s;line-height:1.3}
+#app .cpill:hover{border-color:var(--cb);color:var(--ink)}
+#app .cpill.cpill-on{background:var(--ink);border-color:var(--ink);color:var(--bg);font-weight:500;box-shadow:none}
+#app .cpill .cnt{margin-left:6px;opacity:.6;font-size:.74rem;font-variant-numeric:tabular-nums}
+#app .cpill-mgr{border-style:dashed!important;color:var(--gold2)!important;background:transparent!important;font-weight:500}
+
+/* ── riga conteggio / ordina ── */
+#app .cnt-row{font-family:var(--ui-font);font-size:.78rem;letter-spacing:0;color:var(--smoke)}
+#app .sort-wrap{font-family:var(--ui-font);font-size:.74rem;letter-spacing:0;text-transform:none;color:var(--smoke)}
+#app .sort-sel{font-family:var(--ui-font);font-style:normal;font-size:.84rem;background-color:var(--card);border:1px solid var(--cb);border-radius:10px;height:34px;padding:0 1.7rem 0 .7rem}
+#app .pct-toggle{width:34px;height:34px;border-radius:9px;border:1px solid var(--rim);background:var(--card);color:var(--smoke);font-family:var(--ui-font);font-size:.82rem;font-weight:600}
+#app .pct-toggle.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+#app .sel-btn{flex-shrink:0;height:34px;padding:0 .75rem;border-radius:9px;border:1px solid var(--rim);background:var(--card);color:var(--ink2);font-family:var(--ui-font);font-size:.8rem;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;-webkit-tap-highlight-color:transparent;white-space:nowrap}
+#app .sel-btn.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+@media(max-width:520px){#app .sort-wrap>span{display:none}}
+
+/* ── intestazioni gruppo ── */
+#app .group-hd{grid-column:1/-1;display:flex;align-items:baseline;gap:10px;margin:14px 0 2px;padding:0}
+#app .group-hd span{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:1.4rem;color:var(--ink);line-height:1.1}
+#app .group-hd small{font-family:var(--ui-font);font-size:.76rem;color:var(--smoke)}
+#app .group-hd::after{content:"";flex:1;height:1px;background:var(--rim);align-self:center}
+
+/* ── card ricetta ── */
+#app .grid{gap:12px}
+#app .card{border-radius:16px;border:1px solid var(--rim);background:var(--card);box-shadow:var(--ui-sh);overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s}
+@media(hover:hover){#app .card:hover{transform:translateY(-2px);box-shadow:var(--ui-lift);border-color:var(--cb)}}
+#app .card::before{content:"";position:absolute;left:0;top:16px;width:3px;height:44px;border-radius:0 3px 3px 0;background:var(--gold2);z-index:1}
+#app .card.multi-sel{border-color:var(--gold2);box-shadow:0 0 0 3px var(--glow)}
+#app .card-stripe{display:none}
+#app .card .card-hd::before,#app .card .card-hd::after{display:none}
+#app .card-hd{padding:14px 16px 10px 18px}
+#app .card-meta{gap:6px;margin-bottom:6px}
+#app .card-num{font-family:var(--ui-font);font-style:normal;font-size:.7rem;letter-spacing:0;color:var(--smoke);opacity:1}
+#app .card-num::before{content:"N\00BA  "}
+#app .card-cat{font-family:var(--ui-font);text-transform:none;letter-spacing:0;font-size:.74rem;font-weight:500;padding:2px 10px;border-radius:999px;background:var(--ctrl);border:1px solid var(--rim);color:var(--ink2)}
+#app .card-name{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:1.42rem;line-height:1.14;letter-spacing:-.005em;color:var(--ink);margin:2px 0 4px}
+#app .card-name::first-letter{font-size:inherit;color:inherit;margin:0}
+#app .card-piatto{font-family:var(--ui-font);text-transform:none;letter-spacing:0;font-size:.78rem;color:var(--smoke);opacity:1;margin:0 .45rem .2rem 0;vertical-align:middle}
+#app .cucina-open-btn{font-family:var(--ui-font);text-transform:none;letter-spacing:0;font-size:.76rem;padding:4px 11px;border-radius:8px;border:1px solid var(--cb);background:transparent;color:var(--ink2);margin-top:6px}
+#app .cucina-open-btn:hover{border-color:var(--ink2);color:var(--ink)}
+#app .card-proc-toggle,#app .card-proc-add{font-family:var(--ui-font);text-transform:none;letter-spacing:0;font-size:.74rem;border-radius:8px;padding:4px 10px;margin:0 0 8px 18px;color:var(--smoke)}
+#app .card-proc-add{border:1px dashed var(--cb);background:none}
+#app .card-proc{font-family:var(--ui-font);font-size:.86rem;line-height:1.6;border-left:2px solid var(--gold2);background:var(--ctrl);border-radius:0 10px 10px 0;margin:0 16px 10px 18px}
+#app .act-btn{width:32px;height:32px;border-radius:9px;border:1px solid var(--rim);background:var(--card)}
+#app .card-sub{display:none}
+
+/* tabella ingredienti */
+#app .tbl{font-family:var(--ui-font);font-size:.88rem}
+#app .tbl thead th{font-family:var(--ui-font);text-transform:none;letter-spacing:0;font-size:.72rem;font-weight:500;color:var(--smoke);padding:7px 16px 6px 18px;border-bottom:1px solid var(--rim)}
+#app .tbl thead th.sc{color:var(--gold2)}
+#app .tbl tbody tr{border-bottom:1px solid var(--rim)}
+#app .tbl tbody tr:last-child{border-bottom:none}
+#app .tbl td{padding:8px 16px 8px 18px;color:var(--ink)}
+#app .td-r{color:var(--ink2)}
+#app .td-sc{font-weight:600;color:var(--gold2)}
+#app .td-pc{color:var(--smoke)}
+
+/* ── vista elenco compatta ── */
+#app .grid.list{gap:0;border-top:1px solid var(--rim)}
+#app .grid.list .card{border-radius:0;border-width:0 0 1px;box-shadow:none;transform:none;background:transparent;animation:none}
+#app .grid.list .card::before{top:14px;height:auto;bottom:14px}
+#app .grid.list .card-hd{padding:12px 8px 12px 18px}
+#app .grid.list .card-name{font-size:1.18rem;padding-right:0}
+#app .grid.list .tbl,#app .grid.list .card-proc-toggle,#app .grid.list .card-proc,#app .grid.list .card-proc-add,#app .grid.list .card-num{display:none!important}
+#app .grid.list .card-sub{display:flex;flex-wrap:wrap;gap:12px;font-family:var(--ui-font);font-size:.78rem;color:var(--smoke);margin-top:4px}
+#app .card-sub span{display:inline-flex;align-items:center;gap:4px}
+#app .card-sub svg{width:13px;height:13px}
+#app .grid.list .cucina-open-btn{margin-top:4px;padding:3px 9px;font-size:.72rem}
+#app .grid.list .group-hd{margin:18px 0 6px}
+
+/* ── barra selezione ── */
+.multi-bar{background:var(--ink)!important;color:var(--bg)!important;border-radius:16px!important;padding:8px 8px 8px 16px!important;gap:8px!important;box-shadow:0 14px 40px -12px rgba(0,0,0,.5)!important;font-family:'DM Sans',sans-serif;max-width:calc(100vw - 20px);flex-wrap:wrap;justify-content:center}
+.multi-bar .fsc{font-family:'DM Sans',sans-serif!important;font-size:.82rem!important;letter-spacing:0!important;text-transform:none!important}
+.multi-bar-cnt{font-family:'DM Sans',sans-serif!important;font-style:normal!important;font-weight:600;font-size:.9rem!important;color:var(--bg)!important}
+.multi-bar-move,.multi-bar-cancel{background:color-mix(in srgb,var(--bg) 14%,transparent)!important;border:none!important;color:var(--bg)!important;border-radius:8px!important;padding:6px 11px!important;font-size:.8rem!important;letter-spacing:0!important}
+.multi-bar-move:active,.multi-bar-cancel:active{background:color-mix(in srgb,var(--bg) 26%,transparent)!important}
+
+/* ── vuoto ── */
+#app .empty p{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--ink2)}
+#app .empty p::before,#app .empty p::after{content:none}
+
+/* ── schede (gestione, documenti) ── */
+.pd-sheet{border-radius:20px 20px 0 0}
+.pd-opt,.pd-doc,.pd-item{border-radius:12px;border:1px solid var(--rim);background:var(--card)}
+.pd-doc:active,.pd-opt:active{border-color:var(--gold2)}
+.pd-btn1{background:var(--ink)!important;color:var(--bg)!important;box-shadow:none!important;font-family:'DM Sans',sans-serif!important;font-style:normal!important;font-size:.88rem!important;font-weight:500}
+.pd-btn2{background:var(--card);border:1px solid var(--cb)}
+.mg-tabs{background:var(--ctrl);border:1px solid var(--rim);border-radius:12px;padding:3px}
+.mg-tab{border-radius:9px;font-family:'DM Sans',sans-serif;text-transform:none;letter-spacing:0;font-size:.86rem;color:var(--ink2)}
+.mg-tab.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:500}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
@@ -1595,7 +1707,7 @@ body.t-ebano, body.t-bordeaux, body.t-ottanio {
     </div>
     <div class="cat-bar" id="catBar"></div>
   </div>
-  <div class="sort-row"><div class="cnt-row fsc" id="cnt"></div><button type="button" id="pctToggle" class="pct-toggle on" onclick="togglePct()" title="Mostra o nascondi le percentuali">%</button><label class="sort-wrap fsc" for="sortSel"><span>Ordina</span><select id="sortSel" class="sort-sel" onchange="setSortMode(this.value)"><option value="ins">Inserimento</option><option value="new">Pi&ugrave; recenti</option><option value="az">A &rarr; Z</option><option value="za">Z &rarr; A</option></select></label></div>
+  <div class="sort-row"><div class="cnt-row fsc" id="cnt"></div><button type="button" id="selBtn" class="sel-btn" style="display:none" onclick="toggleMultiMode(!_multiMode)" title="Seleziona pi&ugrave; ricette per stamparle o spostarle">&#9744; Seleziona</button><button type="button" id="pctToggle" class="pct-toggle on" onclick="togglePct()" title="Mostra o nascondi le percentuali">%</button><label class="sort-wrap fsc" for="sortSel"><span>Ordina</span><select id="sortSel" class="sort-sel" onchange="setSortMode(this.value)"><option value="ins">Inserimento</option><option value="new">Pi&ugrave; recenti</option><option value="az">A &rarr; Z</option><option value="za">Z &rarr; A</option></select></label></div>
   <div class="grid" id="grid"></div>
   <div class="fab-wrap" id="fabWrap" style="display:none">
     <div class="fab-menu" id="fabMenu" style="display:none">
@@ -2365,6 +2477,9 @@ function buildCard(r,idx){
   if(r._c){var st=el('span');st.textContent=' \u2605';st.style.color='var(--gold2)';nm.appendChild(st);}
   hd.appendChild(nm);
   if(r.piatto){var pb=el('div','card-piatto fsc');pb.textContent='\ud83c\udf7d\ufe0f '+r.piatto;hd.appendChild(pb);}
+  var sub=el('div','card-sub');var nIng=(r.i||[]).length;
+  sub.innerHTML='<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 11 4-7"/><path d="m19 11-4-7"/><path d="M2 11h20"/><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4"/></svg>'+nIng+' ingredient'+(nIng===1?'e':'i')+'</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 6h11"/><path d="M10 12h11"/><path d="M10 18h11"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>'+(r.p&&String(r.p).trim()?'procedimento':'nessun procedimento')+'</span>';
+  hd.appendChild(sub);
   // Cucina button
   var cucinaBtnEl=el('button','cucina-open-btn fsc');cucinaBtnEl.type='button';cucinaBtnEl.textContent='Cucina';
   cucinaBtnEl.addEventListener('click',function(e){e.stopPropagation();openCucina(r);});
@@ -2452,9 +2567,12 @@ function renderCats(){
     mgb.addEventListener('click',function(){openCatManager(curCat.indexOf('P:')===0?'piatti':'cat');});
     bar.appendChild(mgb);
   }
+  var cnts={Tutte:a.length};
+  a.forEach(function(r){if(r.c)cnts[r.c]=(cnts[r.c]||0)+1;if(r.piatto&&r.piatto.trim()){var pk='P:'+r.piatto.trim();cnts[pk]=(cnts[pk]||0)+1;}});
   cats.forEach(function(c){
     var b=el('button',c===curCat?'cpill cpill-on':'cpill');
     b.textContent=(c.indexOf('P:')===0)?'\ud83c\udf7d\ufe0f '+c.slice(2):c;b.type='button';
+    var cntEl=el('span','cnt');cntEl.textContent=cnts[c]||0;b.appendChild(cntEl);
     b.addEventListener('click',function(){curCat=c;var pills=bar.querySelectorAll('.cpill:not(.cpill-mgr)');for(var pi=0;pi<pills.length;pi++){pills[pi].className='cpill';}b.className='cpill cpill-on';renderGrid();});
     if(c!=='Tutte'){
       var isP=c.indexOf('P:')===0,lpT=null;
@@ -2502,9 +2620,9 @@ function renderGrid(){
     var gi=0;
     order.forEach(function(key){
       if(order.length>1||key!=='__none__'){
-        var hd2=el('div');hd2.style.cssText='grid-column:1/-1;padding:.4rem 0 .15rem;border-bottom:1.5px solid var(--rim);margin-bottom:.15rem;display:flex;align-items:center;gap:.5rem';
-        var lb=el('span','fd');lb.style.cssText='font-size:1.1rem;font-weight:300;font-style:italic;color:var(--gold2)';lb.textContent=(key==='__none__')?'Senza piatto':key;
-        var c2=el('span','fsc');c2.style.cssText='font-size:.52rem;color:var(--smoke2)';c2.textContent=' \u2014 '+grouped[key].length+' ricett'+(grouped[key].length===1?'a':'e');
+        var hd2=el('div','group-hd');
+        var lb=el('span');lb.textContent=(key==='__none__')?'Senza piatto':key;
+        var c2=el('small');c2.textContent=grouped[key].length+' ricett'+(grouped[key].length===1?'a':'e');
         hd2.appendChild(lb);hd2.appendChild(c2);grid.appendChild(hd2);
       }
       grouped[key].forEach(function(r){grid.appendChild(buildCard(r,gi++));});
@@ -2650,6 +2768,7 @@ function checkAdmin(){
     else appEl.classList.remove('admin-on');
   }
   if(typeof updateDrawerState==='function')updateDrawerState();
+  var selB=qs('selBtn');if(selB)selB.style.display=isAdmin?'':'none';
   if(typeof renderCats==='function')renderCats();
   renderGrid();
 }
@@ -3381,8 +3500,9 @@ function updateCucinaDose(){
 var _multiSel=[],_multiMode=false;
 function toggleMultiMode(on){
   _multiMode=on;
+  var sbt=qs('selBtn');if(sbt){sbt.classList.toggle('on',!!on);sbt.textContent=on?'\u2715 Fine':'\u2610 Seleziona';}
   if(!on){_multiSel=[];renderGrid();}
-  var bar=qs('multiBar');if(bar)bar.classList.toggle('on',on);
+  var bar=qs('multiBar');if(bar){if(bar.parentNode!==document.body)document.body.appendChild(bar);bar.classList.toggle('on',on);}
 }
 function updateMultiBar(){var c=qs('multiCnt');if(c)c.textContent=_multiSel.length;}
 function toggleSelCard(rec,cardEl){
@@ -4440,6 +4560,91 @@ function boot(){
     if(!_dbConnected&&!_lrInFlight){clearTimeout(_lrRetryTimer);loadRecipes();}
   });
 }
+
+/* ════ SPOSTA (singola e multipla) — ricostruzione finestra ════ */
+var _moveUIReady=false,_moveMulti=null;
+function ensureMoveUI(){
+  var bg=qs('moveBg');if(!bg)return;
+  if(!_moveUIReady){
+    var old=bg.querySelector('.move-box');
+    var box=document.createElement('div');box.className='move-box';
+    if(old){
+      var sec=qs('moveSec');
+      while(old.firstChild){var n=old.firstChild;box.appendChild(n);if(n===sec)break;}
+      // tutto il resto (finito qui per un errore di markup) torna nel body, nello stesso ordine
+      while(old.firstChild)document.body.appendChild(old.firstChild);
+      old.parentNode.removeChild(old);
+    }
+    var wrap=document.createElement('div');
+    wrap.innerHTML='<label class="fsc">Categoria</label><select id="moveCat" class="fs"></select>'+
+      '<div id="movePiattoWrap"><label class="fsc">Piatto (facoltativo)</label>'+
+      '<input id="movePiatto" class="fs" list="piatti-datalist" autocomplete="off" placeholder="Nessun piatto"></div>'+
+      '<div class="move-btns"><button type="button" class="move-cancel" id="moveCancel">Annulla</button>'+
+      '<button type="button" class="move-save" id="moveSave">Sposta</button></div>';
+    while(wrap.firstChild)box.appendChild(wrap.firstChild);
+    bg.appendChild(box);
+    qs('moveSave').addEventListener('click',doMove);
+    qs('moveCancel').addEventListener('click',closeMove);
+    _moveUIReady=true;
+  }
+  if(bg.parentNode!==document.body)document.body.appendChild(bg);
+}
+function moveFillCats(keepLabel){
+  var mc=qs('moveCat');if(!mc)return;
+  var seen={},list=[];
+  MG_STD_CATS.concat(R.concat(CU).map(function(r){return r&&r.c;})).forEach(function(c){if(c&&!seen[c]){seen[c]=1;list.push(c);}});
+  mc.innerHTML='';
+  if(keepLabel){var k=document.createElement('option');k.value='';k.textContent='\u2014 Lascia invariata \u2014';mc.appendChild(k);}
+  list.forEach(function(c){var o=document.createElement('option');o.value=o.textContent=c;mc.appendChild(o);});
+}
+function toggleMovePiatto(){var pr=qs('movePiattoWrap');if(pr)pr.style.display='block';}
+function openMove(rec){
+  ensureMoveUI();_moveMulti=null;_moveRec=rec;
+  var h=qs('moveBg').querySelector('h4');if(h)h.textContent='Sposta ricetta';
+  var nm=qs('moveName');if(nm)nm.textContent=rec.n;
+  moveFillCats(false);
+  qs('moveSec').value=rec.s||'colazioni';
+  var mc=qs('moveCat'),c=rec.c||'Altro';
+  if(![].some.call(mc.options,function(o){return o.value===c;})){var o=document.createElement('option');o.value=o.textContent=c;mc.appendChild(o);}
+  mc.value=c;
+  var mp=qs('movePiatto');mp.value=rec.piatto||'';mp.placeholder='Nessun piatto';
+  updatePiattiDatalist();
+  qs('moveBg').classList.add('on');
+}
+function openMultiMove(){
+  if(!_multiSel.length)return;
+  ensureMoveUI();_moveRec=null;_moveMulti=_multiSel.slice();
+  var h=qs('moveBg').querySelector('h4');if(h)h.textContent='Sposta ricette';
+  var nm=qs('moveName');if(nm)nm.textContent=_moveMulti.length+(_moveMulti.length===1?' ricetta selezionata':' ricette selezionate');
+  moveFillCats(true);
+  var ms=qs('moveSec');ms.value=(curSec&&curSec!=='tutti')?curSec:(_moveMulti[0].s||'colazioni');
+  qs('moveCat').value='';
+  var mp=qs('movePiatto');mp.value='';mp.placeholder='Lascia invariato';
+  updatePiattiDatalist();
+  qs('moveBg').classList.add('on');
+}
+function closeMove(){var bg=qs('moveBg');if(bg)bg.classList.remove('on');_moveRec=null;_moveMulti=null;}
+function doMove(){
+  var secV=qs('moveSec').value,catV=qs('moveCat').value,piattoV=(qs('movePiatto').value||'').trim();
+  if(_moveMulti){
+    var list=_moveMulti,ch={s:secV};
+    if(catV)ch.c=catV;
+    if(piattoV)ch.piatto=piattoV;
+    closeMove();toggleMultiMode(false);
+    mgApply(list,ch);
+    return;
+  }
+  if(!_moveRec)return;
+  var r=_moveRec;closeMove();
+  mgApply([r],{s:secV,c:catV,piatto:piattoV||null});
+}
+(function(){
+  function wire(){
+    var mv=qs('multiMoveBtn');if(mv&&!mv._w){mv._w=1;mv.addEventListener('click',openMultiMove);}
+    var cx=qs('multiCancelBtn');if(cx&&!cx._w){cx._w=1;cx.addEventListener('click',function(){toggleMultiMode(false);});}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire);else wire();
+})();
 </script>
 
 <!-- FILE IMPORT MODAL -->
