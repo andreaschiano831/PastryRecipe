@@ -1589,6 +1589,7 @@ body.t-ebano, body.t-bordeaux, body.t-ottanio {
 .mg-tabs{background:var(--ctrl);border:1px solid var(--rim);border-radius:12px;padding:3px}
 .mg-tab{border-radius:9px;font-family:'DM Sans',sans-serif;text-transform:none;letter-spacing:0;font-size:.86rem;color:var(--ink2)}
 .mg-tab.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:500}
+.ai-srv-badge{margin:.2rem 0 .6rem;padding:.45rem .7rem;border-radius:10px;background:var(--glow,rgba(0,0,0,.04));border:1px solid var(--rim,var(--cb));font-family:"DM Sans",system-ui,sans-serif;font-size:.7rem;letter-spacing:.02em;color:var(--ink)}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
@@ -1711,7 +1712,8 @@ body.t-ebano, body.t-bordeaux, body.t-ottanio {
   <div class="grid" id="grid"></div>
   <div class="fab-wrap" id="fabWrap" style="display:none">
     <div class="fab-menu" id="fabMenu" style="display:none">
-      <button class="fab-item fs" id="fabAi" type="button"><span class="fab-item-ico">&#10024;</span><span class="fab-item-lbl">Importa con Gemini AI</span></button>
+      <button class="fab-item fs" id="fabPhoto" type="button"><span class="fab-item-ico">&#128247;</span><span class="fab-item-lbl">Da foto (AI)</span></button>
+      <button class="fab-item fs" id="fabAi" type="button"><span class="fab-item-ico">&#10024;</span><span class="fab-item-lbl">Importa con AI</span></button>
       <button class="fab-item fs" id="fabManual" type="button"><span class="fab-item-ico">&#9997;&#65039;</span><span class="fab-item-lbl">Aggiungi manuale</span></button>
     </div>
     <button class="fab" id="fab" type="button">+</button>
@@ -2824,7 +2826,7 @@ function populateAiPreview(parsed){
   if(!parsed.i||!parsed.i.length)addAiIng();
   qs('aiAnalyseBtn').style.display='none';qs('aiSpinner').classList.remove('on');qs('aiPreview').classList.add('on');
 }
-function doAiAnalyse(){
+function doAiAnalyseLocal(){
   var key=(qs('aiKey').value||'').trim();
   if(!key)try{key=localStorage.getItem('groq_key')||'';}catch(ex){}
   if(!key){var dg=document.getElementById('MDL_GROQ');if(dg)key=dg.value.trim();}
@@ -4412,8 +4414,8 @@ function boot(){
           var img=document.createElement('img');img.src=result;img.style.cssText='width:100%;height:100%;object-fit:cover';
           var rm=document.createElement('button');rm.textContent='×';
           rm.style.cssText='position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:.8rem;cursor:pointer;line-height:1;padding:0';
-          var idx=_aiPhotos.length-1;
-          rm.onclick=function(){_aiPhotos.splice(idx,1);grid.removeChild(wrap);};
+          var _ph=_aiPhotos[_aiPhotos.length-1];
+          rm.onclick=function(){var k=_aiPhotos.indexOf(_ph);if(k>-1)_aiPhotos.splice(k,1);grid.removeChild(wrap);var cn=document.getElementById('aiPhotoCountNum');if(cn)cn.textContent=_aiPhotos.length;};
           wrap.appendChild(img);wrap.appendChild(rm);grid.appendChild(wrap);
         }
         // Compat con _aiB64 singolo
@@ -4642,6 +4644,138 @@ function doMove(){
   function wire(){
     var mv=qs('multiMoveBtn');if(mv&&!mv._w){mv._w=1;mv.addEventListener('click',openMultiMove);}
     var cx=qs('multiCancelBtn');if(cx&&!cx._w){cx._w=1;cx.addEventListener('click',function(){toggleMultiMode(false);});}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire);else wire();
+})();
+
+/* ════ AI DAL SERVER (/api/import) — chiave Groq su Vercel, come ANDRE-S-RECIPE ════
+   Se il server non è configurato o non risponde, si usa il metodo di prima (chiave sul dispositivo). */
+var _aiServer=null; // null = da verificare, true/false
+function aiCheckServer(){
+  if(_aiServer!==null)return Promise.resolve(_aiServer);
+  if(location.protocol==='file:'){_aiServer=false;return Promise.resolve(false);}
+  return fetch('/api/import',{method:'GET',cache:'no-store'}).then(function(r){return r.ok?r.json():null;})
+    .then(function(d){_aiServer=!!(d&&d.ok&&d.configured);aiServerBadge();return _aiServer;})
+    .catch(function(){_aiServer=false;return false;});
+}
+function aiServerBadge(){
+  var row=document.querySelector('#aiBg .ai-key-row');if(!row)return;
+  var b=document.getElementById('aiSrvBadge');
+  if(_aiServer){
+    row.style.display='none';
+    if(!b){b=document.createElement('div');b.id='aiSrvBadge';b.className='ai-srv-badge';row.parentNode.insertBefore(b,row);}
+    b.textContent='✓ AI pronta · chiave sul server, niente da inserire';b.style.display='';
+  }else{row.style.display='';if(b)b.style.display='none';}
+}
+function aiResizeImage(dataUrl,max){
+  max=max||1600;
+  return new Promise(function(resolve){
+    var img=new Image();
+    img.onload=function(){
+      var w=img.naturalWidth,h=img.naturalHeight,k=Math.min(1,max/Math.max(w,h));
+      var c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);
+      var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
+      try{resolve(c.toDataURL('image/jpeg',0.86));}catch(e){resolve(dataUrl);}
+    };
+    img.onerror=function(){resolve(dataUrl);};
+    img.src=dataUrl;
+  });
+}
+function aiPost(payload){
+  return fetch('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(function(r){return r.json().catch(function(){return {};}).then(function(d){d=d||{};d._status=r.status;return d;});});
+}
+function aiSpin(on,msg){
+  var btn=qs('aiAnalyseBtn'),spin=qs('aiSpinner');
+  if(btn)btn.disabled=!!on;
+  if(spin){spin.classList.toggle('on',!!on);if(msg!==undefined){var sp=spin.querySelector('.spin');spin.textContent='';if(sp)spin.appendChild(sp);else{sp=document.createElement('span');sp.className='spin';spin.appendChild(sp);}spin.appendChild(document.createTextNode(msg));}}
+}
+function aiHandleRecipes(list,label){
+  var def=(curSec&&curSec!=='tutti')?curSec:'colazioni';
+  list=(list||[]).filter(function(r){return r&&r.n;}).map(function(r){
+    var o={n:String(r.n),c:r.c||'Altro',s:r.s||def,i:Array.isArray(r.i)?r.i:[]};
+    if(r.piatto)o.piatto=r.piatto;if(r.p)o.p=r.p;return o;
+  });
+  aiSpin(false,'Analisi in corso…');
+  if(!list.length){alert('Nessuna ricetta trovata. Riprova con una foto più nitida o più vicina.');return;}
+  if(list.length===1){populateAiPreview(list[0]);return;}
+  var aibg=qs('aiBg');if(aibg)aibg.classList.remove('on');
+  _importParsed=list;
+  var ibg=qs('importBg');if(ibg){if(ibg.parentNode!==document.body)document.body.appendChild(ibg);ibg.classList.add('on');}
+  var st=qs('importAiStatus');if(st)st.textContent='✨ AI: trovate '+list.length+' ricette '+(label||'');
+  var pt=qs('importPreviewTitle');if(pt)pt.textContent='Trovate '+list.length+' ricette — espandi per modificare';
+  var pv=qs('importPreview');if(pv){pv.style.display='block';pv.classList.add('on');}
+  try{renderImportList();}catch(ex){console.error('renderImportList error:',ex);}
+}
+function doAiAnalyse(){
+  var tabEl=document.querySelector('.ai-tab.ai-tab-on');var tab=tabEl?tabEl.dataset.tab:'text';
+  var photos=(_aiPhotos&&_aiPhotos.length)?_aiPhotos.slice():(_aiB64?[{b64:_aiB64,mime:_aiMime||'image/jpeg'}]:[]);
+  var txt=(qs('aiText').value||'').trim();
+  if(tab==='photo'&&!photos.length){alert('Aggiungi almeno una foto');return;}
+  if(tab!=='photo'&&!txt){alert('Inserisci il testo');return;}
+  aiSpin(true,'Analisi in corso…');
+  aiCheckServer().then(function(ok){
+    if(!ok){aiSpin(false);return doAiAnalyseLocal();}
+    if(tab!=='photo'){
+      return aiPost({text:txt}).then(function(d){
+        if(d.recipes)return aiHandleRecipes(d.recipes,'dal testo');
+        return aiServerFail(d);
+      });
+    }
+    // foto: una alla volta, ridotte (più veloci e sotto il limite di Vercel)
+    var found=[],errs=[],i=0;
+    function next(){
+      if(i>=photos.length){
+        if(!found.length&&errs.length)return aiServerFail(errs[0]);
+        if(errs.length)alert(errs.length+' foto non analizzate: '+(errs[0].error||'errore'));
+        return aiHandleRecipes(found,'da '+photos.length+(photos.length===1?' foto':' foto'));
+      }
+      var p=photos[i];aiSpin(true,'Analisi foto '+(i+1)+' di '+photos.length+'…');
+      return aiResizeImage('data:'+(p.mime||'image/jpeg')+';base64,'+p.b64).then(function(url){return aiPost({image:url});})
+        .then(function(d){
+          if(d.recipes)found=found.concat(d.recipes);
+          else{errs.push(d);if(d._status===429||d._status===401||d._status===503){i=photos.length;return next();}}
+          i++;return next();
+        });
+    }
+    return next();
+  }).catch(function(ex){aiSpin(false);alert('Errore connessione: '+(ex&&ex.message||ex));});
+}
+function aiServerFail(d){
+  aiSpin(false,'Analisi in corso…');
+  // chiave del server mancante o non valida: se c'è una chiave sul dispositivo, uso quella
+  var local='';try{local=localStorage.getItem('groq_key')||'';}catch(e){}
+  if((d._status===503||d._status===401||d._status===404)&&(local||(qs('aiKey').value||'').trim())){
+    _aiServer=false;aiServerBadge();return doAiAnalyseLocal();
+  }
+  alert(d.error?('Errore AI: '+d.error):'Errore AI ('+(d._status||'rete')+'). Riprova.');
+}
+(function(){
+  function wire(){
+    // controlla il server quando si apre la finestra AI
+    var fab=qs('fabAi');if(fab)fab.addEventListener('click',function(){aiCheckServer().then(aiServerBadge);});
+    aiCheckServer();
+    // incolla un'immagine (Ctrl+V / screenshot) mentre la finestra AI è aperta
+    document.addEventListener('paste',function(e){
+      var bg=qs('aiBg');if(!bg||!bg.classList.contains('on'))return;
+      var items=(e.clipboardData&&e.clipboardData.files)?Array.from(e.clipboardData.files).filter(function(f){return /^image\//.test(f.type);}):[];
+      if(!items.length)return;
+      e.preventDefault();switchAiTab('photo');
+      var inp=qs('aiFileInput');
+      try{var dt=new DataTransfer();items.forEach(function(f){dt.items.add(f);});inp.files=dt.files;inp.dispatchEvent(new Event('change'));}catch(ex){}
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire);else wire();
+})();
+
+(function(){
+  function wire(){
+    var b=qs('fabPhoto');if(!b||b._w)return;b._w=1;
+    b.addEventListener('click',function(){
+      qs('fabMenu').style.display='none';qs('fab').classList.remove('open');
+      openAiModal();switchAiTab('photo');aiCheckServer().then(aiServerBadge);
+      var inp=qs('aiFileInput');if(inp)inp.click(); // apre subito fotocamera / galleria
+    });
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire);else wire();
 })();
