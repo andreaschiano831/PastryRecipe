@@ -1590,6 +1590,14 @@ body.t-ebano, body.t-bordeaux, body.t-ottanio {
 .mg-tab{border-radius:9px;font-family:'DM Sans',sans-serif;text-transform:none;letter-spacing:0;font-size:.86rem;color:var(--ink2)}
 .mg-tab.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:500}
 .ai-srv-badge{margin:.2rem 0 .6rem;padding:.45rem .7rem;border-radius:10px;background:var(--glow,rgba(0,0,0,.04));border:1px solid var(--rim,var(--cb));font-family:"DM Sans",system-ui,sans-serif;font-size:.7rem;letter-spacing:.02em;color:var(--ink)}
+.ai-check{margin:.1rem 0 .6rem;font-family:"DM Sans",system-ui,sans-serif;font-size:.72rem;color:var(--ink)}
+.ai-check-warn{padding:.5rem .7rem;border-radius:10px;background:rgba(200,120,30,.14);border:1px solid rgba(200,120,30,.45);line-height:1.45;margin-bottom:.45rem}
+.ai-check-ok{padding:.45rem .7rem;border-radius:10px;background:var(--glow,rgba(0,0,0,.04));border:1px solid var(--rim,var(--cb));margin-bottom:.45rem}
+.ai-check details{border:1px solid var(--cb);border-radius:10px;padding:.4rem .6rem;background:var(--ctrl)}
+.ai-check summary{cursor:pointer;color:var(--smoke);font-size:.68rem;letter-spacing:.04em}
+.ai-check-src{white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,Menlo,monospace;font-size:.7rem;line-height:1.5;margin:.45rem 0;max-height:220px;overflow:auto;color:var(--ink)}
+.ai-check-fix{background:transparent;border:1px solid var(--cb);border-radius:8px;padding:.35rem .6rem;font-size:.68rem;color:var(--ink);cursor:pointer;font-family:inherit}
+.ai-ing-row.ai-ing-warn input{border-color:rgba(214,120,30,.9)!important;background:rgba(214,120,30,.12)!important}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
@@ -4667,15 +4675,26 @@ function aiServerBadge(){
     b.textContent='✓ AI pronta · chiave sul server, niente da inserire';b.style.display='';
   }else{row.style.display='';if(b)b.style.display='none';}
 }
+// scala di grigi + stiramento del contrasto (1°–99° percentile): aiuta a leggere foto scure o di schermi
+function aiEnhance(x,w,h){
+  var d=x.getImageData(0,0,w,h),p=d.data,hist=new Uint32Array(256),n=w*h,i,l;
+  for(i=0;i<p.length;i+=4){l=(p[i]*299+p[i+1]*587+p[i+2]*114)/1000|0;p[i]=l;hist[l]++;}
+  var lo=0,hi=255,acc=0;for(i=0;i<256;i++){acc+=hist[i];if(acc>n*0.01){lo=i;break;}}
+  acc=0;for(i=255;i>=0;i--){acc+=hist[i];if(acc>n*0.01){hi=i;break;}}
+  var span=Math.max(hi-lo,40);
+  for(i=0;i<p.length;i+=4){l=(p[i]-lo)*255/span;l=l<0?0:l>255?255:l;p[i]=p[i+1]=p[i+2]=l;}
+  x.putImageData(d,0,0);
+}
 function aiResizeImage(dataUrl,max){
-  max=max||1600;
+  max=max||2048;
   return new Promise(function(resolve){
     var img=new Image();
     img.onload=function(){
       var w=img.naturalWidth,h=img.naturalHeight,k=Math.min(1,max/Math.max(w,h));
       var c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);
       var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
-      try{resolve(c.toDataURL('image/jpeg',0.86));}catch(e){resolve(dataUrl);}
+      try{aiEnhance(x,c.width,c.height);}catch(e){}
+      try{resolve(c.toDataURL('image/jpeg',0.92));}catch(e){resolve(dataUrl);}
     };
     img.onerror=function(){resolve(dataUrl);};
     img.src=dataUrl;
@@ -4690,15 +4709,20 @@ function aiSpin(on,msg){
   if(btn)btn.disabled=!!on;
   if(spin){spin.classList.toggle('on',!!on);if(msg!==undefined){var sp=spin.querySelector('.spin');spin.textContent='';if(sp)spin.appendChild(sp);else{sp=document.createElement('span');sp.className='spin';spin.appendChild(sp);}spin.appendChild(document.createTextNode(msg));}}
 }
-function aiHandleRecipes(list,label){
+function aiHandleRecipes(list,label,source){
   var def=(curSec&&curSec!=='tutti')?curSec:'colazioni';
+  var warns=[];(list||[]).forEach(function(r){if(r&&r._warn)warns=warns.concat(r._warn.map(function(w){return (list.length>1?r.n+': ':'')+w;}));});
+  aiShowCheck(warns,source||'');
   list=(list||[]).filter(function(r){return r&&r.n;}).map(function(r){
     var o={n:String(r.n),c:r.c||'Altro',s:r.s||def,i:Array.isArray(r.i)?r.i:[]};
     if(r.piatto)o.piatto=r.piatto;if(r.p)o.p=r.p;return o;
   });
   aiSpin(false,'Analisi in corso…');
   if(!list.length){alert('Nessuna ricetta trovata. Riprova con una foto più nitida o più vicina.');return;}
-  if(list.length===1){populateAiPreview(list[0]);return;}
+  if(list.length===1){populateAiPreview(list[0]);
+    if(warns.length){var rows=qs('aiIngList').querySelectorAll('.ai-ing-row');[].forEach.call(rows,function(row){var ins=row.querySelectorAll('input');var t=(ins[0].value||'')+' '+(ins[1].value||'')+' '+(ins[2].value||'');if(warns.indexOf(t)>-1)row.classList.add('ai-ing-warn');});}
+    return;}
+  if(warns.length)alert('\u26a0 Controlla queste quantit\u00e0, non le trovo nel testo letto dalla foto:\n\n'+warns.join('\n'));
   var aibg=qs('aiBg');if(aibg)aibg.classList.remove('on');
   _importParsed=list;
   var ibg=qs('importBg');if(ibg){if(ibg.parentNode!==document.body)document.body.appendChild(ibg);ibg.classList.add('on');}
@@ -4723,17 +4747,17 @@ function doAiAnalyse(){
       });
     }
     // foto: una alla volta, ridotte (più veloci e sotto il limite di Vercel)
-    var found=[],errs=[],i=0;
+    var found=[],errs=[],sources=[],i=0;
     function next(){
       if(i>=photos.length){
         if(!found.length&&errs.length)return aiServerFail(errs[0]);
         if(errs.length)alert(errs.length+' foto non analizzate: '+(errs[0].error||'errore'));
-        return aiHandleRecipes(found,'da '+photos.length+(photos.length===1?' foto':' foto'));
+        return aiHandleRecipes(found,'da '+photos.length+(photos.length===1?' foto':' foto'),sources.join('\n\n'));
       }
       var p=photos[i];aiSpin(true,'Analisi foto '+(i+1)+' di '+photos.length+'…');
       return aiResizeImage('data:'+(p.mime||'image/jpeg')+';base64,'+p.b64).then(function(url){return send({image:url});})
         .then(function(d){
-          if(d.recipes)found=found.concat(d.recipes);
+          if(d.recipes)found=found.concat(d.recipes);if(d.source)sources.push((photos.length>1?'Foto '+(i+1)+':\n':'')+d.source);
           else{errs.push(d);if(d._status===429||d._status===401||d._status===503||d._status===0){i=photos.length;return next();}}
           i++;return next();
         });
@@ -4780,32 +4804,42 @@ function aiServerFail(d){
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire);else wire();
 })();
 
-/* ════ AI DIRETTA (chiave sul dispositivo) — stesso metodo del server, con modelli aggiornati ════ */
-var AI_VISION=['qwen/qwen3.8-27b','meta-models/muse-spark-open','meta-llama/llama-4-scout-17b-16e-instruct'];
-var AI_TEXT=['openai/gpt-oss-120b','llama-3.3-70b-versatile','qwen/qwen3.8-27b','openai/gpt-oss-20b'];
-var aiDirectLib=(function(){
-var SECTIONS = { colazioni: 'Monoporzioni', 'fine-dining': 'Fine Dining', gelateria: 'Gelateria', torte: 'Torte' };
-var CATEGORIES = ['Creme', 'Paste', 'Torte', 'Lievitati', 'Pasticcini', 'Marmellate', 'Ganache', 'Mousse', 'Gelatine', 'Gelati', 'Sorbetti', 'Semifreddi', 'Granite', 'Basi', 'Glasse', 'Biscotti', 'Altro'];
+/* ════ AI DIRETTA (chiave sul dispositivo) — stesso CORE del server (api/import.js) ════ */
+/* ===== CORE-START ===== */
+var AI_VISION = ['qwen/qwen3.8-27b', 'meta-models/muse-spark-open', 'meta-llama/llama-4-scout-17b-16e-instruct'];
+var AI_TEXT = ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b'];
+var AI_SECTIONS = { colazioni: 'Monoporzioni', 'fine-dining': 'Fine Dining', gelateria: 'Gelateria', torte: 'Torte' };
+var AI_CATEGORIES = ['Creme', 'Paste', 'Torte', 'Lievitati', 'Pasticcini', 'Marmellate', 'Ganache', 'Mousse', 'Gelatine', 'Gelati', 'Sorbetti', 'Semifreddi', 'Granite', 'Basi', 'Glasse', 'Biscotti', 'Altro'];
 
-function prompt() {
-  return `Sei l'assistente di un pastry chef stellato. Estrai TUTTE le ricette presenti nel materiale e restituisci SOLO un oggetto JSON, senza testo fuori dal JSON, in questo formato:
-{"recipes":[{"name":"","section":"","category":"","dish_group":"","yield_note":"","ingredients":[{"name":"","quantity":0,"unit":"g","note":""}],"steps":[{"body":"","duration_min":null,"temperature":""}],"notes":""}]}
-REGOLE:
-1. Ogni preparazione con un proprio titolo (es. "Massa macaron", "Cremoso pesca", "Glassa") è una ricetta SEPARATA nell'array. Se fanno parte dello stesso piatto o dolce, metti il nome del piatto in "dish_group".
-2. Leggi ogni riga: non saltare ingredienti. "quantity" è un numero (usa il punto come decimale) oppure null se q.b.
-3. Unità ammesse: g, kg, ml, l, cl, n°, q.b., foglio, bacca, %. Converti "gr" in "g", uova/tuorli contati in "n°". Se le quantità sono in once/cup/cucchiai convertile in g/ml.
-4. Traduci tutto in italiano professionale di pasticceria.
-5. "steps": dividi il procedimento in passaggi brevi e ordinati, uno per azione. Se un passaggio indica un tempo, metti i minuti in "duration_min" (numero intero); se indica una temperatura scrivila in "temperature" (es. "170°C ventilato", "82°C").
-6. "section": scegli il più adatto tra ${Object.values(SECTIONS).map((x) => `"${x}"`).join(', ')}.
-7. "category" deve essere una di: ${CATEGORIES.join(', ')}.
-8. "yield_note" è la resa se indicata (es. "per 60 pezzi", "stampo 20 cm"), altrimenti "".
-9. Non inventare ingredienti o quantità che non vedi. Ignora pubblicità, commenti e ricette solo citate senza ingredienti.`;
+var AI_OCR_PROMPT = 'Sei un sistema OCR di precisione. Trascrivi ESATTAMENTE tutto il testo visibile nell\'immagine, riga per riga, nello stesso ordine.\n' +
+  'REGOLE:\n' +
+  '- Copia numeri, virgole, punti e unità ESATTAMENTE come sono scritti (es. "450", "1,5", "70 g", "gr 200"). Non arrotondare e non convertire.\n' +
+  '- Non tradurre, non correggere, non riassumere, non completare ricette, non aggiungere ingredienti o passaggi che non vedi.\n' +
+  '- Mantieni le righe di una tabella sulla stessa riga separando le colonne con " | ".\n' +
+  '- Se una parola o un numero non è leggibile scrivi [?] al suo posto: non indovinare.\n' +
+  '- Ignora tutto ciò che non è testo (sfondi, riflessi, oggetti).\n' +
+  '- Rispondi SOLO con la trascrizione, senza commenti. Se nell\'immagine non c\'è testo leggibile rispondi esattamente: NESSUN TESTO';
+
+function aiRecipePrompt() {
+  var secs = Object.keys(AI_SECTIONS).map(function (k) { return '"' + AI_SECTIONS[k] + '"'; }).join(', ');
+  return 'Sei l\'assistente di un pastry chef stellato. Ricevi un testo (spesso la trascrizione di una foto) e ne estrai le ricette. Restituisci SOLO un oggetto JSON, senza testo fuori dal JSON, in questo formato:\n' +
+    '{"recipes":[{"name":"","section":"","category":"","dish_group":"","yield_note":"","ingredients":[{"name":"","quantity":0,"unit":"g","note":""}],"steps":[{"body":"","duration_min":null,"temperature":""}],"notes":""}]}\n' +
+    'REGOLE ASSOLUTE:\n' +
+    '1. Usa SOLO informazioni presenti nel testo. NON inventare ingredienti, quantità, passaggi, tempi o temperature. Se una quantità non è scritta o è [?], metti "quantity": null.\n' +
+    '2. Ogni quantità deve essere IDENTICA al numero scritto nel testo (usa il punto come decimale: "1,5" diventa 1.5). Non convertire unità, non ricalcolare, non arrotondare.\n' +
+    '3. Ogni preparazione con un proprio titolo (es. "Massa macaron", "Cremoso pesca", "Glassa") è una ricetta SEPARATA. Se fanno parte dello stesso dolce, metti il nome del dolce in "dish_group". Se il testo non ha un titolo, dai un nome breve e descrittivo basato sugli ingredienti principali.\n' +
+    '4. Unità: g, kg, ml, l, cl, n°, q.b., foglio, bacca, %. "gr" diventa "g"; uova/tuorli contati diventano "n°". Se il numero non ha unità ma il contesto è una ricetta in grammi, usa "g".\n' +
+    '5. Nomi degli ingredienti in italiano professionale (traduci solo se il testo è in un\'altra lingua; mantieni marchi e nomi propri, es. "Ivoire", "Petra").\n' +
+    '6. "steps": un passaggio per azione, nell\'ordine del testo. Riporta minuti in "duration_min" e temperature in "temperature" SOLO se scritti.\n' +
+    '7. "section": scegli tra ' + secs + '. "category" deve essere una di: ' + AI_CATEGORIES.join(', ') + '.\n' +
+    '8. "yield_note": la resa solo se scritta, altrimenti "". "notes": solo note presenti nel testo, altrimenti "".\n' +
+    '9. Ignora testo che non fa parte di una ricetta (pubblicità, menu, commenti).';
 }
 
-var gone = (m) => /does not exist|decommissioned|deprecated|not found|do not have access|model_not_found|not supported/i.test(m);
-var stripThink = (t) => String(t || '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+function aiStripThink(t) { return String(t || '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim(); }
+function aiGone(m) { return /does not exist|decommissioned|deprecated|not found|do not have access|model_not_found|not supported/i.test(m); }
 
-function extractJson(text) {
+function aiExtractJson(text) {
   var clean = String(text).replace(/```json|```/g, '').trim();
   try { return JSON.parse(clean); } catch (e) {}
   var obj = clean.match(/\{[\s\S]*\}/);
@@ -4814,95 +4848,160 @@ function extractJson(text) {
   if (arr) { try { return { recipes: JSON.parse(arr[0]) }; } catch (e) {} }
   return null;
 }
-
-function sectionKey(name) {
-  var n = String(name || '').trim().toLowerCase();
+function aiSectionKey(name) {
+  var n = String(name || '').trim().toLowerCase(), k;
   if (!n) return '';
-  for (var [k, v] of Object.entries(SECTIONS)) if (k === n || v.toLowerCase() === n) return k;
-  for (var [k, v] of Object.entries(SECTIONS)) if (n.includes(v.toLowerCase()) || v.toLowerCase().includes(n)) return k;
+  for (k in AI_SECTIONS) if (k === n || AI_SECTIONS[k].toLowerCase() === n) return k;
+  for (k in AI_SECTIONS) { var v = AI_SECTIONS[k].toLowerCase(); if (n.indexOf(v) > -1 || v.indexOf(n) > -1) return k; }
   if (/gelat|sorbett|semifredd|granit/.test(n)) return 'gelateria';
   if (/torta|torte|crostat/.test(n)) return 'torte';
-  if (/dining|piatto|dessert al piatto/.test(n)) return 'fine-dining';
+  if (/dining|piatto/.test(n)) return 'fine-dining';
   if (/colazion|monoporz|lievitat|viennois/.test(n)) return 'colazioni';
   return '';
 }
-function category(c) {
+function aiCategory(c) {
   var n = String(c || '').trim().toLowerCase();
-  return CATEGORIES.find((x) => x.toLowerCase() === n) || CATEGORIES.find((x) => n && (n.includes(x.toLowerCase()) || x.toLowerCase().includes(n))) || 'Altro';
+  return AI_CATEGORIES.filter(function (x) { return x.toLowerCase() === n; })[0] ||
+    AI_CATEGORIES.filter(function (x) { return n && (n.indexOf(x.toLowerCase()) > -1 || x.toLowerCase().indexOf(n) > -1); })[0] || 'Altro';
 }
-function num(q) {
+function aiNum(q) {
   if (q === null || q === undefined || q === '') return null;
   var v = typeof q === 'number' ? q : parseFloat(String(q).replace(',', '.'));
   return isFinite(v) ? v : null;
 }
+// numeri presenti nella trascrizione (gestisce 1,5 / 1.5 / 1.000)
+function aiNumbersIn(text) {
+  var set = {}, m, re = /\d+(?:[.,]\d+)*/g;
+  while ((m = re.exec(String(text || ''))) !== null) {
+    var s = m[0];
+    set[parseFloat(s.replace(',', '.'))] = 1;
+    set[parseFloat(s.replace(/\./g, '').replace(',', '.'))] = 1;
+    set[parseFloat(s.replace(/,/g, ''))] = 1;
+  }
+  return set;
+}
 
-// dal formato "ricco" dell'AI al formato dell'app
-function toApp(r) {
+// dal formato "ricco" dell'AI al formato dell'app; se c'è la trascrizione, controlla le quantità
+function aiToApp(r, source) {
   if (!r || typeof r !== 'object') return null;
   var n = String(r.name || r.n || '').trim();
   if (!n) return null;
-  var ings = (Array.isArray(r.ingredients) ? r.ingredients : Array.isArray(r.i) ? r.i : []).map((x) => {
-    if (Array.isArray(x)) return [String(x[0] || '').trim(), num(x[1]), String(x[2] || 'g').trim() || 'g'];
-    var name = String(x && x.name || '').trim() + (x && x.note ? ` (${String(x.note).trim()})` : '');
-    return [name, num(x && x.quantity), String(x && x.unit || 'g').trim() || 'g'];
-  }).filter((x) => x[0]);
-  var steps = (Array.isArray(r.steps) ? r.steps : []).map((s, i) => {
-    if (typeof s === 'string') return `${i + 1}. ${s.trim()}`;
-    var extra = [s && s.temperature ? String(s.temperature).trim() : '', s && s.duration_min ? `${s.duration_min} min` : ''].filter(Boolean).join(' · ');
-    return `${i + 1}. ${String(s && s.body || '').trim()}${extra ? ` (${extra})` : ''}`;
-  }).filter((x) => x.length > 3);
+  var nums = source ? aiNumbersIn(source) : null, warn = [];
+  var ings = (Array.isArray(r.ingredients) ? r.ingredients : Array.isArray(r.i) ? r.i : []).map(function (x) {
+    var row;
+    if (Array.isArray(x)) row = [String(x[0] || '').trim(), aiNum(x[1]), String(x[2] || 'g').trim() || 'g'];
+    else row = [String((x && x.name) || '').trim() + (x && x.note ? ' (' + String(x.note).trim() + ')' : ''), aiNum(x && x.quantity), String((x && x.unit) || 'g').trim() || 'g'];
+    if (nums && row[0] && row[1] !== null && !nums[row[1]]) warn.push(row[0] + ' ' + row[1] + ' ' + row[2]);
+    return row;
+  }).filter(function (x) { return x[0]; });
+  var steps = (Array.isArray(r.steps) ? r.steps : []).map(function (s, i) {
+    if (typeof s === 'string') return (i + 1) + '. ' + s.trim();
+    var extra = [s && s.temperature ? String(s.temperature).trim() : '', s && s.duration_min ? s.duration_min + ' min' : ''].filter(Boolean).join(' · ');
+    return (i + 1) + '. ' + String((s && s.body) || '').trim() + (extra ? ' (' + extra + ')' : '');
+  }).filter(function (x) { return x.length > 3; });
   var parts = [];
-  if (r.yield_note) parts.push(`Resa: ${String(r.yield_note).trim()}`);
+  if (r.yield_note) parts.push('Resa: ' + String(r.yield_note).trim());
   if (steps.length) parts.push(steps.join('\n'));
   else if (r.p) parts.push(String(r.p).trim());
-  if (r.notes) parts.push(`Note: ${String(r.notes).trim()}`);
-  var out = { n, c: category(r.category || r.c), s: sectionKey(r.section || r.s), i: ings };
+  if (r.notes) parts.push('Note: ' + String(r.notes).trim());
+  var out = { n: n, c: aiCategory(r.category || r.c), s: aiSectionKey(r.section || r.s), i: ings };
   var piatto = String(r.dish_group || r.piatto || '').trim();
   if (piatto && piatto.toLowerCase() !== n.toLowerCase()) out.piatto = piatto;
   if (parts.length) out.p = parts.join('\n\n');
+  if (warn.length) out._warn = warn;
   return out;
 }
 
-
-  async function chat(key,system,user,image,json){
-    var models=image?AI_VISION:AI_TEXT,last='';
-    for(var mi=0;mi<models.length;mi++){
-      var model=models[mi];
-      var content=image?[{type:'text',text:user},{type:'image_url',image_url:{url:image}}]:user;
-      var body={model:model,temperature:0.1,max_completion_tokens:8000,messages:[{role:'system',content:system},{role:'user',content:content}]};
-      if(json)body.response_format={type:'json_object'};
-      if(model.indexOf('openai/gpt-oss')===0)body.reasoning_effort='low';else if(model.indexOf('qwen/')===0)body.reasoning_effort='none';
-      var call=function(b){return fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify(b)});};
-      var res=await call(body);var data=await res.json().catch(function(){return null;});
-      var em=(data&&data.error&&data.error.message)||'';
-      if(!res.ok&&res.status===400&&body.reasoning_effort&&/reasoning/i.test(em)){delete body.reasoning_effort;res=await call(body);data=await res.json().catch(function(){return null;});em=(data&&data.error&&data.error.message)||'';}
-      var out=data&&data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
-      if(res.ok&&out)return {text:stripThink(out)};
-      var msg=em||('Errore Groq '+res.status);
-      if(res.status===401)return {error:'Chiave Groq non valida: aggiornala nel menu \u2261 \u2192 AI',_status:401};
-      if(res.status===429)return {error:'Troppe richieste all\u2019AI: attendi 30 secondi e riprova.',_status:429};
-      last=msg;
-      if(gone(msg)||res.status===404)continue;
-      if(json&&/json|response_format/i.test(msg)){json=false;mi--;continue;}
-      return {error:msg,_status:res.status};
+// chat(kind, system, user, image, json) -> Promise<{text}|{error,_status}>
+async function aiExtract(chat, payload) {
+  var source = '';
+  if (payload.image) {
+    var o = await chat('vision', AI_OCR_PROMPT, 'Trascrivi il testo di questa immagine.', payload.image, false);
+    if (o.error) return o;
+    source = aiStripThink(o.text).replace(/^```[a-z]*\n?|```$/g, '').trim();
+    if (!source || /^NESSUN TESTO/i.test(source) || source.replace(/\[\?\]|\s/g, '').length < 8) {
+      return { error: 'Non riesco a leggere il testo della foto. Prova con una foto più vicina, dritta e ben illuminata.', _status: 422, source: source };
     }
-    return {error:'Nessun modello AI disponibile su Groq ('+last+')',_status:502};
+  } else {
+    source = String(payload.text || '').slice(0, 24000);
   }
-  return async function(payload){
-    var key=((qs('aiKey')&&qs('aiKey').value)||'').trim();
-    if(!key)try{key=localStorage.getItem('groq_key')||'';}catch(e){}
-    if(!key){var dg=document.getElementById('MDL_GROQ');if(dg)key=(dg.value||'').trim();}
-    if(!key)return {error:'Inserisci la chiave Groq nel menu \u2261 \u2192 AI (oppure configurala su Vercel)',_status:0};
-    try{localStorage.setItem('groq_key',key);}catch(e){}
-    try{
-      var r=payload.image?await chat(key,prompt(),'Estrai le ricette da questa immagine e rispondi solo con il JSON.',payload.image,true)
-                         :await chat(key,prompt(),String(payload.text||'').slice(0,24000),null,true);
-      if(r.error)return r;
-      var parsed=extractJson(r.text);
-      var raw=Array.isArray(parsed&&parsed.recipes)?parsed.recipes:Array.isArray(parsed)?parsed:parsed&&(parsed.name||parsed.n)?[parsed]:[];
-      return {recipes:raw.map(toApp).filter(Boolean)};
-    }catch(ex){return {error:'Errore connessione: '+(ex&&ex.message||ex),_status:0};}
-  };
+  var r = await chat('text', aiRecipePrompt(), source, null, true);
+  if (r.error) return r;
+  var parsed = aiExtractJson(r.text);
+  var raw = Array.isArray(parsed && parsed.recipes) ? parsed.recipes : Array.isArray(parsed) ? parsed : parsed && (parsed.name || parsed.n) ? [parsed] : [];
+  var recipes = raw.map(function (x) { return aiToApp(x, payload.image ? source : ''); }).filter(Boolean);
+  return payload.image ? { recipes: recipes, source: source } : { recipes: recipes };
+}
+
+// chiamata Groq con modelli di riserva
+async function aiGroqChat(url, key, kind, system, user, image, json) {
+  var models = kind === 'vision' ? AI_VISION : AI_TEXT, last = '';
+  for (var mi = 0; mi < models.length; mi++) {
+    var model = models[mi];
+    var content = image ? [{ type: 'text', text: user }, { type: 'image_url', image_url: { url: image } }] : user;
+    var body = { model: model, temperature: 0, max_completion_tokens: 8000, messages: [{ role: 'system', content: system }, { role: 'user', content: content }] };
+    if (json) body.response_format = { type: 'json_object' };
+    if (model.indexOf('openai/gpt-oss') === 0) body.reasoning_effort = kind === 'vision' ? 'low' : 'medium';
+    else if (model.indexOf('qwen/') === 0) body.reasoning_effort = 'none';
+    var send = function (b) { return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key }, body: JSON.stringify(b) }); };
+    var res = await send(body);
+    var data = await res.json().catch(function () { return null; });
+    var em = (data && data.error && data.error.message) || '';
+    if (!res.ok && res.status === 400 && body.reasoning_effort && /reasoning/i.test(em)) {
+      delete body.reasoning_effort; res = await send(body); data = await res.json().catch(function () { return null; }); em = (data && data.error && data.error.message) || '';
+    }
+    var out = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (res.ok && out) return { text: aiStripThink(out) };
+    var msg = em || ('Errore Groq ' + res.status);
+    if (res.status === 401) return { error: 'Chiave Groq non valida', _status: 401 };
+    if (res.status === 429) return { error: 'Troppe richieste all’AI: attendi 30 secondi e riprova.', _status: 429 };
+    last = msg;
+    if (aiGone(msg) || res.status === 404) continue;
+    if (json && /json|response_format/i.test(msg)) { json = false; delete body.response_format; mi--; continue; }
+    return { error: msg, _status: res.status || 502 };
+  }
+  return { error: 'Nessun modello AI disponibile su Groq (' + last + ')', _status: 502 };
+}
+/* ===== CORE-END ===== */
+var aiDirectLib=async function(payload){
+  var key=((qs('aiKey')&&qs('aiKey').value)||'').trim();
+  if(!key)try{key=localStorage.getItem('groq_key')||'';}catch(e){}
+  if(!key){var dg=document.getElementById('MDL_GROQ');if(dg)key=(dg.value||'').trim();}
+  if(!key)return {error:'Inserisci la chiave Groq nel menu \u2261 \u2192 AI (oppure configurala su Vercel)',_status:0};
+  try{localStorage.setItem('groq_key',key);}catch(e){}
+  try{
+    var out=await aiExtract(function(kind,s,u,img,json){return aiGroqChat('https://api.groq.com/openai/v1/chat/completions',key,kind,s,u,img,json);},payload);
+    if(out.error&&out._status===401)out.error='Chiave Groq non valida: aggiornala nel menu \u2261 \u2192 AI';
+    return out;
+  }catch(ex){return {error:'Errore connessione: '+(ex&&ex.message||ex),_status:0};}
+};
+
+/* ════ CONTROLLO DATI AI: testo letto dalla foto + quantità sospette ════ */
+function aiShowCheck(warns,source){
+  var pv=qs('aiPreview');if(!pv)return;
+  var box=document.getElementById('aiCheck');
+  if(!box){box=document.createElement('div');box.id='aiCheck';box.className='ai-check';var t=pv.querySelector('.ai-preview-title');pv.insertBefore(box,t?t.nextSibling:pv.firstChild);}
+  box.innerHTML='';
+  if(!source&&!warns.length){box.style.display='none';return;}
+  box.style.display='';
+  if(warns.length){
+    var w=document.createElement('div');w.className='ai-check-warn';
+    w.textContent='\u26a0 Non trovo nel testo della foto: '+warns.join(' \u00b7 ')+'. Controlla prima di salvare.';
+    box.appendChild(w);
+  }else if(source){
+    var ok=document.createElement('div');ok.className='ai-check-ok';ok.textContent='\u2713 Tutte le quantit\u00e0 corrispondono al testo letto dalla foto';box.appendChild(ok);
+  }
+  if(source){
+    var det=document.createElement('details');var sm=document.createElement('summary');sm.textContent='Testo letto dalla foto';det.appendChild(sm);
+    var pre=document.createElement('pre');pre.className='ai-check-src';pre.textContent=source;det.appendChild(pre);
+    var fix=document.createElement('button');fix.type='button';fix.className='ai-check-fix';fix.textContent='\u270e Correggi il testo e rianalizza';
+    fix.addEventListener('click',function(){qs('aiText').value=source;switchAiTab('text');var ta=qs('aiText');if(ta)ta.focus();});
+    det.appendChild(fix);box.appendChild(det);
+  }
+}
+(function(){
+  var _open=openAiModal;
+  openAiModal=function(){_open.apply(this,arguments);var b=document.getElementById('aiCheck');if(b){b.innerHTML='';b.style.display='none';}};
 })();
 </script>
 
