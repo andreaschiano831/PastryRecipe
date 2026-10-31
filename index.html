@@ -7448,7 +7448,7 @@ function adminGate(then,reason){
     var pinW=document.getElementById('MDL_PIN_WRAP');if(pinW)pinW.style.display='none';
     // database
     var last=0;try{last=parseInt(localStorage.getItem('sb_last_ok')||'0',10);}catch(e){}
-    refs.dbState.innerHTML=_dbConnected?'<span class="ok">● Connesso a Supabase · '+tot+' ricette</span>':'<span class="warn">● Non connesso'+(last?' · ultimo contatto '+new Date(last).toLocaleDateString('it-IT'):'')+'</span>';
+    refs.dbState.innerHTML=_dbConnected?'<span class="ok">● Connesso a Supabase · '+tot+' ricette</span>'+'<br><small class="hub-note">Tenuto sveglio in automatico ogni giorno: non va più in pausa.</small>':'<span class="warn">● Non connesso'+(last?' · ultimo contatto '+new Date(last).toLocaleDateString('it-IT'):'')+'</span>';
   }
   function dupGroup(gr){
     var box=h('details','hub-dup');
