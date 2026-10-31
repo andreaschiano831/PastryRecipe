@@ -134,7 +134,8 @@ async function aiExtract(chat, payload) {
   if (r.error) return r;
   var parsed = aiExtractJson(r.text);
   var raw = Array.isArray(parsed && parsed.recipes) ? parsed.recipes : Array.isArray(parsed) ? parsed : parsed && (parsed.name || parsed.n) ? [parsed] : [];
-  var recipes = raw.map(function (x) { return aiToApp(x, payload.image ? source : ''); }).filter(Boolean);
+  // le quantità si controllano sempre sulla fonte (trascrizione della foto o testo incollato)
+  var recipes = raw.map(function (x) { return aiToApp(x, source); }).filter(Boolean);
   return payload.image ? { recipes: recipes, source: source } : { recipes: recipes };
 }
 
