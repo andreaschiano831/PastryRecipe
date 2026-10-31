@@ -1983,6 +1983,60 @@ body.ck-open .tabbar{display:none!important}
 .pwd-logo{border:0!important;box-shadow:none!important;background:transparent!important;overflow:visible!important;width:clamp(130px,36vw,170px)!important;height:clamp(130px,36vw,170px)!important;border-radius:50%!important}
 .pwd-logo::before,.pwd-logo::after{content:none!important;display:none!important;animation:none!important}
 .pwd-logo img{width:100%!important;height:100%!important;object-fit:contain!important;border-radius:50%!important;filter:drop-shadow(0 8px 22px rgba(0,0,0,.12))}
+
+/* ════ TEMA: chip + pannello con anteprime ════ */
+.th2 .t-dot,.th2 .t-lbl{display:none!important}
+.th-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:99px;border:1px solid var(--cb);background:var(--card);color:var(--ink);font:500 .85rem "DM Sans",system-ui,sans-serif;cursor:pointer;box-shadow:var(--sh);-webkit-tap-highlight-color:transparent}
+.th-sw{width:22px;height:22px;border-radius:50%;flex-shrink:0}
+.th-cn{font:italic 500 1rem "Cormorant Garamond",serif}
+.th-sheet-bg{position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0);display:flex;align-items:flex-end;justify-content:center;transition:background .25s}
+.th-sheet-bg.on{background:rgba(0,0,0,.45)}
+.th-sheet{width:min(560px,100%);background:var(--bg);color:var(--ink);border-radius:26px 26px 0 0;padding:10px 16px calc(20px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);box-shadow:0 -20px 50px -20px rgba(0,0,0,.5);font-family:"DM Sans",system-ui,sans-serif}
+.th-sheet-bg.on .th-sheet{transform:none}
+.th-grab{width:42px;height:5px;border-radius:99px;background:var(--cb);margin:0 auto 12px}
+.th-sheet-hd{display:flex;flex-direction:column;gap:2px;margin:0 2px 14px}
+.th-sheet-hd b{font:italic 500 1.6rem "Cormorant Garamond",serif}
+.th-sheet-hd small{color:var(--smoke);font-size:.82rem}
+.th-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:380px){.th-grid{grid-template-columns:repeat(2,1fr)}}
+.th-card{position:relative;display:flex;flex-direction:column;gap:8px;padding:6px;border-radius:18px;border:1.5px solid var(--cb);background:var(--card);cursor:pointer;text-align:left;font:inherit;color:var(--ink);transition:transform .15s,border-color .15s;-webkit-tap-highlight-color:transparent}
+.th-card:active{transform:scale(.97)}
+.th-card.on{border-color:var(--gold2);box-shadow:0 0 0 3px var(--glow)}
+.th-prev{display:flex;flex-direction:column;gap:6px;padding:9px;border-radius:13px;background:var(--tb);aspect-ratio:4/3.4;box-shadow:inset 0 0 0 1px rgba(128,128,128,.18);overflow:hidden}
+.th-p-top{display:flex;justify-content:space-between;align-items:center}
+.th-p-top i{display:block;height:5px;width:28%;border-radius:99px;background:var(--ta);opacity:.8}
+.th-p-top i+i{width:12px;height:12px;border-radius:4px;opacity:1}
+.th-p-title{font:italic 600 .95rem/1 "Cormorant Garamond",serif;color:var(--ti)}
+.th-p-card{display:flex;flex-direction:column;gap:4px;padding:7px;border-radius:9px;background:var(--tc);box-shadow:0 4px 10px -6px rgba(0,0,0,.35);border-left:3px solid var(--ta)}
+.th-p-card i{display:block;height:4px;border-radius:99px;background:var(--ti);opacity:.55;width:80%}
+.th-p-card i.a{background:var(--ta);opacity:1;width:40%}
+.th-p-card i.s{width:55%;opacity:.3}
+.th-p-bar{margin-top:auto;height:9px;border-radius:99px;background:var(--ti);opacity:.85;width:100%}
+.th-meta{display:flex;flex-direction:column;padding:0 4px 4px}
+.th-meta b{font-size:.88rem;font-weight:600}
+.th-meta small{font-size:.68rem;color:var(--smoke)}
+.th-check{position:absolute;top:12px;right:12px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--gold2);color:#fff;font-size:.75rem;font-weight:700;opacity:0;transform:scale(.5);transition:all .2s}
+.th-card.on .th-check{opacity:1;transform:none}
+
+/* ════ ACCESSO ADMIN ════ */
+.ag-bg{position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,0);transition:background .2s}
+.ag-bg.on{background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.ag{width:min(360px,100%);display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:24px 20px 18px;border-radius:24px;background:var(--card);color:var(--ink);border:1px solid var(--cb);box-shadow:0 30px 70px -30px rgba(0,0,0,.6);font-family:"DM Sans",system-ui,sans-serif;transform:translateY(16px) scale(.98);opacity:0;transition:all .22s cubic-bezier(.2,.8,.2,1)}
+.ag-bg.on .ag{transform:none;opacity:1}
+.ag.shake{animation:agShake .4s}
+@keyframes agShake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.ag-ico{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;background:var(--glow);color:var(--gold2);margin-bottom:4px}
+.ag-t{font:italic 500 1.55rem "Cormorant Garamond",serif}
+.ag-s{margin:0 0 6px;font-size:.86rem;color:var(--smoke);line-height:1.45}
+.ag-f{position:relative;width:100%}
+.ag-in{width:100%;box-sizing:border-box;padding:14px 46px 14px 16px;border-radius:14px;border:1px solid var(--cb);background:var(--bg2);color:var(--ink);font:500 1.05rem "DM Sans",sans-serif;letter-spacing:.08em;text-align:center;outline:none;-webkit-appearance:none}
+.ag-in:focus{border-color:var(--gold2);box-shadow:0 0 0 3px var(--glow)}
+.ag-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;background:none;cursor:pointer;opacity:.6}
+.ag-err{margin:0;min-height:1.1em;font-size:.82rem;color:#B23B3B;font-weight:600}
+.ag-btns{display:flex;gap:8px;width:100%;margin-top:4px}
+.ag-btns button{flex:1;padding:13px;border-radius:14px;font:600 .95rem "DM Sans",sans-serif;cursor:pointer}
+.ag-no{border:1px solid var(--cb);background:none;color:var(--ink)}
+.ag-ok{border:0;background:linear-gradient(135deg,var(--gold2),var(--gold3));color:#fff}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
@@ -2569,7 +2623,8 @@ function loadRecipes(){
     setDbStatus('ok');
     // Keep-alive: salva timestamp ultima connessione riuscita
     try{localStorage.setItem('sb_last_ok', Date.now().toString());}catch(ex){}
-    CU=Array.isArray(rows)?rows.map(function(row){
+    try{aiKeyOnRows(rows);}catch(ex){}
+    CU=Array.isArray(rows)?rows.filter(function(row){return row&&row.data&&!row.data._cfg;}).map(function(row){
       var r=row.data;r._c=true;r._id=row.id;return r;
     }):[];
     mergeQueueIntoCU();
@@ -6144,7 +6199,7 @@ var ST={tab:'photo',imgs:[],text:'',files:[],sec:'',items:[],saved:[],busy:'',op
   window.openStudio=function(opts){
     opts=opts||{};
     try{checkAdmin();}catch(e){}
-    if(!isAdmin){alert('Per inserire ricette accedi come amministratore dal menu ≡');return;}
+    if(!isAdmin){adminGate(function(){openStudio(opts);});return;}
     var r=root();ST.open=true;r.classList.add('on');document.body.classList.add('st-open');
     try{tbSetActive('new');}catch(e){}
     if(opts.tab)ST.tab=opts.tab;
@@ -6743,51 +6798,105 @@ function cardApply(card,r){
 function rpSetDose(d){_rpDose=d;var s=String(Math.round(d*100)/100).replace('.',',');var a=document.getElementById('rpDose'),b=document.getElementById('rpXlbl');if(a)a.textContent=s;if(b)b.textContent=s;rpRenderIng();rpChipsSync();}
 function rpChipsSync(){var c=document.getElementById('rpChips');if(!c)return;[].forEach.call(c.querySelectorAll('.cd-chip[data-d]'),function(b){b.classList.toggle('on',Math.abs(+b.dataset.d-_rpDose)<1e-9);});}
 
-/* ════ SCELTA DEL TEMA più coinvolgente ════ */
+/* ════ SCELTA DEL TEMA — anteprime in un pannello ════ */
 (function(){
-  var PAL={'t-crema':['#F5EFE0','#A8772A','Crema'],'t-ebano':['#0E0C09','#D4AE42','Ebano'],'t-bordeaux':['#1A0A10','#D4A878','Bordeaux'],'t-ottanio':['#081418','#8CCCC0','Ottanio'],'t-carta':['#EDE4D0','#A87830','Carta'],'t-avorio':['#FAF8F2','#8B7A3A','Avorio']};
-  function curTheme(){for(var k in PAL)if(document.body.classList.contains(k))return k;return 't-crema';}
+  var PAL={
+    't-crema':{n:'Crema',d:'Chiaro · caldo',bg:'#F5EFE0',card:'#FDFAF3',ink:'#1A1410',acc:'#A8772A'},
+    't-avorio':{n:'Avorio',d:'Chiaro · luminoso',bg:'#FAF8F2',card:'#FFFFFF',ink:'#1C1A18',acc:'#8B7A3A'},
+    't-carta':{n:'Carta',d:'Chiaro · pergamena',bg:'#EDE4D0',card:'#F5EDD8',ink:'#1E1810',acc:'#A87830'},
+    't-ebano':{n:'Ebano',d:'Scuro · oro',bg:'#0E0C09',card:'#141210',ink:'#EDE5D0',acc:'#D4AE42'},
+    't-bordeaux':{n:'Bordeaux',d:'Scuro · vino',bg:'#1A0A10',card:'#240E16',ink:'#F0E4E8',acc:'#D4A878'},
+    't-ottanio':{n:'Ottanio',d:'Scuro · verde mare',bg:'#081418',card:'#0C1E24',ink:'#E4F0EE',acc:'#8CCCC0'}
+  };
+  var ORDER=['t-crema','t-avorio','t-carta','t-ebano','t-bordeaux','t-ottanio'];
+  function cur(){for(var k in PAL)if(document.body.classList.contains(k))return k;return 't-crema';}
+  function chipHtml(){var p=PAL[cur()];return '<span class="th-sw" style="background:'+p.bg+';box-shadow:inset 0 0 0 4px '+p.acc+'"></span><span class="th-cn">'+p.n+'</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>';}
   function decorate(){
-    var bar=document.querySelector('#landing .t-bar');if(!bar||bar._th)return;bar._th=1;bar.classList.add('th-picker');
-    var lbl=bar.querySelector('.t-lbl');
-    var name=document.createElement('span');name.className='th-name';if(lbl)lbl.parentNode.insertBefore(name,lbl.nextSibling);
-    [].forEach.call(bar.querySelectorAll('.t-dot'),function(d){
-      var p=PAL[d.dataset.t];if(!p)return;
-      d.style.background='conic-gradient(from 225deg,'+p[0]+' 0 50%,'+p[1]+' 50% 100%)';
-      d.setAttribute('role','radio');d.setAttribute('aria-label','Tema '+p[2]);d.title=p[2];
-      d.innerHTML='<i></i>';
+    var bar=document.querySelector('#landing .t-bar');if(!bar||bar._th2)return;bar._th2=1;bar.classList.add('th2');
+    var chip=document.createElement('button');chip.type='button';chip.className='th-chip';chip.setAttribute('aria-label','Scegli il tema');chip.innerHTML=chipHtml();
+    chip.onclick=function(){openSheet(chip);};
+    var first=bar.querySelector('.t-dot');bar.insertBefore(chip,first||bar.firstChild);
+  }
+  function sync(){[].forEach.call(document.querySelectorAll('.th-chip'),function(c){c.innerHTML=chipHtml();});}
+  function openSheet(){
+    var bg=document.createElement('div');bg.className='th-sheet-bg';
+    var sh=document.createElement('div');sh.className='th-sheet';sh.setAttribute('role','dialog');sh.setAttribute('aria-label','Tema');
+    sh.innerHTML='<div class="th-grab"></div><div class="th-sheet-hd"><b>Scegli il tema</b><small>Cambia colori a tutta l’app</small></div>';
+    var grid=document.createElement('div');grid.className='th-grid';
+    ORDER.forEach(function(k){
+      var p=PAL[k],b=document.createElement('button');b.type='button';b.className='th-card'+(k===cur()?' on':'');
+      b.style.cssText='--tb:'+p.bg+';--tc:'+p.card+';--ti:'+p.ink+';--ta:'+p.acc;
+      b.innerHTML='<span class="th-prev"><span class="th-p-top"><i></i><i></i></span><span class="th-p-title">Ricettario</span><span class="th-p-card"><i class="a"></i><i></i><i class="s"></i></span><span class="th-p-bar"></span></span>'+
+        '<span class="th-meta"><b>'+p.n+'</b><small>'+p.d+'</small></span><span class="th-check">✓</span>';
+      b.onclick=function(){close();setTimeout(function(){pick(k,b);},180);};
+      grid.appendChild(b);
     });
-    bar.addEventListener('click',function(e){
-      var d=e.target.closest('.t-dot');if(!d)return;
-      e.stopPropagation();e.preventDefault();pickTheme(d.dataset.t,d);
-    },true);
-    sync();
+    sh.appendChild(grid);bg.appendChild(sh);document.body.appendChild(bg);
+    requestAnimationFrame(function(){bg.classList.add('on');});
+    function close(){bg.classList.remove('on');setTimeout(function(){bg.remove();},260);}
+    bg.onclick=function(e){if(e.target===bg)close();};
   }
-  function sync(){
-    var c=curTheme(),n=document.querySelector('.th-name');
-    if(n){n.textContent=PAL[c]?PAL[c][2]:'';n.classList.remove('pop');void n.offsetWidth;n.classList.add('pop');}
-    [].forEach.call(document.querySelectorAll('#landing .t-dot'),function(d){d.setAttribute('aria-checked',d.dataset.t===c?'true':'false');});
-  }
-  function pickTheme(t,dot){
-    if(t===curTheme()){dot.classList.remove('bump');void dot.offsetWidth;dot.classList.add('bump');return;}
+  function pick(t,el){
+    if(t===cur())return;
     try{navigator.vibrate&&navigator.vibrate(12);}catch(e){}
-    var r=dot.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+    var r=(el&&el.isConnected?el:document.querySelector('.th-chip')).getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
     var R=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y));
     var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
     if(document.startViewTransition&&!reduce){
-      var vt=document.startViewTransition(function(){setTheme(t);sync();});
+      var vt=document.startViewTransition(function(){setTheme(t);});
       vt.ready.then(function(){document.documentElement.animate({clipPath:['circle(0px at '+x+'px '+y+'px)','circle('+R+'px at '+x+'px '+y+'px)']},{duration:650,easing:'cubic-bezier(.2,.8,.2,1)',pseudoElement:'::view-transition-new(root)'});}).catch(function(){});
     }else{
-      // ripiego: onda di colore che si espande dal pallino
-      var w=document.createElement('div');w.className='th-wave';var p=PAL[t];w.style.cssText='left:'+x+'px;top:'+y+'px;background:'+(p?p[0]:'#000');document.body.appendChild(w);
+      var w=document.createElement('div');w.className='th-wave';w.style.cssText='left:'+x+'px;top:'+y+'px;background:'+PAL[t].bg;document.body.appendChild(w);
       requestAnimationFrame(function(){w.style.transform='translate(-50%,-50%) scale('+(R/10)+')';});
-      setTimeout(function(){setTheme(t);sync();w.style.opacity='0';},330);setTimeout(function(){w.remove();},800);
+      setTimeout(function(){setTheme(t);w.style.opacity='0';},330);setTimeout(function(){w.remove();},800);
     }
   }
-  window.themeSync=sync;
+  window.openThemeSheet=openSheet;
   var _st=setTheme;setTheme=function(){var r=_st.apply(this,arguments);try{sync();}catch(e){}return r;};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',decorate);else decorate();
 })();
+
+/* ════ CHIAVE AI SALVATA (su questo dispositivo e su tutti gli altri) ════ */
+var _aiCfgRow=null,_aiSharedKey='';
+function aiKeyEnc(k){var s='MDL-ricettario',o='';for(var i=0;i<k.length;i++)o+=String.fromCharCode(k.charCodeAt(i)^s.charCodeAt(i%s.length));try{return btoa(o);}catch(e){return '';}}
+function aiKeyDec(v){try{var t=atob(v),s='MDL-ricettario',o='';for(var i=0;i<t.length;i++)o+=String.fromCharCode(t.charCodeAt(i)^s.charCodeAt(i%s.length));return o;}catch(e){return '';}}
+function aiKeyLocal(){var k='';try{k=localStorage.getItem('groq_key')||'';}catch(e){}return k;}
+function aiKeyApply(k){
+  if(!k)return;try{localStorage.setItem('groq_key',k);}catch(e){}
+  var a=document.getElementById('aiKey');if(a&&!a.value)a.value=k;var m=document.getElementById('MDL_GROQ');if(m&&!m.value)m.value=k;
+  try{renderStatusAll();}catch(e){}
+}
+function renderStatusAll(){var s=document.getElementById('stStatus');if(s&&typeof _aiServer!=='undefined'){s.textContent=(_aiServer||aiHasLocalKey())?'AI pronta':'Manca la chiave AI';s.className='st-status '+((_aiServer||aiHasLocalKey())?'ok':'warn');}}
+function aiKeyShare(k){
+  var row={data:{_cfg:'ai',k:aiKeyEnc(k),at:new Date().toISOString()}};
+  var url=SB_URL+'/rest/v1/ricette'+(_aiCfgRow?'?id=eq.'+_aiCfgRow:''),m=_aiCfgRow?'PATCH':'POST';
+  return fetch(url,{method:m,headers:Object.assign({},sbH(),{'Prefer':'return=representation'}),body:JSON.stringify(row)})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(rows){if(rows&&rows[0])_aiCfgRow=rows[0].id;_aiSharedKey=k;return true;});
+}
+// salvataggio dal menu ≡ → AI: resta sul telefono e viene condivisa con gli altri dispositivi
+MDL_GROQ_SAVE=function(){
+  var inp=document.getElementById('MDL_GROQ'),msg=document.getElementById('MDL_GROQ_MSG');var k=(inp&&inp.value||'').trim();if(!k)return;
+  if(!/^gsk_/.test(k)&&!confirm('La chiave Groq di solito inizia con «gsk_». Salvarla comunque?'))return;
+  try{localStorage.setItem('groq_key',k);}catch(ex){}var ki=document.getElementById('aiKey');if(ki)ki.value=k;
+  if(msg){msg.textContent='Salvata su questo dispositivo…';msg.style.color='#8B7A3A';}
+  aiKeyShare(k).then(function(){if(msg)msg.textContent='✓ Salvata: vale su tutti i dispositivi';}).catch(function(){if(msg)msg.textContent='✓ Salvata su questo dispositivo (la condivido quando torna la connessione)';try{localStorage.setItem('groq_key_pending','1');}catch(e){}});
+  try{renderStatusAll();}catch(e){}
+};
+// quando la chiave si usa per la prima volta da un altro punto (es. la finestra AI), la condivido
+(function(){
+  var _sl=Storage.prototype.setItem;
+  Storage.prototype.setItem=function(k,v){var r=_sl.apply(this,arguments);try{if(this===window.localStorage&&k==='groq_key'&&v&&v!==_aiSharedKey&&_dbConnected&&!aiKeyShare._busy){aiKeyShare._busy=1;aiKeyShare(v).catch(function(){}).then(function(){aiKeyShare._busy=0;});}}catch(e){}return r;};
+})();
+function aiKeyOnRows(rows){
+  try{
+    (rows||[]).forEach(function(row){if(row&&row.data&&row.data._cfg==='ai'){if(!_aiCfgRow||row.id>_aiCfgRow){_aiCfgRow=row.id;_aiSharedKey=aiKeyDec(row.data.k||'');}}});
+    var local=aiKeyLocal();
+    if(_aiSharedKey&&!local)aiKeyApply(_aiSharedKey);
+    else if(local&&!_aiSharedKey&&_dbConnected){aiKeyShare._busy=1;aiKeyShare(local).catch(function(){}).then(function(){aiKeyShare._busy=0;});}
+  }catch(e){}
+}
+(function(){var k=aiKeyLocal();if(k){var m=document.getElementById('MDL_GROQ');if(m&&!m.value)m.value=k;}})();
 
 /* ════════════════════════════════════════════════════════════════
    CALCOLI DELLA RICETTA — bilanciamento (acqua, zuccheri, grassi,
@@ -6965,6 +7074,39 @@ function rcWidget(host,opt){
   };
   var _rr=rpRenderIng;rpRenderIng=function(){var r=_rr.apply(this,arguments);try{window._rpCalc&&window._rpCalc.refresh();}catch(e){}return r;};
 })();
+
+/* ════ ACCESSO ADMIN AL VOLO (dal + o dove serve) ════ */
+function adminGate(then,reason){
+  if(isAdmin){then&&then();return;}
+  var old=document.getElementById('admGate');if(old)old.remove();
+  var bg=document.createElement('div');bg.id='admGate';bg.className='ag-bg';
+  bg.innerHTML='<div class="ag" role="dialog" aria-label="Accesso amministratore">'+
+    '<div class="ag-ico"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>'+
+    '<b class="ag-t">Accesso amministratore</b><p class="ag-s">'+(reason||'Per inserire ricette serve il PIN admin.')+'</p>'+
+    '<form class="ag-f"><input class="ag-in" type="password" inputmode="text" autocomplete="current-password" placeholder="PIN admin" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="button" class="ag-eye" aria-label="Mostra">👁</button></form>'+
+    '<p class="ag-err"></p><div class="ag-btns"><button type="button" class="ag-no">Annulla</button><button type="button" class="ag-ok">Entra</button></div></div>';
+  document.body.appendChild(bg);requestAnimationFrame(function(){bg.classList.add('on');});
+  var inp=bg.querySelector('.ag-in'),err=bg.querySelector('.ag-err'),box=bg.querySelector('.ag');
+  function close(){bg.classList.remove('on');setTimeout(function(){bg.remove();},220);}
+  function ok(){
+    var v=(inp.value||'').trim();var pin=typeof ADMIN_PIN!=='undefined'?ADMIN_PIN:'MDL2025';
+    if(v===pin){
+      try{sessionStorage.setItem('adm','1');localStorage.setItem('mdl_adm',new Date().toDateString());}catch(e){}
+      isAdmin=true;try{checkAdmin();}catch(e){}try{tbAdmin();}catch(e){}try{MDL_REFRESH();}catch(e){}try{if(qs('app').classList.contains('on'))renderGrid();}catch(e){}
+      try{navigator.vibrate&&navigator.vibrate(15);}catch(e){}
+      close();setTimeout(function(){then&&then();},160);
+    }else{
+      err.textContent='PIN non corretto';box.classList.remove('shake');void box.offsetWidth;box.classList.add('shake');inp.select();
+      try{navigator.vibrate&&navigator.vibrate([30,40,30]);}catch(e){}
+    }
+  }
+  bg.querySelector('.ag-ok').onclick=ok;bg.querySelector('.ag-no').onclick=close;
+  bg.querySelector('.ag-f').onsubmit=function(e){e.preventDefault();ok();};
+  inp.onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();ok();}if(e.key==='Escape')close();};
+  bg.querySelector('.ag-eye').onclick=function(){inp.type=inp.type==='password'?'text':'password';inp.focus();};
+  bg.onclick=function(e){if(e.target===bg)close();};
+  setTimeout(function(){inp.focus();},250);
+}
 </script>
 
 <!-- FILE IMPORT MODAL -->
