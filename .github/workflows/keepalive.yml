@@ -1,0 +1,15 @@
+# Riserva: se per qualche motivo il cron di Vercel non parte, GitHub sveglia il database ogni 2 giorni.
+name: Database sveglio
+on:
+  schedule:
+    - cron: "41 7 */2 * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lettura leggera su Supabase
+        run: |
+          curl -fsS "https://pastry-recipe.vercel.app/api/keepalive" || \
+          curl -fsS "https://tedjmlbpojdohtawepvr.supabase.co/rest/v1/ricette?select=id&limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
