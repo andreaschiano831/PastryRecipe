@@ -2133,6 +2133,33 @@ body.ck-open .tabbar{display:none!important}
 .hub-mini.danger{color:#B23B3B}
 .hub-ka{margin:0!important;border-radius:12px!important}
 .hub-foot{text-align:center;font:italic .9rem "Cormorant Garamond",serif;color:var(--smoke2);margin:8px 0 0}
+
+/* ════ SCELTA PAGINE DA ANALIZZARE ════ */
+.pp-bg{position:absolute;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0);transition:background .2s}
+.pp-bg.on{background:rgba(0,0,0,.45)}
+.pp{width:min(620px,100%);max-height:88vh;overflow-y:auto;background:var(--rd-card);color:var(--rd-ink);border-radius:24px 24px 0 0;padding:10px 16px calc(16px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .26s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;gap:12px;font-family:"DM Sans",system-ui,sans-serif}
+.pp-bg.on .pp{transform:none}
+.pp-grab{width:42px;height:5px;border-radius:99px;background:var(--rd-line);margin:0 auto}
+.pp-hd{display:flex;flex-direction:column;gap:4px}
+.pp-hd b{font:italic 500 1.5rem "Cormorant Garamond",serif}
+.pp-hd small{font-size:.8rem;color:var(--rd-muted);line-height:1.4}
+.pp-quick{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.pp-chip{flex-shrink:0;padding:8px 13px;border-radius:99px;border:1px solid var(--rd-line);background:var(--rd-bg);color:var(--rd-ink);font:600 .8rem "DM Sans",sans-serif;cursor:pointer;white-space:nowrap}
+.pp-chip.on{background:var(--rd-ink);color:var(--rd-bg);border-color:transparent}
+.pp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:10px}
+.pp-page{position:relative;display:flex;flex-direction:column;gap:5px;padding:5px;border-radius:12px;border:2px solid transparent;background:none;color:var(--rd-ink);cursor:pointer;font:inherit}
+.pp-page.on{border-color:var(--rd-acc);background:color-mix(in srgb,var(--rd-acc) 12%,transparent)}
+.pp-img{display:grid;place-items:center;aspect-ratio:3/4;border-radius:7px;overflow:hidden;background:#fff;box-shadow:0 4px 12px -6px rgba(0,0,0,.4)}
+.pp-img img{width:100%;height:100%;object-fit:cover}
+.pp-n{font-size:.75rem;font-weight:600;text-align:center;color:var(--rd-muted)}
+.pp-page.cur .pp-n{color:var(--rd-acc)}
+.pp-ord{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--rd-acc);color:#fff;font:700 .72rem "DM Sans",sans-serif;font-style:normal}
+.pp-more{border:1px dashed var(--rd-line);border-radius:12px;background:none;color:var(--rd-muted);font:600 .78rem "DM Sans",sans-serif;cursor:pointer;min-height:90px}
+.pp-range{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--rd-muted)}
+.pp-range input{width:70px;padding:8px;border-radius:10px;border:1px solid var(--rd-line);background:var(--rd-bg);color:var(--rd-ink);font:600 .9rem "DM Sans",sans-serif;text-align:center}
+.pp-go{display:flex;align-items:center;justify-content:center;gap:8px;padding:15px;border-radius:16px;border:0;background:linear-gradient(135deg,#A8772A,#C4933A);color:#fff;font:600 1rem "DM Sans",sans-serif;cursor:pointer}
+.pp-go:disabled{opacity:.6}
+.pp-cancel{border:0;background:none;color:var(--rd-muted);font:600 .88rem "DM Sans",sans-serif;padding:6px;cursor:pointer}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
@@ -5458,6 +5485,14 @@ function aiToApp(r, source) {
 }
 
 // chat(kind, system, user, image, json) -> Promise<{text}|{error,_status}>
+// solo lettura fedele di un'immagine (per unire più pagine prima di ordinarle in ricette)
+async function aiOcrOnly(chat, image) {
+  var o = await chat('vision', AI_OCR_PROMPT, 'Trascrivi il testo di questa immagine.', image, false);
+  if (o.error) return o;
+  var source = aiStripThink(o.text).replace(/^```[a-z]*\n?|```$/g, '').trim();
+  if (/^NESSUN TESTO/i.test(source)) source = '';
+  return { source: source };
+}
 async function aiExtract(chat, payload) {
   var source = '';
   if (payload.image) {
@@ -6071,6 +6106,7 @@ var LIB={books:[],progress:{},setup:null,covers:{},loaded:false,q:''};
     openStudio(Object.assign({auto:true},input));
   }
   function pageToRecipe(){
+    if(R&&R.api&&R.api.thumb&&R.api.pageCount){return pagePicker();}
     if(!R||!R.api||!R.api.pageContent){toast('Apri prima il libro','err');return;}
     toast('Preparo la pagina\u2026');
     R.api.pageContent().then(function(c){
@@ -6079,6 +6115,83 @@ var LIB={books:[],progress:{},setup:null,covers:{},loaded:false,q:''};
       else if(c.image)toRecipe({images:[c.image]});
       else toast('In questa pagina non trovo testo','err');
     }).catch(function(e){toast(e.message||'Errore','err');});
+  }
+
+
+  /* scelta delle pagine da analizzare (PDF) */
+  function pagePicker(){
+    var api=R.api,total=api.pageCount(),cur=api.current(),sel={};sel[cur]=1;
+    var from=Math.max(1,cur-4),to=Math.min(total,cur+5),thumbs={};
+    var bg=h('div','pp-bg');var sh=h('div','pp');bg.appendChild(sh);R.el.appendChild(bg);
+    requestAnimationFrame(function(){bg.classList.add('on');});
+    function close(){bg.classList.remove('on');setTimeout(function(){bg.remove();},220);}
+    bg.onclick=function(e){if(e.target===bg&&!busy)close();};
+    var busy=false;
+    function list(){return Object.keys(sel).map(Number).sort(function(a,b){return a-b;});}
+    function render(){
+      var L=list();sh.innerHTML='';
+      sh.appendChild(h('div','pp-grab'));
+      var hd=h('div','pp-hd');hd.appendChild(txt('b','','Pagine da analizzare'));hd.appendChild(txt('small','','Tocca le pagine con la ricetta: le pagine scelte vengono lette insieme, così una ricetta divisa su due pagine resta intera.'));sh.appendChild(hd);
+      var q=h('div','pp-quick');
+      [['Solo questa',[cur]],['Con la successiva',[cur,cur+1]],['Con la precedente',[cur-1,cur]],['Doppia pagina ±1',[cur-1,cur,cur+1]]].forEach(function(o){
+        var ps=o[1].filter(function(n){return n>=1&&n<=total;});if(ps.length!==o[1].length)return;var on=ps.length===L.length&&ps.every(function(n){return sel[n];});
+        var b=txt('button','pp-chip'+(on?' on':''),o[0]);b.type='button';b.onclick=function(){sel={};ps.forEach(function(n){sel[n]=1;});render();};q.appendChild(b);
+      });
+      sh.appendChild(q);
+      var grid=h('div','pp-grid');
+      if(from>1){var mb=txt('button','pp-more','‹ '+Math.max(1,from-6)+'–'+(from-1));mb.type='button';mb.onclick=function(){from=Math.max(1,from-6);render();};grid.appendChild(mb);}
+      for(var n=from;n<=to;n++)(function(n){
+        var b=h('button','pp-page'+(sel[n]?' on':'')+(n===cur?' cur':''));b.type='button';
+        var im=h('span','pp-img');if(thumbs[n]){var i=document.createElement('img');i.src=thumbs[n];im.appendChild(i);}else im.appendChild(h('span','lib-spin'));
+        b.appendChild(im);b.appendChild(txt('span','pp-n',(n===cur?'● ':'')+n));
+        if(sel[n]){var o=L.indexOf(n)+1;b.appendChild(txt('i','pp-ord',String(o)));}
+        b.onclick=function(){if(sel[n])delete sel[n];else{if(list().length>=12){toast('Al massimo 12 pagine per volta','err');return;}sel[n]=1;}render();};
+        grid.appendChild(b);
+      })(n);
+      if(to<total){var ma=txt('button','pp-more',(to+1)+'–'+Math.min(total,to+6)+' ›');ma.type='button';ma.onclick=function(){to=Math.min(total,to+6);render();};grid.appendChild(ma);}
+      sh.appendChild(grid);
+      var rg=h('div','pp-range');rg.appendChild(txt('span','','Intervallo'));
+      var a=h('input');a.type='number';a.min=1;a.max=total;a.inputMode='numeric';a.value=L[0]||cur;
+      var z=h('input');z.type='number';z.min=1;z.max=total;z.inputMode='numeric';z.value=L[L.length-1]||cur;
+      var ok=txt('button','pp-chip','Usa');ok.type='button';ok.onclick=function(){var x=Math.max(1,Math.min(total,+a.value||cur)),y=Math.max(1,Math.min(total,+z.value||x));if(y<x){var t=x;x=y;y=t;}if(y-x>11)y=x+11;sel={};for(var k=x;k<=y;k++)sel[k]=1;from=Math.max(1,x-2);to=Math.min(total,y+2);render();};
+      rg.appendChild(a);rg.appendChild(txt('span','','–'));rg.appendChild(z);rg.appendChild(ok);sh.appendChild(rg);
+      var go=h('button','pp-go');go.type='button';go.disabled=!L.length||busy;
+      go.innerHTML=busy?'<span class="lib-spin"></span><span>'+busy+'</span>':ICON.spark+'<span>Analizza '+(L.length===1?'la pagina '+L[0]:L.length+' pagine')+' con l’AI</span>';
+      go.onclick=run;sh.appendChild(go);
+      var cn=txt('button','pp-cancel','Annulla');cn.type='button';cn.onclick=close;sh.appendChild(cn);
+      loadThumbs();
+    }
+    var loading=false;
+    function loadThumbs(){
+      if(loading)return;var need=[];for(var n=from;n<=to;n++)if(!thumbs[n])need.push(n);if(!need.length)return;loading=true;
+      var i=0;(function next(){if(i>=need.length||!bg.isConnected){loading=false;if(bg.isConnected){var still=false;for(var k=from;k<=to;k++)if(!thumbs[k])still=true;if(still)loadThumbs();}return;}
+        var n=need[i++];api.thumb(n,160).then(function(u){thumbs[n]=u;var el=sh.querySelectorAll('.pp-page')[n-from];
+          if(el){var s=el.querySelector('.pp-img');s.innerHTML='';var im=document.createElement('img');im.src=u;s.appendChild(im);}}).catch(function(){}).then(next);})();
+    }
+    function run(){
+      var L=list();if(!L.length||busy)return;
+      var parts=[],i=0;
+      function step(){
+        if(i>=L.length){
+          var body=parts.filter(function(p){return p.t&&p.t.trim();});
+          if(!body.length){busy=false;render();toast('Non trovo testo nelle pagine scelte','err');return;}
+          var text=body.map(function(p){return '--- Pagina '+p.n+' ---\n'+p.t.trim();}).join('\n\n');
+          var src='(Da «'+R.book.title+'»'+(R.book.author?', '+R.book.author:'')+', '+(L.length===1?'pagina '+L[0]:'pagine '+L.join(', '))+')';
+          close();toRecipe({text:text+'\n\n'+src});return;
+        }
+        var n=L[i++];busy='Leggo la pagina '+n+(L.length>1?' ('+i+' di '+L.length+')':'')+'…';render();
+        api.pageContent(n).then(function(c){
+          if(c.text&&c.text.replace(/\s/g,'').length>60){parts.push({n:n,t:c.text});return;}
+          if(!c.image)return;
+          return aiResizeImage(c.image).then(function(u){return aiOcrRun(u);}).then(function(d){
+            if(d.source)parts.push({n:n,t:d.source});
+            else if(d.error){toast('Pagina '+n+': '+d.error,'err');}
+          });
+        }).catch(function(e){toast('Pagina '+n+': '+(e.message||e),'err');}).then(step);
+      }
+      busy='Preparo…';step();
+    }
+    render();
   }
 
   /* ── vista EPUB ── */
@@ -6276,8 +6389,12 @@ var LIB={books:[],progress:{},setup:null,covers:{},loaded:false,q:''};
           setMarks:function(m){S.marks=m;paintMarks();},
           clearSelection:function(){try{window.getSelection().removeAllRanges();}catch(e){}},
           applySettings:function(s){sc.classList.toggle('fit-page',s.fit==='page');S.cache={};render(S.n);},
-          pageContent:function(){
-            var n=S.n;return textOf(n).then(function(t){
+          pageCount:function(){return S.total;},current:function(){return S.n;},
+          thumb:function(n,w){return pdf.getPage(n).then(function(p){var b=p.getViewport({scale:1});var vp=p.getViewport({scale:(w||150)/b.width});
+            var c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+            return p.render({canvasContext:x,viewport:vp}).promise.then(function(){return c.toDataURL('image/jpeg',0.7);});});},
+          pageContent:function(nn){
+            var n=nn||S.n;return textOf(n).then(function(t){
               if(t&&t.replace(/\s/g,'').length>60)return {text:t,label:'pagina '+n};
               // pagina scansionata: la mando come immagine
               return pdf.getPage(n).then(function(p){var b=p.getViewport({scale:1});var vp=p.getViewport({scale:Math.min(2.5,2000/Math.max(b.width,b.height))});
@@ -7489,6 +7606,18 @@ function adminGate(then,reason){
   var _ref=MDL_REFRESH;MDL_REFRESH=function(){var r=_ref.apply(this,arguments);try{render();}catch(e){}return r;};
   var _lr=MDL_LOAD_RECENT;MDL_LOAD_RECENT=function(){var r=_lr.apply(this,arguments);try{render();}catch(e){}return r;};
 })();
+
+function aiOcrRun(image){
+  return aiCheckServer().then(function(ok){
+    if(ok)return fetch('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:image,ocr:true})}).then(function(r){return r.json().catch(function(){return {};}).then(function(d){d._status=r.status;return d;});});
+    var key='';try{key=localStorage.getItem('groq_key')||'';}catch(e){}if(!key){var dg=document.getElementById('MDL_GROQ');if(dg)key=(dg.value||'').trim();}
+    if(!key)return {error:'Inserisci la chiave Groq nel menu Altro'};
+    return aiOcrOnly(function(kind,s,u,img,json){return aiGroqChat('https://api.groq.com/openai/v1/chat/completions',key,kind,s,u,img,json);},image);
+  }).then(function(d){
+    if(d&&d.error&&_aiServer&&(d._status===503||d._status===401||d._status===404)&&aiHasLocalKey()){_aiServer=false;return aiOcrRun(image);}
+    return d;
+  }).catch(function(e){return {error:'Errore connessione: '+(e&&e.message||e)};});
+}
 </script>
 
 <!-- FILE IMPORT MODAL -->

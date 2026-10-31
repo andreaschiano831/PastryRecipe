@@ -118,6 +118,14 @@ function aiToApp(r, source) {
 }
 
 // chat(kind, system, user, image, json) -> Promise<{text}|{error,_status}>
+// solo lettura fedele di un'immagine (per unire più pagine prima di ordinarle in ricette)
+async function aiOcrOnly(chat, image) {
+  var o = await chat('vision', AI_OCR_PROMPT, 'Trascrivi il testo di questa immagine.', image, false);
+  if (o.error) return o;
+  var source = aiStripThink(o.text).replace(/^```[a-z]*\n?|```$/g, '').trim();
+  if (/^NESSUN TESTO/i.test(source)) source = '';
+  return { source: source };
+}
 async function aiExtract(chat, payload) {
   var source = '';
   if (payload.image) {
@@ -195,6 +203,13 @@ module.exports = async function handler(req, res) {
   let body = req.body;
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = null; } }
   if (!body || typeof body !== 'object') return res.status(400).json({ error: 'Richiesta non valida' });
+  if (body.ocr && body.image) {
+    if (!/^data:image\/(jpeg|png|webp);base64,/.test(String(body.image))) return res.status(400).json({ error: 'Formato immagine non supportato' });
+    const chat = (kind, system, user, img, json) => aiGroqChat(GROQ_URL, key, kind, system, user, img, json);
+    const o = await aiOcrOnly(chat, String(body.image));
+    if (o.error) return res.status(o._status && o._status >= 400 ? o._status : 502).json({ error: o.error });
+    return res.status(200).json(o);
+  }
   if (body.advice) {
     const sys = 'Sei un pastry chef consulente di alto livello. Ricevi una ricetta con calcoli di composizione stimati. Rispondi in italiano con 3-6 consigli pratici e brevi per migliorarla o bilanciarla (zuccheri, grassi, solidi, struttura, dolcezza; per gelati e sorbetti anche POD/PAC e servizio). Per ogni correzione indica la quantità in grammi. Usa solo i dati forniti, non inventare ingredienti che non servono; se i dati non bastano dillo. Niente premesse, solo elenco puntato.';
     const r = await aiGroqChat(GROQ_URL, key, 'text', sys, String(body.advice).slice(0, 8000), null, false);
