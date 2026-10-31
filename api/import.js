@@ -195,6 +195,12 @@ module.exports = async function handler(req, res) {
   let body = req.body;
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = null; } }
   if (!body || typeof body !== 'object') return res.status(400).json({ error: 'Richiesta non valida' });
+  if (body.advice) {
+    const sys = 'Sei un pastry chef consulente di alto livello. Ricevi una ricetta con calcoli di composizione stimati. Rispondi in italiano con 3-6 consigli pratici e brevi per migliorarla o bilanciarla (zuccheri, grassi, solidi, struttura, dolcezza; per gelati e sorbetti anche POD/PAC e servizio). Per ogni correzione indica la quantità in grammi. Usa solo i dati forniti, non inventare ingredienti che non servono; se i dati non bastano dillo. Niente premesse, solo elenco puntato.';
+    const r = await aiGroqChat(GROQ_URL, key, 'text', sys, String(body.advice).slice(0, 8000), null, false);
+    if (r.error) return res.status(r._status && r._status >= 400 ? r._status : 502).json({ error: r.error });
+    return res.status(200).json({ advice: r.text });
+  }
   const image = body.image ? String(body.image) : '';
   const text = body.text ? String(body.text) : '';
   if (image && !/^data:image\/(jpeg|png|webp);base64,/.test(image)) return res.status(400).json({ error: 'Formato immagine non supportato' });
