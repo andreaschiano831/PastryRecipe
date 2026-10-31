@@ -2160,6 +2160,23 @@ body.ck-open .tabbar{display:none!important}
 .pp-go{display:flex;align-items:center;justify-content:center;gap:8px;padding:15px;border-radius:16px;border:0;background:linear-gradient(135deg,#A8772A,#C4933A);color:#fff;font:600 1rem "DM Sans",sans-serif;cursor:pointer}
 .pp-go:disabled{opacity:.6}
 .pp-cancel{border:0;background:none;color:var(--rd-muted);font:600 .88rem "DM Sans",sans-serif;padding:6px;cursor:pointer}
+
+.isug{position:fixed;z-index:100000;display:none;flex-direction:column;overflow-y:auto;border-radius:14px;background:var(--card,#fff);border:1px solid var(--cb,#ddd);box-shadow:0 18px 40px -14px rgba(0,0,0,.45);padding:4px;font-family:"DM Sans",system-ui,sans-serif;-webkit-overflow-scrolling:touch}
+.isug.on{display:flex}
+.isug-hd{padding:6px 10px 4px;font-size:.64rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--smoke,#888)}
+.isug-i{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:10px 10px;border:0;border-radius:10px;background:none;color:var(--ink,#222);text-align:left;cursor:pointer;font:inherit}
+.isug-i b{font-weight:500;font-size:.95rem}
+.isug-i mark{background:var(--glow,rgba(168,119,42,.2));color:inherit;border-radius:3px;font-weight:700}
+.isug-i small{font-size:.7rem;color:var(--smoke,#888);white-space:nowrap}
+.isug-i:hover,.isug-i.on{background:var(--bg2,#f3eee3)}
+.rd-tr-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--rd-line)}
+.rd-tr-bar .rd-hint{flex:1;margin:0}
+.rd-tr-bar select{width:auto;padding:8px 10px}
+.rd-tr-text{padding:14px 16px;white-space:pre-wrap;font:400 1.02rem/1.6 Georgia,"Iowan Old Style",serif;color:var(--rd-ink)}
+.rd-tr-wait{display:flex;align-items:center;gap:10px;padding:20px 16px;color:var(--rd-muted)}
+.rd-tr-acts{display:flex;gap:8px;padding:10px 14px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--rd-line)}
+.rd-tr-acts .lib-btn{flex:1;padding:11px}
+@media(max-width:420px){.rd-top .rd-btn{width:34px}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
@@ -5543,6 +5560,10 @@ async function aiGroqChat(url, key, kind, system, user, image, json) {
   }
   return { error: 'Nessun modello AI disponibile su Groq (' + last + ')', _status: 502 };
 }
+function aiTranslatePrompt(lang) {
+  return 'Sei un traduttore specializzato in pasticceria e cucina professionale. Traduci in ' + lang + ' il testo che ricevi, in modo fedele e naturale, con la terminologia di laboratorio (es. "blind bake" = "cuocere in bianco", "egg wash" = "doratura", "sweet dough" = "pasta frolla", "half-dome molds" = "stampi a semisfera"). ' +
+    'Mantieni ESATTAMENTE numeri, quantità, unità e temperature come scritti (non convertire), e la struttura: titoli, elenchi, a capo. Se una parola è illeggibile ([?]) lasciala così. Non aggiungere commenti, note o spiegazioni: rispondi solo con la traduzione.';
+}
 /* ===== CORE-END ===== */
 var aiDirectLib=async function(payload){
   var key=((qs('aiKey')&&qs('aiKey').value)||'').trim();
@@ -5651,6 +5672,7 @@ var LIB={books:[],progress:{},setup:null,covers:{},loaded:false,q:''};
     type:'<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>',
     mark:'<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>',
     spark:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/></svg>',
+    globe:'<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M10 5c-1 4-3.5 7-6 8.5M6 9c1.2 2 3 3.6 5 4.5"/><path d="M12.5 21l4-9 4 9M14 18h5"/></svg>',
     x:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
     trash:'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>',
     book:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2zM22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>',
@@ -5950,6 +5972,7 @@ var LIB={books:[],progress:{},setup:null,covers:{},loaded:false,q:''};
     var top=R.el.querySelector('.rd-top'),bot=R.el.querySelector('.rd-bottom');
     top.appendChild(btn(ICON.back,'Torna alla biblioteca',closeReader));
     top.appendChild(txt('span','rd-title',R.book.title));
+    top.appendChild(btn(ICON.globe,'Traduci',translatePages,'rd-trb'));
     if(isAdmin)top.appendChild(btn(ICON.spark,R.book.kind==='pdf'?'Ricetta da questa pagina':'Ricetta da questa pagina',pageToRecipe,'rd-ai'));
     top.appendChild(btn(ICON.list,'Indice',function(){togglePanel('toc');},'p-toc'));
     top.appendChild(btn(ICON.search,'Cerca nel libro',function(){togglePanel('search');},'p-search'));
@@ -6095,6 +6118,7 @@ var LIB={books:[],progress:{},setup:null,covers:{},loaded:false,q:''};
     var bar=h('div','rd-sel');bar.onmousedown=function(e){e.preventDefault();};
     Object.keys(HL).forEach(function(k){var d=h('button','dot');d.type='button';d.style.background=HL[k];d.setAttribute('aria-label','Evidenzia');d.onclick=function(){highlight(k);};bar.appendChild(d);});
     var n=h('button','',ICON.notes+'<span>Nota</span>');n.type='button';n.onclick=function(){highlight('yellow',true);};bar.appendChild(n);
+    var trs=txt('button','','Traduci');trs.type='button';trs.onclick=function(){var t=s.text;R.api&&R.api.clearSelection();hideSel();showTranslation(t,'Testo selezionato');};bar.appendChild(trs);
     var cp=txt('button','','Copia');cp.type='button';cp.onclick=function(){try{navigator.clipboard.writeText(s.text);}catch(e){}R.api&&R.api.clearSelection();hideSel();toast('Copiato','ok');};bar.appendChild(cp);
     if(isAdmin){var rc=h('button','rd-sel-ai',ICON.spark+'<span>Ricetta</span>');rc.type='button';rc.onclick=function(){var t=s.text;R.api&&R.api.clearSelection();hideSel();toRecipe({text:t+'\n\n(Da \u00ab'+R.book.title+'\u00bb'+(R.book.author?', '+R.book.author:'')+')'});};bar.appendChild(rc);}
     var W=window.innerWidth;bar.style.left=Math.min(Math.max(s.x,160),W-160)+'px';bar.style.top=Math.max(s.y-10,80)+'px';
@@ -6118,8 +6142,52 @@ var LIB={books:[],progress:{},setup:null,covers:{},loaded:false,q:''};
   }
 
 
+  /* ── traduzione nel lettore ── */
+  var TR_LANGS=[['it','Italiano'],['en','English'],['fr','Français'],['es','Español'],['de','Deutsch']];
+  function trLang(){try{return localStorage.getItem('mdl_tr_lang')||'it';}catch(e){return 'it';}}
+  function trCacheKey(label,lang,text){var s=0;for(var i=0;i<text.length;i++)s=(s*31+text.charCodeAt(i))|0;return 'mdl_tr_'+lang+'_'+(R?R.book.id:'')+'_'+s;}
+  function translatePages(){
+    if(R&&R.api&&R.api.thumb&&R.api.pageCount)return pagePicker('translate');
+    if(!R||!R.api||!R.api.pageContent){toast('Apri prima il libro','err');return;}
+    toast('Preparo la pagina…');
+    R.api.pageContent().then(function(c){
+      if(c.text&&c.text.replace(/\s/g,'').length>20)return showTranslation(c.text,c.label||'Pagina attuale');
+      if(c.image)return aiResizeImage(c.image).then(aiOcrRun).then(function(d){if(d.source)showTranslation(d.source,c.label);else toast(d.error||'Testo non leggibile','err');});
+      toast('In questa pagina non trovo testo','err');
+    }).catch(function(e){toast(e.message||'Errore','err');});
+  }
+  function showTranslation(text,label){
+    if(!R)return;setPanel(null);
+    var a=h('aside','rd-panel rd-tr');var hd=h('div','rd-panel-head');hd.appendChild(txt('b','','Traduzione'));
+    hd.appendChild(btn(ICON.x,'Chiudi',function(){a.remove();}));a.appendChild(hd);
+    var bar=h('div','rd-tr-bar');var sel=h('select','rd-input');TR_LANGS.forEach(function(l){var o=h('option');o.value=l[0];o.textContent=l[1];sel.appendChild(o);});sel.value=trLang();
+    var tg=txt('button','pp-chip','Originale');tg.type='button';
+    bar.appendChild(txt('span','rd-hint',label||''));bar.appendChild(sel);bar.appendChild(tg);a.appendChild(bar);
+    var body=h('div','rd-panel-body rd-tr-body');a.appendChild(body);
+    var acts=h('div','rd-tr-acts');a.appendChild(acts);
+    R.el.appendChild(a);
+    var out='',showOrig=false;
+    function draw(){body.innerHTML='';var p=txt('div','rd-tr-text',showOrig?text:out);body.appendChild(p);tg.textContent=showOrig?'Traduzione':'Originale';tg.classList.toggle('on',showOrig);}
+    tg.onclick=function(){showOrig=!showOrig;draw();};
+    function run(){
+      var lang=sel.value;try{localStorage.setItem('mdl_tr_lang',lang);}catch(e){}
+      var key=trCacheKey(label,lang,text),cached=null;try{cached=localStorage.getItem(key);}catch(e){}
+      if(cached){out=cached;draw();return;}
+      body.innerHTML='<div class="rd-tr-wait"><span class="lib-spin"></span><span>Traduco…</span></div>';
+      aiTranslate(text,lang,function(p,t){var w=body.querySelector('.rd-tr-wait span:last-child');if(w)w.textContent='Traduco… '+p+' di '+t;}).then(function(d){
+        if(d.error){body.innerHTML='';body.appendChild(txt('p','rd-row','⚠ '+d.error));return;}
+        out=d.text;try{localStorage.setItem(key,out);}catch(e){}draw();
+      });
+    }
+    sel.onchange=run;
+    var cp=txt('button','lib-btn','Copia');cp.type='button';cp.onclick=function(){try{navigator.clipboard.writeText(showOrig?text:out);toast('Copiato','ok');}catch(e){}};acts.appendChild(cp);
+    if(isAdmin){var rc=h('button','lib-btn lib-btn-dark',ICON.spark+'<span>Crea ricetta</span>');rc.type='button';rc.onclick=function(){if(!out)return;a.remove();toRecipe({text:out+'\n\n(Da «'+R.book.title+'»'+(R.book.author?', '+R.book.author:'')+(label?', '+label:'')+', tradotto)'});};acts.appendChild(rc);}
+    run();
+  }
+  window.libShowTranslation=showTranslation;
+
   /* scelta delle pagine da analizzare (PDF) */
-  function pagePicker(){
+  function pagePicker(mode){
     var api=R.api,total=api.pageCount(),cur=api.current(),sel={};sel[cur]=1;
     var from=Math.max(1,cur-4),to=Math.min(total,cur+5),thumbs={};
     var bg=h('div','pp-bg');var sh=h('div','pp');bg.appendChild(sh);R.el.appendChild(bg);
@@ -6131,7 +6199,7 @@ var LIB={books:[],progress:{},setup:null,covers:{},loaded:false,q:''};
     function render(){
       var L=list();sh.innerHTML='';
       sh.appendChild(h('div','pp-grab'));
-      var hd=h('div','pp-hd');hd.appendChild(txt('b','','Pagine da analizzare'));hd.appendChild(txt('small','','Tocca le pagine con la ricetta: le pagine scelte vengono lette insieme, così una ricetta divisa su due pagine resta intera.'));sh.appendChild(hd);
+      var hd=h('div','pp-hd');hd.appendChild(txt('b','',mode==='translate'?'Pagine da tradurre':'Pagine da analizzare'));hd.appendChild(txt('small','',mode==='translate'?'Scegli le pagine: vengono lette e tradotte insieme, mantenendo numeri e quantità.':'Tocca le pagine con la ricetta: le pagine scelte vengono lette insieme, così una ricetta divisa su due pagine resta intera.'));sh.appendChild(hd);
       var q=h('div','pp-quick');
       [['Solo questa',[cur]],['Con la successiva',[cur,cur+1]],['Con la precedente',[cur-1,cur]],['Doppia pagina ±1',[cur-1,cur,cur+1]]].forEach(function(o){
         var ps=o[1].filter(function(n){return n>=1&&n<=total;});if(ps.length!==o[1].length)return;var on=ps.length===L.length&&ps.every(function(n){return sel[n];});
@@ -6156,7 +6224,7 @@ var LIB={books:[],progress:{},setup:null,covers:{},loaded:false,q:''};
       var ok=txt('button','pp-chip','Usa');ok.type='button';ok.onclick=function(){var x=Math.max(1,Math.min(total,+a.value||cur)),y=Math.max(1,Math.min(total,+z.value||x));if(y<x){var t=x;x=y;y=t;}if(y-x>11)y=x+11;sel={};for(var k=x;k<=y;k++)sel[k]=1;from=Math.max(1,x-2);to=Math.min(total,y+2);render();};
       rg.appendChild(a);rg.appendChild(txt('span','','–'));rg.appendChild(z);rg.appendChild(ok);sh.appendChild(rg);
       var go=h('button','pp-go');go.type='button';go.disabled=!L.length||busy;
-      go.innerHTML=busy?'<span class="lib-spin"></span><span>'+busy+'</span>':ICON.spark+'<span>Analizza '+(L.length===1?'la pagina '+L[0]:L.length+' pagine')+' con l’AI</span>';
+      go.innerHTML=busy?'<span class="lib-spin"></span><span>'+busy+'</span>':(mode==='translate'?ICON.globe+'<span>Traduci '+(L.length===1?'la pagina '+L[0]:L.length+' pagine')+'</span>':ICON.spark+'<span>Analizza '+(L.length===1?'la pagina '+L[0]:L.length+' pagine')+' con l\u2019AI</span>');
       go.onclick=run;sh.appendChild(go);
       var cn=txt('button','pp-cancel','Annulla');cn.type='button';cn.onclick=close;sh.appendChild(cn);
       loadThumbs();
@@ -6177,7 +6245,7 @@ var LIB={books:[],progress:{},setup:null,covers:{},loaded:false,q:''};
           if(!body.length){busy=false;render();toast('Non trovo testo nelle pagine scelte','err');return;}
           var text=body.map(function(p){return '--- Pagina '+p.n+' ---\n'+p.t.trim();}).join('\n\n');
           var src='(Da «'+R.book.title+'»'+(R.book.author?', '+R.book.author:'')+', '+(L.length===1?'pagina '+L[0]:'pagine '+L.join(', '))+')';
-          close();toRecipe({text:text+'\n\n'+src});return;
+          close();if(mode==='translate'){showTranslation(text,L.length===1?'Pagina '+L[0]:'Pagine '+L[0]+'\u2013'+L[L.length-1]);return;}toRecipe({text:text+'\n\n'+src});return;
         }
         var n=L[i++];busy='Leggo la pagina '+n+(L.length>1?' ('+i+' di '+L.length+')':'')+'…';render();
         api.pageContent(n).then(function(c){
@@ -7618,6 +7686,118 @@ function aiOcrRun(image){
     return d;
   }).catch(function(e){return {error:'Errore connessione: '+(e&&e.message||e)};});
 }
+
+function aiTranslate(text,lang,onProg){
+  var parts=aiChunks(text,5000),out=[],i=0;
+  function one(t){
+    return aiCheckServer().then(function(ok){
+      if(ok)return fetch('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({translate:t,lang:lang})}).then(function(r){return r.json().catch(function(){return {};}).then(function(d){d._status=r.status;return d;});});
+      var key='';try{key=localStorage.getItem('groq_key')||'';}catch(e){}if(!key){var dg=document.getElementById('MDL_GROQ');if(dg)key=(dg.value||'').trim();}
+      if(!key)return {error:'Inserisci la chiave Groq nel menu Altro'};
+      var L={it:'italiano',en:'inglese',fr:'francese',es:'spagnolo',de:'tedesco'}[lang]||'italiano';
+      return aiGroqChat('https://api.groq.com/openai/v1/chat/completions',key,'text',aiTranslatePrompt(L),t,null,false);
+    }).then(function(d){
+      if(d&&d.error&&_aiServer&&(d._status===503||d._status===401||d._status===404)&&aiHasLocalKey()){_aiServer=false;return one(t);}
+      return d;
+    });
+  }
+  function next(){
+    if(i>=parts.length)return Promise.resolve({text:out.join('\n\n')});
+    if(onProg&&parts.length>1)onProg(i+1,parts.length);
+    return one(parts[i++]).then(function(d){if(d.error)return d;out.push(d.text);return next();});
+  }
+  return next().catch(function(e){return {error:'Errore connessione: '+(e&&e.message||e)};});
+}
+
+/* ════ SUGGERIMENTI INGREDIENTI (da quelli già caricati) ════
+   Mentre scrivi il nome di un ingrediente compare l'elenco di quelli già usati
+   nelle ricette, con l'unità più usata: tocchi e si compila da solo. */
+(function(){
+  var IDX=null,IDX_AT=0;
+  function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();}
+  function index(){
+    if(IDX&&Date.now()-IDX_AT<15000)return IDX;
+    var m={};
+    var all=[];try{all=(typeof R!=='undefined'&&Array.isArray(R)?R:[]).concat(typeof CU!=='undefined'?CU:[]);}catch(e){}
+    all.forEach(function(r){(r&&r.i||[]).forEach(function(g){
+      if(!g||!g[0])return;var nm=String(g[0]).trim();if(nm.length<2)return;var k=norm(nm);
+      var e=m[k]||(m[k]={k:k,names:{},count:0,units:{},qty:[]});
+      e.names[nm]=(e.names[nm]||0)+1;e.count++;var u=String(g[2]||'').trim();if(u)e.units[u]=(e.units[u]||0)+1;if(g[1]!=null)e.qty.push(+g[1]);
+    });});
+    IDX=Object.keys(m).map(function(k){var e=m[k];
+      var best=Object.keys(e.names).sort(function(a,b){return e.names[b]-e.names[a]||(/[A-Z]/.test(b[0])?1:-1);})[0];
+      var unit=Object.keys(e.units).sort(function(a,b){return e.units[b]-e.units[a];})[0]||'g';
+      return {name:best,k:k,count:e.count,unit:unit};
+    }).sort(function(a,b){return b.count-a.count||a.name.localeCompare(b.name,'it');});
+    IDX_AT=Date.now();return IDX;
+  }
+  function search(q){
+    var n=norm(q),L=index();if(!n)return L.slice(0,8);
+    var start=[],word=[],part=[];
+    L.forEach(function(e){if(e.k===n)return;var i=e.k.indexOf(n);if(i===0)start.push(e);else if(i>0&&e.k[i-1]===' ')word.push(e);else if(i>0)part.push(e);});
+    return start.concat(word,part).slice(0,8);
+  }
+  var box=null,cur=null,items=[],sel=-1;
+  function ensure(){if(box)return box;box=document.createElement('div');box.className='isug';box.setAttribute('role','listbox');document.body.appendChild(box);
+    box.addEventListener('mousedown',function(e){e.preventDefault();});return box;}
+  function isIngInput(el){
+    if(!el||el.tagName!=='INPUT')return false;
+    if(el.getAttribute('list')==='ing-datalist'||el.dataset.isug==='1')return true;
+    var row=el.closest&&el.closest('.ing-row,.st-ing,.ai-ing-row');
+    return !!(row&&row.querySelector('input')===el);
+  }
+  function unitInput(el){var row=el.closest&&el.closest('.ing-row,.st-ing,.ai-ing-row');if(!row)return null;var ins=row.querySelectorAll('input');return ins[2]||null;}
+  function qtyInput(el){var row=el.closest&&el.closest('.ing-row,.st-ing,.ai-ing-row');if(!row)return null;var ins=row.querySelectorAll('input');return ins[1]||null;}
+  function hide(){if(box)box.classList.remove('on');items=[];sel=-1;}
+  function show(el){
+    cur=el;items=search(el.value);ensure();
+    if(!items.length){hide();return;}
+    box.innerHTML='';sel=-1;
+    var q=norm(el.value);
+    items.forEach(function(it,i){
+      var b=document.createElement('button');b.type='button';b.className='isug-i';b.setAttribute('role','option');
+      var nm=document.createElement('b');var k=it.k.indexOf(q);
+      if(q&&k>=0){nm.appendChild(document.createTextNode(it.name.slice(0,k)));var mk=document.createElement('mark');mk.textContent=it.name.slice(k,k+q.length);nm.appendChild(mk);nm.appendChild(document.createTextNode(it.name.slice(k+q.length)));}
+      else nm.textContent=it.name;
+      var sm=document.createElement('small');sm.textContent=it.count+(it.count===1?' ricetta':' ricette')+' · '+it.unit;
+      b.appendChild(nm);b.appendChild(sm);
+      b.onclick=function(){pick(i);};
+      box.appendChild(b);
+    });
+    var hd=document.createElement('div');hd.className='isug-hd';hd.textContent=q?'Ingredienti già usati':'I più usati';box.insertBefore(hd,box.firstChild);
+    place();box.classList.add('on');
+  }
+  function place(){
+    if(!cur||!box)return;var r=cur.getBoundingClientRect(),vh=window.visualViewport?window.visualViewport.height:window.innerHeight;
+    var w=Math.max(r.width,240);box.style.width=Math.min(w,window.innerWidth-16)+'px';box.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px';
+    var below=vh-r.bottom;box.style.maxHeight=Math.max(150,Math.min(300,below>200?below-14:r.top-14))+'px';
+    if(below<200&&r.top>below){box.style.top='';box.style.bottom=(window.innerHeight-r.top+6)+'px';}else{box.style.bottom='';box.style.top=(r.bottom+6)+'px';}
+  }
+  function pick(i){
+    var it=items[i];if(!it||!cur)return;var el=cur;
+    el.value=it.name;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));
+    var u=unitInput(el);if(u&&(!u.value||u.value==='g')&&it.unit){u.value=it.unit;u.dispatchEvent(new Event('input',{bubbles:true}));}
+    hide();var q=qtyInput(el);if(q&&!q.value)setTimeout(function(){q.focus();},30);
+  }
+  document.addEventListener('focusin',function(e){
+    var el=e.target;if(!isIngInput(el)){if(!(box&&box.contains(el)))hide();return;}
+    if(el.getAttribute('list')==='ing-datalist'){el.removeAttribute('list');el.dataset.isug='1';}
+    el.setAttribute('autocomplete','off');show(el);
+  });
+  document.addEventListener('input',function(e){if(isIngInput(e.target)&&e.target===document.activeElement)show(e.target);});
+  document.addEventListener('keydown',function(e){
+    if(!box||!box.classList.contains('on')||e.target!==cur)return;var bs=box.querySelectorAll('.isug-i');
+    if(e.key==='ArrowDown'){e.preventDefault();sel=Math.min(bs.length-1,sel+1);}
+    else if(e.key==='ArrowUp'){e.preventDefault();sel=Math.max(0,sel-1);}
+    else if(e.key==='Enter'&&sel>=0){e.preventDefault();pick(sel);return;}
+    else if(e.key==='Escape'){hide();return;}else return;
+    [].forEach.call(bs,function(b,i){b.classList.toggle('on',i===sel);if(i===sel)b.scrollIntoView({block:'nearest'});});
+  });
+  document.addEventListener('focusout',function(e){if(e.target===cur)setTimeout(function(){if(document.activeElement!==cur)hide();},150);});
+  window.addEventListener('resize',place);document.addEventListener('scroll',function(){if(box&&box.classList.contains('on'))place();},true);
+  if(window.visualViewport)window.visualViewport.addEventListener('resize',place);
+  window.ingSuggestReset=function(){IDX=null;};
+})();
 </script>
 
 <!-- FILE IMPORT MODAL -->
